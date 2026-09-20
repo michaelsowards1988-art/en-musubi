@@ -49,7 +49,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-600 font-mono text-xs tracking-widest uppercase">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-400 font-mono text-xs tracking-widest uppercase">
         Establishing Sanctuary...
       </div>
     );
@@ -63,12 +63,12 @@ export default function Home() {
         <div className="absolute w-125 h-125 bg-blue-950/10 rounded-full blur-3xl pointer-events-none -bottom-48 -right-48"></div>
 
         <div className="w-full max-w-sm p-8 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 backdrop-blur-xl shadow-2xl text-center relative z-10">
-          <div className="inline-flex p-3 rounded-xl bg-zinc-950 border border-zinc-800/60 mb-6 text-zinc-400">
+          <div className="inline-flex p-3 rounded-xl bg-zinc-950 border border-zinc-800/60 mb-6 text-zinc-300">
             <Sparkles className="w-5 h-5 text-purple-400" />
           </div>
           
           <h1 className="text-3xl font-light tracking-widest text-zinc-100 mb-2">縁結び</h1>
-          <p className="text-zinc-500 tracking-wider text-[10px] mb-8 uppercase font-mono">Texas — Kanagawa Sanctuary</p>
+          <p className="text-zinc-400 tracking-wider text-[11px] mb-8 uppercase font-mono">Texas — Kanagawa Sanctuary</p>
           
           <form onSubmit={handleLogin} className="space-y-4">
             <input
@@ -76,11 +76,11 @@ export default function Home() {
               value={passcode}
               onChange={(e) => setPasscode(e.target.value)}
               placeholder="Passcode"
-              className="w-full p-3 rounded-xl bg-zinc-950/80 border border-zinc-800 text-zinc-200 text-center text-sm font-mono tracking-widest focus:outline-none focus:border-purple-500/50 transition-all placeholder:text-zinc-700"
+              className="w-full p-3.5 rounded-xl bg-zinc-950/80 border border-zinc-800 text-zinc-100 text-center text-sm font-mono tracking-widest focus:outline-none focus:border-purple-500/50 transition-all placeholder:text-zinc-600 shadow-inner"
             />
             <button 
               type="submit" 
-              className="w-full py-3 rounded-xl bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-white hover:shadow-lg hover:shadow-zinc-100/10 transition-all"
+              className="w-full py-3.5 rounded-xl bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-white hover:shadow-lg hover:shadow-zinc-100/10 transition-all cursor-pointer"
             >
               Connect
             </button>
@@ -93,7 +93,7 @@ export default function Home() {
 
   // The unlocked dashboard
   return (
-    <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-zinc-800 relative overflow-hidden">
+    <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-zinc-800 relative overflow-hidden text-zinc-100">
       <div className="absolute w-200 h-200 bg-purple-950/10 rounded-full blur-3xl pointer-events-none -top-96 left-1/2 -translate-x-1/2"></div>
 
       <div className="w-full max-w-4xl mb-6 flex justify-between items-end border-b border-zinc-900 pb-6 relative z-10">
@@ -101,24 +101,24 @@ export default function Home() {
           <h1 className="text-3xl font-light tracking-widest text-zinc-100 flex items-center gap-3">
             縁結び 
             <div className="flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full overflow-hidden border border-purple-500/40 bg-zinc-900 inline-block">
+              <span className="w-8 h-8 rounded-full overflow-hidden border border-purple-500/40 bg-zinc-900 inline-block shadow-md">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png" alt="Michael" className="w-full h-full object-cover" />
               </span>
-              <span className="w-7 h-7 rounded-full overflow-hidden border border-purple-500/40 bg-zinc-900 inline-block">
+              <span className="w-8 h-8 rounded-full overflow-hidden border border-purple-500/40 bg-zinc-900 inline-block shadow-md">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png" alt="Tamae" className="w-full h-full object-cover" />
               </span>
             </div>
           </h1>
-          <p className="text-zinc-500 text-xs font-mono mt-1">Texas — Kanagawa Sanctuary</p>
+          <p className="text-zinc-400 text-xs font-mono mt-1 tracking-wide">Texas — Kanagawa Sanctuary</p>
         </div>
 
         <button 
           onClick={() => supabase.auth.signOut()} 
-          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 bg-zinc-900/60 border border-zinc-800/60 px-3 py-1.5 rounded-lg transition-all mb-1"
+          className="flex items-center gap-1.5 text-xs text-zinc-300 hover:text-zinc-100 bg-zinc-900/80 border border-zinc-800 px-3.5 py-2 rounded-xl transition-all mb-1 shadow-sm cursor-pointer"
         >
-          <Lock className="w-3 h-3" />
+          <Lock className="w-3.5 h-3.5 text-zinc-400" />
           <span>Lock</span>
         </button>
       </div>
