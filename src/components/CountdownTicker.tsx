@@ -40,14 +40,14 @@ export default function CountdownTicker({ lang }: CountdownTickerProps) {
     <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] mb-6 transition-all">
       <div className="flex items-center justify-between p-6">
         <div className="flex items-center gap-4">
-          <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-800/30 text-purple-400 shadow-inner">
+          <div className="p-2.5 rounded-xl bg-stone-900/50 border border-stone-800/50 text-amber-600/80 shadow-inner">
             <Timer className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-light tracking-wide text-zinc-100">
+            <h2 className="text-lg font-light tracking-wide text-stone-100">
               {lang === 'ja' ? '次の目標期間' : 'Next Window Target'}
             </h2>
-            <p className="text-xs text-zinc-400 font-mono mt-0.5">
+            <p className="text-xs text-stone-400 font-mono mt-0.5">
               {lang === 'ja' ? '年末の訪問' : 'End-of-Year Visit'}
             </p>
           </div>
@@ -55,20 +55,20 @@ export default function CountdownTicker({ lang }: CountdownTickerProps) {
 
         <div className="flex items-center gap-3 font-mono text-xs">
           <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
-            <span className="text-base font-semibold text-zinc-100">{timeLeft.days}</span>
-            <span className="block text-[10px] text-zinc-500 uppercase mt-0.5">{lang === 'ja' ? '日' : 'Days'}</span>
+            <span className="text-base font-semibold text-stone-100">{timeLeft.days}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '日' : 'Days'}</span>
           </div>
           <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
-            <span className="text-base font-semibold text-zinc-100">{timeLeft.hours}</span>
-            <span className="block text-[10px] text-zinc-500 uppercase mt-0.5">{lang === 'ja' ? '時間' : 'Hours'}</span>
+            <span className="text-base font-semibold text-stone-100">{timeLeft.hours}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '時間' : 'Hours'}</span>
           </div>
           <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
-            <span className="text-base font-semibold text-zinc-100">{timeLeft.minutes}</span>
-            <span className="block text-[10px] text-zinc-500 uppercase mt-0.5">{lang === 'ja' ? '分' : 'Mins'}</span>
+            <span className="text-base font-semibold text-stone-100">{timeLeft.minutes}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '分' : 'Mins'}</span>
           </div>
           <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
-            <span className="text-base font-semibold text-zinc-100">{timeLeft.seconds}</span>
-            <span className="block text-[10px] text-zinc-500 uppercase mt-0.5">{lang === 'ja' ? '秒' : 'Secs'}</span>
+            <span className="text-base font-semibold text-stone-100">{timeLeft.seconds}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '秒' : 'Secs'}</span>
           </div>
         </div>
       </div>

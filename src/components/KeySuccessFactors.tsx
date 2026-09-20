@@ -98,7 +98,7 @@ export default function KeySuccessFactors() {
             placeholder="Focus area (e.g., Daily Japanese & English practice)"
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500"
+            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
           />
           <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-purple-600" />

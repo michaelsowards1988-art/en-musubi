@@ -27,12 +27,14 @@ export default function CollapsibleSection({
         className="flex items-center justify-between p-6 cursor-pointer select-none hover:bg-zinc-900/30 transition-colors border-b border-zinc-800/40"
       >
         <div className="flex items-center gap-4">
-          <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-800/30 text-purple-400 shadow-inner">
+          {/* Muted Stone Background & Warm Amber Icon */}
+          <div className="p-2.5 rounded-xl bg-stone-900/50 border border-stone-800/50 text-amber-600/80 shadow-inner">
             {icon}
           </div>
           <div>
-            <h2 className="text-lg font-light tracking-wide text-zinc-100 group-hover:text-purple-300 transition-colors">{title}</h2>
-            <p className="text-xs text-zinc-400 font-mono mt-0.5">{subtitle}</p>
+            {/* Hover transitions to a soft warm off-white/amber */}
+            <h2 className="text-lg font-light tracking-wide text-stone-100 group-hover:text-amber-100/90 transition-colors">{title}</h2>
+            <p className="text-xs text-stone-400 font-mono mt-0.5">{subtitle}</p>
           </div>
         </div>
 

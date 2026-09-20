@@ -189,12 +189,14 @@ export default function CollapsibleSection({
         className="flex items-center justify-between p-6 cursor-pointer select-none hover:bg-zinc-900/30 transition-colors border-b border-zinc-800/40"
       >
         <div className="flex items-center gap-4">
-          <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-800/30 text-purple-400 shadow-inner">
+          {/* Muted Stone Background & Warm Amber Icon */}
+          <div className="p-2.5 rounded-xl bg-stone-900/50 border border-stone-800/50 text-amber-600/80 shadow-inner">
             {icon}
           </div>
           <div>
-            <h2 className="text-lg font-light tracking-wide text-zinc-100 group-hover:text-purple-300 transition-colors">{title}</h2>
-            <p className="text-xs text-zinc-400 font-mono mt-0.5">{subtitle}</p>
+            {/* Hover transitions to a soft warm off-white/amber */}
+            <h2 className="text-lg font-light tracking-wide text-stone-100 group-hover:text-amber-100/90 transition-colors">{title}</h2>
+            <p className="text-xs text-stone-400 font-mono mt-0.5">{subtitle}</p>
           </div>
         </div>
 
@@ -210,76 +212,6 @@ export default function CollapsibleSection({
           {children}
         </div>
       )}
-    </div>
-  );
-}
-</file>
-
-<file path="src/components/CountdownTicker.tsx">
-'use client';
-
-import { useState, useEffect, useMemo } from 'react';
-import { Timer } from 'lucide-react';
-
-interface TimeLeft {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
-
-export default function CountdownTicker() {
-  const targetDate = useMemo(() => new Date('2026-12-15T00:00:00'), []);
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    function calculateTime() {
-      const difference = targetDate.getTime() - new Date().getTime();
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-        });
-      }
-    }
-
-    calculateTime();
-    const interval = setInterval(calculateTime, 1000);
-    return () => clearInterval(interval);
-  }, [targetDate]);
-
-  return (
-    <div className="w-full max-w-4xl p-5 rounded-2xl bg-zinc-950 text-zinc-100 border border-zinc-800 shadow-2xl flex items-center justify-between mb-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-purple-400">
-          <Timer className="w-4 h-4" />
-        </div>
-        <div>
-          <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-400">Next Window Target</h3>
-          <p className="text-sm font-medium text-zinc-200">End-of-Year Visit</p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3 font-mono text-xs">
-        <div className="text-center px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800/80">
-          <span className="text-sm font-semibold text-zinc-100">{timeLeft.days}</span>
-          <span className="block text-[10px] text-zinc-500 uppercase">Days</span>
-        </div>
-        <div className="text-center px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800/80">
-          <span className="text-sm font-semibold text-zinc-100">{timeLeft.hours}</span>
-          <span className="block text-[10px] text-zinc-500 uppercase">Hours</span>
-        </div>
-        <div className="text-center px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800/80">
-          <span className="text-sm font-semibold text-zinc-100">{timeLeft.minutes}</span>
-          <span className="block text-[10px] text-zinc-500 uppercase">Mins</span>
-        </div>
-        <div className="text-center px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800/80">
-          <span className="text-sm font-semibold text-zinc-100">{timeLeft.seconds}</span>
-          <span className="block text-[10px] text-zinc-500 uppercase">Secs</span>
-        </div>
-      </div>
     </div>
   );
 }
@@ -478,20 +410,20 @@ export default function ItineraryTracker() {
             placeholder="Flight # (e.g., JL012)"
             value={flightNumber}
             onChange={(e) => setFlightNumber(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500 font-mono"
+            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500 font-mono"
           />
           <input
             type="text"
             placeholder="Route (e.g., DFW -> HND)"
             value={route}
             onChange={(e) => setRoute(e.target.value)}
-            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500"
+            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
           />
           <input
             type="date"
             value={travelDate}
             onChange={(e) => setTravelDate(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-purple-500"
+            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500"
           />
           <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
             Save
@@ -629,7 +561,7 @@ export default function KeySuccessFactors() {
             placeholder="Focus area (e.g., Daily Japanese & English practice)"
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500"
+            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
           />
           <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-purple-600" />
@@ -773,7 +705,7 @@ export default function MemoryVault() {
             <select
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-300 focus:outline-none focus:border-purple-500"
+              className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-300 focus:outline-none focus:border-stone-500"
             >
               <option value="Texas">Texas</option>
               <option value="Kanagawa">Kanagawa</option>
@@ -783,7 +715,7 @@ export default function MemoryVault() {
               placeholder="Image URL (direct link)"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
-              className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500 font-mono"
+              className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500 font-mono"
             />
           </div>
           <input
@@ -791,7 +723,7 @@ export default function MemoryVault() {
             placeholder="Caption (e.g., Sunset walk by the lake)"
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500"
+            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
           />
           <button type="submit" className="py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2">
             <Sparkles className="w-4 h-4 text-purple-600" />
@@ -826,94 +758,6 @@ export default function MemoryVault() {
             </div>
           ))
         )}
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="src/components/SanctuaryStatus.tsx">
-'use client';
-
-import { useState, useEffect } from 'react';
-import { Sun, Moon, Cloud, Thermometer } from 'lucide-react';
-import { formatInTimeZone } from 'date-fns-tz';
-
-export default function SanctuaryStatus() {
-  const [now, setNow] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const texasHour = parseInt(formatInTimeZone(now, 'America/Chicago', 'H'), 10);
-  const japanHour = parseInt(formatInTimeZone(now, 'Asia/Tokyo', 'H'), 10);
-
-  const isTexasDay = texasHour >= 6 && texasHour < 20;
-  const isJapanDay = japanHour >= 6 && japanHour < 20;
-
-  const texasFormattedDate = formatInTimeZone(now, 'America/Chicago', 'EEEE, MMM d');
-  const japanFormattedDate = formatInTimeZone(now, 'Asia/Tokyo', 'EEEE, MMM d');
-
-  return (
-    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      {/* Kanagawa Status (Tamae First) */}
-      <div className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-xl">
-        <div className="flex items-center gap-4">
-          <div className={`p-3.5 rounded-xl border ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
-            {isJapanDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">Kanagawa (JST)</h4>
-              <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
-                <Thermometer className="w-3.5 h-3.5 text-amber-400" /> 26°C / 78°F
-              </span>
-            </div>
-            <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
-              {formatInTimeZone(now, 'Asia/Tokyo', 'h:mm:ss a')}
-            </p>
-            <p className="text-sm text-zinc-300 mt-0.5 font-mono">{japanFormattedDate}</p>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
-            {isJapanDay ? 'Daytime' : 'Night'}
-          </span>
-          <span className="text-xs text-zinc-400 flex items-center gap-1">
-            <Cloud className="w-3.5 h-3.5" /> Clear
-          </span>
-        </div>
-      </div>
-
-      {/* Texas Status */}
-      <div className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-xl">
-        <div className="flex items-center gap-4">
-          <div className={`p-3.5 rounded-xl border ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
-            {isTexasDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">Texas (CDT)</h4>
-              <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
-                <Thermometer className="w-3.5 h-3.5 text-amber-400" /> 35°C / 95°F
-              </span>
-            </div>
-            <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
-              {formatInTimeZone(now, 'America/Chicago', 'h:mm:ss a')}
-            </p>
-            <p className="text-sm text-zinc-300 mt-0.5 font-mono">{texasFormattedDate}</p>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
-            {isTexasDay ? 'Daytime' : 'Night'}
-          </span>
-          <span className="text-xs text-zinc-400 flex items-center gap-1">
-            <Cloud className="w-3.5 h-3.5" /> Sunny
-          </span>
-        </div>
       </div>
     </div>
   );
@@ -1106,6 +950,86 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 }
 </file>
 
+<file path="src/components/CountdownTicker.tsx">
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { Timer } from 'lucide-react';
+
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+interface CountdownTickerProps {
+  lang: 'en' | 'ja';
+}
+
+export default function CountdownTicker({ lang }: CountdownTickerProps) {
+  const targetDate = useMemo(() => new Date('2026-12-15T00:00:00'), []);
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    function calculateTime() {
+      const difference = targetDate.getTime() - new Date().getTime();
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        });
+      }
+    }
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
+    return () => clearInterval(interval);
+  }, [targetDate]);
+
+  return (
+    <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] mb-6 transition-all">
+      <div className="flex items-center justify-between p-6">
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 rounded-xl bg-stone-900/50 border border-stone-800/50 text-amber-600/80 shadow-inner">
+            <Timer className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-light tracking-wide text-stone-100">
+              {lang === 'ja' ? '次の目標期間' : 'Next Window Target'}
+            </h2>
+            <p className="text-xs text-stone-400 font-mono mt-0.5">
+              {lang === 'ja' ? '年末の訪問' : 'End-of-Year Visit'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 font-mono text-xs">
+          <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
+            <span className="text-base font-semibold text-stone-100">{timeLeft.days}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '日' : 'Days'}</span>
+          </div>
+          <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
+            <span className="text-base font-semibold text-stone-100">{timeLeft.hours}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '時間' : 'Hours'}</span>
+          </div>
+          <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
+            <span className="text-base font-semibold text-stone-100">{timeLeft.minutes}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '分' : 'Mins'}</span>
+          </div>
+          <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
+            <span className="text-base font-semibold text-stone-100">{timeLeft.seconds}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '秒' : 'Secs'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
 <file path="src/components/MilestoneTracker.tsx">
 'use client';
 
@@ -1210,13 +1134,13 @@ export default function MilestoneTracker() {
             placeholder="Milestone title (e.g., Summer Visit)"
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
-            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500"
+            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
           />
           <input
             type="date"
             value={newDate}
             onChange={(e) => setNewDate(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-purple-500"
+            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500"
           />
           <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
             Save
@@ -1282,7 +1206,7 @@ export default function SanctuaryNotes() {
         .from('notes')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(10);
 
       if (isMounted) {
         if (!error && data) {
@@ -1346,7 +1270,7 @@ export default function SanctuaryNotes() {
         <select
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
-          className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 focus:outline-none focus:border-purple-500"
+          className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 focus:outline-none focus:border-stone-500"
         >
           <option value="Texas">Texas</option>
           <option value="Kanagawa">Kanagawa</option>
@@ -1356,7 +1280,7 @@ export default function SanctuaryNotes() {
           placeholder="Drop a note..."
           value={newContent}
           onChange={(e) => setNewContent(e.target.value)}
-          className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500"
+          className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
         />
         <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2">
           <Send className="w-3.5 h-3.5" />
@@ -1382,6 +1306,139 @@ export default function SanctuaryNotes() {
             </div>
           ))
         )}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/SanctuaryStatus.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Sun, Moon, Cloud, Thermometer, CloudRain, CloudLightning, CloudSnow, CloudFog } from 'lucide-react';
+import { formatInTimeZone } from 'date-fns-tz';
+import { enUS, ja } from 'date-fns/locale';
+
+interface SanctuaryStatusProps {
+  lang: 'en' | 'ja';
+}
+
+export default function SanctuaryStatus({ lang }: SanctuaryStatusProps) {
+  const [now, setNow] = useState(new Date());
+  const [jpWeather, setJpWeather] = useState<{ tempC: number | null, code: number | null }>({ tempC: null, code: null });
+  const [txWeather, setTxWeather] = useState<{ tempC: number | null, code: number | null }>({ tempC: null, code: null });
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    // Fetch live weather for Kanagawa (Yokohama) and Texas (Hawkins)
+    Promise.all([
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=35.4478&longitude=139.6425&current=temperature_2m,weather_code'),
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=32.5896&longitude=-95.1972&current=temperature_2m,weather_code')
+    ])
+    .then(async ([jpRes, txRes]) => {
+      const jpData = await jpRes.json();
+      const txData = await txRes.json();
+      setJpWeather({ tempC: jpData.current.temperature_2m, code: jpData.current.weather_code });
+      setTxWeather({ tempC: txData.current.temperature_2m, code: txData.current.weather_code });
+    })
+    .catch(console.error);
+  }, []);
+
+  const texasHour = parseInt(formatInTimeZone(now, 'America/Chicago', 'H'), 10);
+  const japanHour = parseInt(formatInTimeZone(now, 'Asia/Tokyo', 'H'), 10);
+
+  const isTexasDay = texasHour >= 6 && texasHour < 20;
+  const isJapanDay = japanHour >= 6 && japanHour < 20;
+
+  const locale = lang === 'ja' ? ja : enUS;
+  const formatStr = lang === 'ja' ? 'M月d日 (EEEE)' : 'EEEE, MMM d';
+  
+  const texasFormattedDate = formatInTimeZone(now, 'America/Chicago', formatStr, { locale });
+  const japanFormattedDate = formatInTimeZone(now, 'Asia/Tokyo', formatStr, { locale });
+
+  const getWeatherInfo = (code: number | null, isDay: boolean) => {
+    if (code === null) return { Icon: Cloud, text: lang === 'ja' ? '取得中...' : 'Loading...' };
+    if (code === 0) return { Icon: isDay ? Sun : Moon, text: lang === 'ja' ? '快晴' : 'Clear' };
+    if (code <= 3) return { Icon: Cloud, text: lang === 'ja' ? '曇り' : 'Cloudy' };
+    if (code === 45 || code === 48) return { Icon: CloudFog, text: lang === 'ja' ? '霧' : 'Fog' };
+    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return { Icon: CloudRain, text: lang === 'ja' ? '雨' : 'Rain' };
+    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return { Icon: CloudSnow, text: lang === 'ja' ? '雪' : 'Snow' };
+    if (code >= 95) return { Icon: CloudLightning, text: lang === 'ja' ? '雷雨' : 'Storm' };
+    return { Icon: Cloud, text: lang === 'ja' ? '不明' : 'Unknown' };
+  };
+
+  const jpWeatherDetails = getWeatherInfo(jpWeather.code, isJapanDay);
+  const txWeatherDetails = getWeatherInfo(txWeather.code, isTexasDay);
+
+  const formatTemp = (tempC: number | null) => {
+    if (tempC === null) return '--';
+    const tempF = (tempC * 9/5) + 32;
+    return `${Math.round(tempC)}°C / ${Math.round(tempF)}°F`;
+  };
+
+  return (
+    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      {/* Kanagawa Status (Tamae First) */}
+      <div className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
+        <div className="flex items-center gap-4">
+          <div className={`p-3.5 rounded-xl border shadow-inner ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+            {isJapanDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+          </div>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? '神奈川 (JST)' : 'Kanagawa (JST)'}</h4>
+              <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+                <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(jpWeather.tempC)}
+              </span>
+            </div>
+            <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
+              {formatInTimeZone(now, 'Asia/Tokyo', 'h:mm:ss a')}
+            </p>
+            <p className="text-sm text-zinc-300 mt-0.5 font-mono">{japanFormattedDate}</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
+            {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+          </span>
+          <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+            <jpWeatherDetails.Icon className="w-3.5 h-3.5" /> {jpWeatherDetails.text}
+          </span>
+        </div>
+      </div>
+
+      {/* Texas Status */}
+      <div className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
+        <div className="flex items-center gap-4">
+          <div className={`p-3.5 rounded-xl border shadow-inner ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+            {isTexasDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+          </div>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? 'テキサス (CDT)' : 'Texas (CDT)'}</h4>
+              <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+                <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(txWeather.tempC)}
+              </span>
+            </div>
+            <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
+              {formatInTimeZone(now, 'America/Chicago', 'h:mm:ss a')}
+            </p>
+            <p className="text-sm text-zinc-300 mt-0.5 font-mono">{texasFormattedDate}</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
+            {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+          </span>
+          <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+            <txWeatherDetails.Icon className="w-3.5 h-3.5" /> {txWeatherDetails.text}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -1438,13 +1495,14 @@ import MemoryVault from '@/components/MemoryVault';
 import SanctuaryNotes from '@/components/SanctuaryNotes';
 import CollapsibleSection from '@/components/CollapsibleSection';
 import { supabase } from '@/lib/supabase';
-import { Sparkles, Lock, Target, Lightbulb, Plane, Image as ImageIcon, MessageSquare, Clock } from 'lucide-react';
+import { Sparkles, Globe2, Target, Lightbulb, Plane, Image as ImageIcon, MessageSquare, Clock } from 'lucide-react';
 
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [lang, setLang] = useState<'en' | 'ja'>('en');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1473,9 +1531,46 @@ export default function Home() {
     if (error) setError('Incorrect passcode.');
   };
 
+  const t = {
+    en: {
+      title: "Kanagawa — Texas",
+      milestones: "Milestones",
+      milestones_sub: "Upcoming horizon targets",
+      ksf: "Key Success Factors",
+      ksf_sub: "Core focuses and cornerstones",
+      travel: "Travel & Itinerary",
+      travel_sub: "Cross-Pacific flights",
+      vault: "Memory Vault",
+      vault_sub: "Moments across Kanagawa and Texas",
+      notes: "Our Notes",
+      notes_sub: "Shared thoughts and messages",
+      sync: "Schedule Sync",
+      sync_sub: "Coordinating JST & CDT time zones",
+      langToggle: "日本語"
+    },
+    ja: {
+      title: "神奈川 — テキサス",
+      milestones: "マイルストーン",
+      milestones_sub: "今後の目標",
+      ksf: "成功の鍵",
+      ksf_sub: "中心となる焦点",
+      travel: "旅行と旅程",
+      travel_sub: "太平洋横断フライト",
+      vault: "私たちの記録",
+      vault_sub: "神奈川とテキサスでの瞬間",
+      notes: "私たちのノート",
+      notes_sub: "共有する考えとメッセージ",
+      sync: "スケジュール同期",
+      sync_sub: "JSTとCDTのタイムゾーン調整",
+      langToggle: "English"
+    }
+  };
+
+  const currentLang = t[lang];
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-200 font-mono text-sm tracking-widest uppercase">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-stone-400 font-mono text-sm tracking-widest uppercase">
         Establishing Connection...
       </div>
     );
@@ -1484,17 +1579,18 @@ export default function Home() {
   // The locked gateway
   if (!session) {
     return (
-      <main className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-8 selection:bg-zinc-800 relative overflow-hidden">
-        <div className="absolute w-125 h-125 bg-purple-950/20 rounded-full blur-3xl pointer-events-none -top-48 -left-48"></div>
-        <div className="absolute w-125 h-125 bg-blue-950/10 rounded-full blur-3xl pointer-events-none -bottom-48 -right-48"></div>
+      <main className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-8 selection:bg-stone-800 relative overflow-hidden">
+        {/* Soft, warm ambient glow replacing neon purple/blue */}
+        <div className="absolute w-125 h-125 bg-amber-900/10 rounded-full blur-3xl pointer-events-none -top-48 -left-48"></div>
+        <div className="absolute w-125 h-125 bg-stone-800/20 rounded-full blur-3xl pointer-events-none -bottom-48 -right-48"></div>
 
         <div className="w-full max-w-sm p-8 rounded-2xl bg-zinc-900/60 border border-zinc-800 backdrop-blur-xl shadow-2xl text-center relative z-10">
-          <div className="inline-flex p-3 rounded-xl bg-zinc-950 border border-zinc-800 mb-6 text-zinc-100 shadow-inner">
-            <Sparkles className="w-6 h-6 text-purple-400" />
+          <div className="inline-flex p-3 rounded-xl bg-zinc-950 border border-zinc-800 mb-6 text-stone-300 shadow-inner">
+            <Sparkles className="w-6 h-6 text-amber-600/80" />
           </div>
           
-          <h1 className="text-4xl font-bold tracking-widest text-zinc-100 mb-2">縁結び</h1>
-          <p className="text-zinc-300 tracking-wider text-sm mb-8 uppercase font-mono font-medium">Kanagawa — Texas</p>
+          <h1 className="text-4xl font-bold tracking-widest text-stone-100 mb-2">縁結び</h1>
+          <p className="text-stone-400 tracking-wider text-sm mb-8 uppercase font-mono font-medium">Kanagawa — Texas</p>
           
           <form onSubmit={handleLogin} className="space-y-4">
             <input
@@ -1502,15 +1598,15 @@ export default function Home() {
               value={passcode}
               onChange={(e) => setPasscode(e.target.value)}
               placeholder="Passcode"
-              className="w-full p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-center text-base font-mono tracking-widest focus:outline-none focus:border-purple-500 transition-all placeholder:text-zinc-500 shadow-inner"
+              className="w-full p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-stone-100 text-center text-base font-mono tracking-widest focus:outline-none focus:border-stone-500 transition-all placeholder:text-zinc-600 shadow-inner"
             />
             <button 
               type="submit" 
-              className="w-full py-4 rounded-xl bg-zinc-100 text-zinc-950 font-medium text-base hover:bg-white hover:shadow-lg hover:shadow-zinc-100/10 transition-all cursor-pointer"
+              className="w-full py-4 rounded-xl bg-stone-200 text-zinc-900 font-medium text-base hover:bg-white hover:shadow-lg hover:shadow-stone-100/10 transition-all cursor-pointer"
             >
               Connect
             </button>
-            {error && <p className="text-red-400 text-sm font-mono mt-3">{error}</p>}
+            {error && <p className="text-red-400/80 text-sm font-mono mt-3">{error}</p>}
           </form>
         </div>
       </main>
@@ -1519,61 +1615,61 @@ export default function Home() {
 
   // The unlocked dashboard
   return (
-    <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-zinc-800 relative overflow-hidden text-zinc-100">
-      <div className="absolute w-200 h-200 bg-purple-950/10 rounded-full blur-3xl pointer-events-none -top-96 left-1/2 -translate-x-1/2"></div>
+    <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-stone-800 relative overflow-hidden text-stone-100">
+      <div className="absolute w-200 h-200 bg-stone-800/10 rounded-full blur-3xl pointer-events-none -top-96 left-1/2 -translate-x-1/2"></div>
 
       <div className="w-full max-w-4xl mb-6 flex justify-between items-end border-b border-zinc-900 pb-6 relative z-10">
         <div>
-          <h1 className="text-4xl font-bold tracking-widest text-zinc-100 flex items-center gap-4">
+          <h1 className="text-4xl font-bold tracking-widest text-stone-100 flex items-center gap-4">
             縁結び 
             <div className="flex items-center gap-3">
-              <span className="w-10 h-10 rounded-full overflow-hidden border border-purple-500/50 bg-zinc-900 inline-block shadow-md shrink-0">
+              <span className="w-10 h-10 rounded-full overflow-hidden border border-stone-500/40 bg-zinc-900 inline-block shadow-md shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png" alt="Tamae" className="w-full h-full object-cover" />
               </span>
-              <span className="w-10 h-10 rounded-full overflow-hidden border border-purple-500/50 bg-zinc-900 inline-block shadow-md shrink-0">
+              <span className="w-10 h-10 rounded-full overflow-hidden border border-stone-500/40 bg-zinc-900 inline-block shadow-md shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png" alt="Michael" className="w-full h-full object-cover" />
               </span>
             </div>
           </h1>
-          <p className="text-zinc-300 text-sm font-mono mt-2 tracking-wider font-medium">Kanagawa — Texas</p>
+          <p className="text-stone-400 text-sm font-mono mt-2 tracking-wider font-medium">{currentLang.title}</p>
         </div>
 
         <button 
-          onClick={() => supabase.auth.signOut()} 
-          className="flex items-center gap-2 text-sm text-zinc-200 hover:text-white bg-zinc-900/90 border border-zinc-800 px-4 py-2.5 rounded-xl transition-all mb-1 shadow-sm cursor-pointer"
+          onClick={() => setLang(prev => prev === 'en' ? 'ja' : 'en')} 
+          className="flex items-center gap-2 text-sm text-stone-300 hover:text-white bg-zinc-900/90 border border-zinc-800 px-4 py-2.5 rounded-xl transition-all mb-1 shadow-sm cursor-pointer"
         >
-          <Lock className="w-4 h-4 text-zinc-300" />
-          <span>Lock</span>
+          <Globe2 className="w-4 h-4 text-stone-400" />
+          <span className="font-medium">{currentLang.langToggle}</span>
         </button>
       </div>
       
       <div className="w-full max-w-4xl space-y-6 relative z-10">
-        <SanctuaryStatus />
-        <CountdownTicker />
+        <SanctuaryStatus lang={lang} />
+        <CountdownTicker lang={lang} />
 
-        <CollapsibleSection title="Milestones" subtitle="Upcoming horizon targets" icon={<Target className="w-5 h-5" />} defaultOpen={false}>
+        <CollapsibleSection title={currentLang.milestones} subtitle={currentLang.milestones_sub} icon={<Target className="w-5 h-5" />} defaultOpen={false}>
           <MilestoneTracker />
         </CollapsibleSection>
 
-        <CollapsibleSection title="Key Success Factors" subtitle="Core focuses and cornerstones" icon={<Lightbulb className="w-5 h-5" />} defaultOpen={false}>
+        <CollapsibleSection title={currentLang.ksf} subtitle={currentLang.ksf_sub} icon={<Lightbulb className="w-5 h-5" />} defaultOpen={false}>
           <KeySuccessFactors />
         </CollapsibleSection>
 
-        <CollapsibleSection title="Travel & Itinerary" subtitle="Cross-Pacific flights" icon={<Plane className="w-5 h-5" />} defaultOpen={false}>
+        <CollapsibleSection title={currentLang.travel} subtitle={currentLang.travel_sub} icon={<Plane className="w-5 h-5" />} defaultOpen={false}>
           <ItineraryTracker />
         </CollapsibleSection>
 
-        <CollapsibleSection title="Memory Vault" subtitle="Moments across Kanagawa and Texas" icon={<ImageIcon className="w-5 h-5" />} defaultOpen={false}>
+        <CollapsibleSection title={currentLang.vault} subtitle={currentLang.vault_sub} icon={<ImageIcon className="w-5 h-5" />} defaultOpen={false}>
           <MemoryVault />
         </CollapsibleSection>
 
-        <CollapsibleSection title="Our Notes" subtitle="Shared thoughts and messages" icon={<MessageSquare className="w-5 h-5" />} defaultOpen={false}>
+        <CollapsibleSection title={currentLang.notes} subtitle={currentLang.notes_sub} icon={<MessageSquare className="w-5 h-5" />} defaultOpen={false}>
           <SanctuaryNotes />
         </CollapsibleSection>
 
-        <CollapsibleSection title="Schedule Sync" subtitle="Coordinating JST & CDT time zones" icon={<Clock className="w-5 h-5" />} defaultOpen={false}>
+        <CollapsibleSection title={currentLang.sync} subtitle={currentLang.sync_sub} icon={<Clock className="w-5 h-5" />} defaultOpen={false}>
           <DualZoneCalendar />
         </CollapsibleSection>
       </div>
