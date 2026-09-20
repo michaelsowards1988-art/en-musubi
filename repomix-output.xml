@@ -53,9 +53,11 @@ src/
     layout.tsx
     page.tsx
   components/
+    CollapsibleSection.tsx
     CountdownTicker.tsx
     DualZoneCalendar.tsx
     ItineraryTracker.tsx
+    KeySuccessFactors.tsx
     MemoryVault.tsx
     MilestoneTracker.tsx
     SanctuaryNotes.tsx
@@ -153,6 +155,62 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
+  );
+}
+</file>
+
+<file path="src/components/CollapsibleSection.tsx">
+'use client';
+
+import { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+
+interface CollapsibleSectionProps {
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+export default function CollapsibleSection({
+  title,
+  subtitle,
+  icon,
+  children,
+  defaultOpen = true,
+}: CollapsibleSectionProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all overflow-hidden group">
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between p-6 cursor-pointer select-none hover:bg-zinc-900/30 transition-colors border-b border-zinc-800/40"
+      >
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-800/30 text-purple-400 shadow-inner">
+            {icon}
+          </div>
+          <div>
+            <h2 className="text-lg font-light tracking-wide text-zinc-100 group-hover:text-purple-300 transition-colors">{title}</h2>
+            <p className="text-xs text-zinc-400 font-mono mt-0.5">{subtitle}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors">
+            {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </div>
+        </div>
+      </div>
+
+      {isOpen && (
+        <div className="p-6 pt-5 animate-in fade-in duration-300">
+          {children}
+        </div>
+      )}
+    </div>
   );
 }
 </file>
@@ -470,6 +528,145 @@ export default function ItineraryTracker() {
 }
 </file>
 
+<file path="src/components/KeySuccessFactors.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Lightbulb, Plus, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+interface Factor {
+  id: string;
+  title: string;
+  status: 'active' | 'achieved';
+}
+
+export default function KeySuccessFactors() {
+  const [factors, setFactors] = useState<Factor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newTitle, setNewTitle] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadData() {
+      const { data, error } = await supabase
+        .from('success_factors')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (isMounted) {
+        if (!error && data) {
+          setFactors(data);
+        }
+        setLoading(false);
+      }
+    }
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const toggleStatus = async (id: string, currentStatus: Factor['status']) => {
+    const nextStatus: Factor['status'] = currentStatus === 'achieved' ? 'active' : 'achieved';
+    
+    setFactors(factors.map(f => f.id === id ? { ...f, status: nextStatus } : f));
+
+    await supabase
+      .from('success_factors')
+      .update({ status: nextStatus })
+      .eq('id', id);
+  };
+
+  const addFactor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle) return;
+
+    const { data, error } = await supabase
+      .from('success_factors')
+      .insert([{ title: newTitle, status: 'active' }])
+      .select();
+
+    if (!error && data) {
+      setFactors([...factors, data[0] as Factor]);
+      setNewTitle('');
+      setIsAdding(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Key Success Factors...
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800/40">
+        <div>
+          <h3 className="text-sm font-medium text-zinc-200">Key Success Factors</h3>
+          <p className="text-xs text-zinc-400 mt-0.5">Core focuses and relationship cornerstones</p>
+        </div>
+        <button 
+          onClick={() => setIsAdding(!isAdding)}
+          className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>Add Focus</span>
+        </button>
+      </div>
+
+      {isAdding && (
+        <form onSubmit={addFactor} className="mb-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex gap-3">
+          <input
+            type="text"
+            placeholder="Focus area (e.g., Daily Japanese & English practice)"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500"
+          />
+          <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+            <span>Save</span>
+          </button>
+        </form>
+      )}
+
+      <div className="space-y-3">
+        {factors.map((item) => (
+          <div 
+            key={item.id} 
+            onClick={() => toggleStatus(item.id, item.status)}
+            className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:border-zinc-700/60 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center gap-3">
+              {item.status === 'achieved' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
+              ) : (
+                <Lightbulb className="w-4 h-4 text-purple-400 transition-transform group-hover:scale-110" />
+              )}
+              <span className={`text-sm font-medium transition-colors ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
+                {item.title}
+              </span>
+            </div>
+
+            <span className="text-[10px] font-mono uppercase px-2.5 py-1 rounded-lg bg-zinc-950 border border-zinc-800/60 text-zinc-400">
+              {item.status}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+</file>
+
 <file path="src/components/MemoryVault.tsx">
 'use client';
 
@@ -635,297 +832,11 @@ export default function MemoryVault() {
 }
 </file>
 
-<file path="src/components/MilestoneTracker.tsx">
-'use client';
-
-import { useState, useEffect } from 'react';
-import { Target, Calendar, CheckCircle2, Clock, Plus, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-
-interface Milestone {
-  id: string;
-  title: string;
-  target_date: string;
-  status: 'planned' | 'in_progress' | 'achieved';
-}
-
-export default function MilestoneTracker() {
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newTitle, setNewTitle] = useState('');
-  const [newDate, setNewDate] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadData() {
-      const { data, error } = await supabase
-        .from('milestones')
-        .select('*')
-        .order('target_date', { ascending: true });
-
-      if (isMounted) {
-        if (!error && data) {
-          setMilestones(data);
-        }
-        setLoading(false);
-      }
-    }
-
-    loadData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const toggleStatus = async (id: string, currentStatus: Milestone['status']) => {
-    const nextStatus: Milestone['status'] = currentStatus === 'achieved' ? 'planned' : 'achieved';
-    
-    // Optimistic UI update
-    setMilestones(milestones.map(m => m.id === id ? { ...m, status: nextStatus } : m));
-
-    await supabase
-      .from('milestones')
-      .update({ status: nextStatus })
-      .eq('id', id);
-  };
-
-  const addMilestone = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle || !newDate) return;
-
-    const { data, error } = await supabase
-      .from('milestones')
-      .insert([{ title: newTitle, target_date: newDate, status: 'planned' }])
-      .select();
-
-    if (!error && data) {
-      setMilestones([...milestones, data[0] as Milestone]);
-      setNewTitle('');
-      setNewDate('');
-      setIsAdding(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="w-full max-w-4xl p-8 rounded-2xl bg-zinc-950 text-zinc-500 border border-zinc-800 shadow-2xl mt-8 flex items-center justify-center font-mono text-xs">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Milestones...
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full max-w-4xl p-6 rounded-2xl bg-zinc-950 text-zinc-100 border border-zinc-800 shadow-2xl mt-8">
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800/50">
-        <div>
-          <h2 className="text-xl font-light tracking-wide text-zinc-200">Key Success Factors</h2>
-          <p className="text-sm text-zinc-500 mt-1">Upcoming logistical milestones & horizon targets</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setIsAdding(!isAdding)}
-            className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Target</span>
-          </button>
-          <Target className="w-5 h-5 text-zinc-600" />
-        </div>
-      </div>
-
-      {isAdding && (
-        <form onSubmit={addMilestone} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="Milestone title (e.g., Summer Visit)"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500"
-          />
-          <input
-            type="date"
-            value={newDate}
-            onChange={(e) => setNewDate(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-purple-500"
-          />
-          <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
-            Save
-          </button>
-        </form>
-      )}
-
-      <div className="space-y-3">
-        {milestones.map((item) => (
-          <div 
-            key={item.id} 
-            onClick={() => toggleStatus(item.id, item.status)}
-            className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:border-zinc-700/60 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center gap-3">
-              {item.status === 'achieved' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
-              ) : (
-                <Clock className="w-4 h-4 text-zinc-500 transition-transform group-hover:scale-110" />
-              )}
-              <span className={`text-sm font-medium transition-colors ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
-                {item.title}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800/60">
-              <Calendar className="w-3.5 h-3.5 text-zinc-500" />
-              <span>{item.target_date}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="src/components/SanctuaryNotes.tsx">
-'use client';
-
-import { useState, useEffect } from 'react';
-import { MessageSquare, Send, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-
-interface Note {
-  id: string;
-  content: string;
-  author: string;
-  created_at: string;
-}
-
-export default function SanctuaryNotes() {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [newContent, setNewContent] = useState('');
-  const [author, setAuthor] = useState('Texas');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function fetchNotes() {
-      const { data, error } = await supabase
-        .from('notes')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (isMounted) {
-        if (!error && data) {
-          setNotes(data);
-        }
-        setLoading(false);
-      }
-    }
-
-    fetchNotes();
-
-    // Setup real-time listener
-    const channel = supabase
-      .channel('public:notes')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notes' },
-        (payload) => {
-          const newNote = payload.new as Note;
-          setNotes((prev) => [newNote, ...prev.filter((n) => n.id !== newNote.id)]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      isMounted = false;
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const postNote = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newContent.trim()) return;
-
-    await supabase
-      .from('notes')
-      .insert([{ content: newContent, author }]);
-
-    setNewContent('');
-  };
-
-  if (loading) {
-    return (
-      <div className="w-full max-w-4xl p-8 rounded-2xl bg-zinc-950 text-zinc-500 border border-zinc-800 shadow-2xl mt-8 flex items-center justify-center font-mono text-xs">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Sanctuary Notes...
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full max-w-4xl p-6 rounded-2xl bg-zinc-950 text-zinc-100 border border-zinc-800 shadow-2xl mt-8">
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800/50">
-        <div>
-          <h2 className="text-xl font-light tracking-wide text-zinc-200">Sanctuary Log</h2>
-          <p className="text-sm text-zinc-500 mt-1">Shared notes and operational alignment</p>
-        </div>
-        <MessageSquare className="w-5 h-5 text-zinc-600" />
-      </div>
-
-      <form onSubmit={postNote} className="mb-6 flex flex-col md:flex-row gap-3">
-        <select
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 focus:outline-none focus:border-purple-500"
-        >
-          <option value="Texas">Texas</option>
-          <option value="Kanagawa">Kanagawa</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Drop a note or update..."
-          value={newContent}
-          onChange={(e) => setNewContent(e.target.value)}
-          className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500"
-        />
-        <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2">
-          <Send className="w-3.5 h-3.5" />
-          <span>Send</span>
-        </button>
-      </form>
-
-      <div className="space-y-3">
-        {notes.length === 0 ? (
-          <p className="text-xs text-zinc-600 font-mono text-center py-4">No notes recorded yet.</p>
-        ) : (
-          notes.map((note) => (
-            <div key={note.id} className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 flex items-start justify-between">
-              <div>
-                <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-900 text-zinc-400 border border-zinc-800 mb-1.5">
-                  {note.author}
-                </span>
-                <p className="text-sm text-zinc-200">{note.content}</p>
-              </div>
-              <span className="text-[10px] font-mono text-zinc-600">
-                {new Date(note.created_at).toLocaleDateString()}
-              </span>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-</file>
-
 <file path="src/components/SanctuaryStatus.tsx">
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Cloud, Thermometer } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 
 export default function SanctuaryStatus() {
@@ -942,42 +853,67 @@ export default function SanctuaryStatus() {
   const isTexasDay = texasHour >= 6 && texasHour < 20;
   const isJapanDay = japanHour >= 6 && japanHour < 20;
 
+  const texasFormattedDate = formatInTimeZone(now, 'America/Chicago', 'EEEE, MMM d');
+  const japanFormattedDate = formatInTimeZone(now, 'Asia/Tokyo', 'EEEE, MMM d');
+
   return (
     <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      {/* Texas Status */}
-      <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-xl border ${isTexasDay ? 'bg-amber-950/20 border-amber-800/40 text-amber-400' : 'bg-blue-950/20 border-blue-800/40 text-blue-400'}`}>
-            {isTexasDay ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      {/* Kanagawa Status (Tamae First) */}
+      <div className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-xl">
+        <div className="flex items-center gap-4">
+          <div className={`p-3.5 rounded-xl border ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+            {isJapanDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
           </div>
           <div>
-            <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-400">Texas (CDT)</h4>
-            <p className="text-sm font-medium text-zinc-200">
-              {formatInTimeZone(now, 'America/Chicago', 'h:mm:ss a')}
-            </p>
-          </div>
-        </div>
-        <span className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400">
-          {isTexasDay ? 'Daytime' : 'Night'}
-        </span>
-      </div>
-
-      {/* Kanagawa Status */}
-      <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-xl border ${isJapanDay ? 'bg-amber-950/20 border-amber-800/40 text-amber-400' : 'bg-blue-950/20 border-blue-800/40 text-blue-400'}`}>
-            {isJapanDay ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </div>
-          <div>
-            <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-400">Kanagawa (JST)</h4>
-            <p className="text-sm font-medium text-zinc-200">
+            <div className="flex items-center gap-2.5">
+              <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">Kanagawa (JST)</h4>
+              <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+                <Thermometer className="w-3.5 h-3.5 text-amber-400" /> 26°C / 78°F
+              </span>
+            </div>
+            <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
               {formatInTimeZone(now, 'Asia/Tokyo', 'h:mm:ss a')}
             </p>
+            <p className="text-sm text-zinc-300 mt-0.5 font-mono">{japanFormattedDate}</p>
           </div>
         </div>
-        <span className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400">
-          {isJapanDay ? 'Daytime' : 'Night'}
-        </span>
+        <div className="flex flex-col items-end gap-2">
+          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
+            {isJapanDay ? 'Daytime' : 'Night'}
+          </span>
+          <span className="text-xs text-zinc-400 flex items-center gap-1">
+            <Cloud className="w-3.5 h-3.5" /> Clear
+          </span>
+        </div>
+      </div>
+
+      {/* Texas Status */}
+      <div className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-xl">
+        <div className="flex items-center gap-4">
+          <div className={`p-3.5 rounded-xl border ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+            {isTexasDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+          </div>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">Texas (CDT)</h4>
+              <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+                <Thermometer className="w-3.5 h-3.5 text-amber-400" /> 35°C / 95°F
+              </span>
+            </div>
+            <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
+              {formatInTimeZone(now, 'America/Chicago', 'h:mm:ss a')}
+            </p>
+            <p className="text-sm text-zinc-300 mt-0.5 font-mono">{texasFormattedDate}</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
+            {isTexasDay ? 'Daytime' : 'Night'}
+          </span>
+          <span className="text-xs text-zinc-400 flex items-center gap-1">
+            <Cloud className="w-3.5 h-3.5" /> Sunny
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -1170,6 +1106,288 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 }
 </file>
 
+<file path="src/components/MilestoneTracker.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Calendar, CheckCircle2, Clock, Plus, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+interface Milestone {
+  id: string;
+  title: string;
+  target_date: string;
+  status: 'planned' | 'in_progress' | 'achieved';
+}
+
+export default function MilestoneTracker() {
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDate, setNewDate] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadData() {
+      const { data, error } = await supabase
+        .from('milestones')
+        .select('*')
+        .order('target_date', { ascending: true });
+
+      if (isMounted) {
+        if (!error && data) {
+          setMilestones(data);
+        }
+        setLoading(false);
+      }
+    }
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const toggleStatus = async (id: string, currentStatus: Milestone['status']) => {
+    const nextStatus: Milestone['status'] = currentStatus === 'achieved' ? 'planned' : 'achieved';
+    
+    setMilestones(milestones.map(m => m.id === id ? { ...m, status: nextStatus } : m));
+
+    await supabase
+      .from('milestones')
+      .update({ status: nextStatus })
+      .eq('id', id);
+  };
+
+  const addMilestone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle || !newDate) return;
+
+    const { data, error } = await supabase
+      .from('milestones')
+      .insert([{ title: newTitle, target_date: newDate, status: 'planned' }])
+      .select();
+
+    if (!error && data) {
+      setMilestones([...milestones, data[0] as Milestone]);
+      setNewTitle('');
+      setNewDate('');
+      setIsAdding(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Milestones...
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800/40">
+        <div>
+          <h3 className="text-sm font-medium text-zinc-200">Milestones</h3>
+          <p className="text-xs text-zinc-400 mt-0.5">Shared goals and upcoming dates</p>
+        </div>
+        <button 
+          onClick={() => setIsAdding(!isAdding)}
+          className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>Add Target</span>
+        </button>
+      </div>
+
+      {isAdding && (
+        <form onSubmit={addMilestone} className="mb-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row gap-3">
+          <input
+            type="text"
+            placeholder="Milestone title (e.g., Summer Visit)"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500"
+          />
+          <input
+            type="date"
+            value={newDate}
+            onChange={(e) => setNewDate(e.target.value)}
+            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-purple-500"
+          />
+          <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
+            Save
+          </button>
+        </form>
+      )}
+
+      <div className="space-y-3">
+        {milestones.map((item) => (
+          <div 
+            key={item.id} 
+            onClick={() => toggleStatus(item.id, item.status)}
+            className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:border-zinc-700/60 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center gap-3">
+              {item.status === 'achieved' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
+              ) : (
+                <Clock className="w-4 h-4 text-zinc-500 transition-transform group-hover:scale-110" />
+              )}
+              <span className={`text-sm font-medium transition-colors ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
+                {item.title}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800/60">
+              <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+              <span>{item.target_date}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/SanctuaryNotes.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { MessageSquare, Send, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+interface Note {
+  id: string;
+  content: string;
+  author: string;
+  created_at: string;
+}
+
+export default function SanctuaryNotes() {
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [newContent, setNewContent] = useState('');
+  const [author, setAuthor] = useState('Texas');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchNotes() {
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (isMounted) {
+        if (!error && data) {
+          setNotes(data);
+        }
+        setLoading(false);
+      }
+    }
+
+    fetchNotes();
+
+    // Correct chaining order: .channel() -> .on() -> .subscribe()
+    const channel = supabase
+      .channel('public-notes-channel')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notes' },
+        (payload) => {
+          const newNote = payload.new as Note;
+          setNotes((prev) => [newNote, ...prev.filter((n) => n.id !== newNote.id)]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const postNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newContent.trim()) return;
+
+    await supabase
+      .from('notes')
+      .insert([{ content: newContent, author }]);
+
+    setNewContent('');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Notes...
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800/40">
+        <div>
+          <h3 className="text-sm font-medium text-zinc-200">Our Notes</h3>
+          <p className="text-xs text-zinc-400 mt-0.5">Quick thoughts and messages back and forth</p>
+        </div>
+        <MessageSquare className="w-4 h-4 text-zinc-500" />
+      </div>
+
+      <form onSubmit={postNote} className="mb-4 flex flex-col md:flex-row gap-3">
+        <select
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 focus:outline-none focus:border-purple-500"
+        >
+          <option value="Texas">Texas</option>
+          <option value="Kanagawa">Kanagawa</option>
+        </select>
+        <input
+          type="text"
+          placeholder="Drop a note..."
+          value={newContent}
+          onChange={(e) => setNewContent(e.target.value)}
+          className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500"
+        />
+        <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2">
+          <Send className="w-3.5 h-3.5" />
+          <span>Send</span>
+        </button>
+      </form>
+
+      <div className="space-y-3">
+        {notes.length === 0 ? (
+          <p className="text-xs text-zinc-600 font-mono text-center py-4">No notes recorded yet.</p>
+        ) : (
+          notes.map((note) => (
+            <div key={note.id} className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 flex items-start justify-between">
+              <div>
+                <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-900 text-zinc-400 border border-zinc-800 mb-1.5">
+                  {note.author}
+                </span>
+                <p className="text-sm text-zinc-200">{note.content}</p>
+              </div>
+              <span className="text-[10px] font-mono text-zinc-600">
+                {new Date(note.created_at).toLocaleDateString()}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+</file>
+
 <file path="package.json">
 {
   "name": "en-musubi",
@@ -1214,11 +1432,13 @@ import SanctuaryStatus from '@/components/SanctuaryStatus';
 import CountdownTicker from '@/components/CountdownTicker';
 import DualZoneCalendar from '@/components/DualZoneCalendar';
 import MilestoneTracker from '@/components/MilestoneTracker';
+import KeySuccessFactors from '@/components/KeySuccessFactors';
 import ItineraryTracker from '@/components/ItineraryTracker';
 import MemoryVault from '@/components/MemoryVault';
 import SanctuaryNotes from '@/components/SanctuaryNotes';
+import CollapsibleSection from '@/components/CollapsibleSection';
 import { supabase } from '@/lib/supabase';
-import { Sparkles, Lock } from 'lucide-react';
+import { Sparkles, Lock, Target, Lightbulb, Plane, Image as ImageIcon, MessageSquare, Clock } from 'lucide-react';
 
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
@@ -1255,8 +1475,8 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-600 font-mono text-xs tracking-widest uppercase">
-        Establishing Sanctuary...
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-200 font-mono text-sm tracking-widest uppercase">
+        Establishing Connection...
       </div>
     );
   }
@@ -1268,13 +1488,13 @@ export default function Home() {
         <div className="absolute w-125 h-125 bg-purple-950/20 rounded-full blur-3xl pointer-events-none -top-48 -left-48"></div>
         <div className="absolute w-125 h-125 bg-blue-950/10 rounded-full blur-3xl pointer-events-none -bottom-48 -right-48"></div>
 
-        <div className="w-full max-w-sm p-8 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 backdrop-blur-xl shadow-2xl text-center relative z-10">
-          <div className="inline-flex p-3 rounded-xl bg-zinc-950 border border-zinc-800/60 mb-6 text-zinc-400">
-            <Sparkles className="w-5 h-5 text-purple-400" />
+        <div className="w-full max-w-sm p-8 rounded-2xl bg-zinc-900/60 border border-zinc-800 backdrop-blur-xl shadow-2xl text-center relative z-10">
+          <div className="inline-flex p-3 rounded-xl bg-zinc-950 border border-zinc-800 mb-6 text-zinc-100 shadow-inner">
+            <Sparkles className="w-6 h-6 text-purple-400" />
           </div>
           
-          <h1 className="text-3xl font-light tracking-widest text-zinc-100 mb-2">縁結び</h1>
-          <p className="text-zinc-500 tracking-wider text-[10px] mb-8 uppercase font-mono">Texas — Kanagawa Sanctuary</p>
+          <h1 className="text-4xl font-bold tracking-widest text-zinc-100 mb-2">縁結び</h1>
+          <p className="text-zinc-300 tracking-wider text-sm mb-8 uppercase font-mono font-medium">Kanagawa — Texas</p>
           
           <form onSubmit={handleLogin} className="space-y-4">
             <input
@@ -1282,15 +1502,15 @@ export default function Home() {
               value={passcode}
               onChange={(e) => setPasscode(e.target.value)}
               placeholder="Passcode"
-              className="w-full p-3 rounded-xl bg-zinc-950/80 border border-zinc-800 text-zinc-200 text-center text-sm font-mono tracking-widest focus:outline-none focus:border-purple-500/50 transition-all placeholder:text-zinc-700"
+              className="w-full p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-100 text-center text-base font-mono tracking-widest focus:outline-none focus:border-purple-500 transition-all placeholder:text-zinc-500 shadow-inner"
             />
             <button 
               type="submit" 
-              className="w-full py-3 rounded-xl bg-zinc-100 text-zinc-950 font-medium text-sm hover:bg-white hover:shadow-lg hover:shadow-zinc-100/10 transition-all"
+              className="w-full py-4 rounded-xl bg-zinc-100 text-zinc-950 font-medium text-base hover:bg-white hover:shadow-lg hover:shadow-zinc-100/10 transition-all cursor-pointer"
             >
               Connect
             </button>
-            {error && <p className="text-red-400 text-xs font-mono mt-3">{error}</p>}
+            {error && <p className="text-red-400 text-sm font-mono mt-3">{error}</p>}
           </form>
         </div>
       </main>
@@ -1299,22 +1519,32 @@ export default function Home() {
 
   // The unlocked dashboard
   return (
-    <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-zinc-800 relative overflow-hidden">
+    <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-zinc-800 relative overflow-hidden text-zinc-100">
       <div className="absolute w-200 h-200 bg-purple-950/10 rounded-full blur-3xl pointer-events-none -top-96 left-1/2 -translate-x-1/2"></div>
 
       <div className="w-full max-w-4xl mb-6 flex justify-between items-end border-b border-zinc-900 pb-6 relative z-10">
         <div>
-          <h1 className="text-3xl font-light tracking-widest text-zinc-100">
-            縁結び
+          <h1 className="text-4xl font-bold tracking-widest text-zinc-100 flex items-center gap-4">
+            縁結び 
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-full overflow-hidden border border-purple-500/50 bg-zinc-900 inline-block shadow-md shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png" alt="Tamae" className="w-full h-full object-cover" />
+              </span>
+              <span className="w-10 h-10 rounded-full overflow-hidden border border-purple-500/50 bg-zinc-900 inline-block shadow-md shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png" alt="Michael" className="w-full h-full object-cover" />
+              </span>
+            </div>
           </h1>
-          <p className="text-zinc-500 text-xs font-mono mt-1">Texas — Kanagawa Logistical Bridge</p>
+          <p className="text-zinc-300 text-sm font-mono mt-2 tracking-wider font-medium">Kanagawa — Texas</p>
         </div>
 
         <button 
           onClick={() => supabase.auth.signOut()} 
-          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 bg-zinc-900/60 border border-zinc-800/60 px-3 py-1.5 rounded-lg transition-all mb-1"
+          className="flex items-center gap-2 text-sm text-zinc-200 hover:text-white bg-zinc-900/90 border border-zinc-800 px-4 py-2.5 rounded-xl transition-all mb-1 shadow-sm cursor-pointer"
         >
-          <Lock className="w-3 h-3" />
+          <Lock className="w-4 h-4 text-zinc-300" />
           <span>Lock</span>
         </button>
       </div>
@@ -1322,11 +1552,30 @@ export default function Home() {
       <div className="w-full max-w-4xl space-y-6 relative z-10">
         <SanctuaryStatus />
         <CountdownTicker />
-        <DualZoneCalendar />
-        <MilestoneTracker />
-        <ItineraryTracker />
-        <MemoryVault />
-        <SanctuaryNotes />
+
+        <CollapsibleSection title="Milestones" subtitle="Upcoming horizon targets" icon={<Target className="w-5 h-5" />} defaultOpen={false}>
+          <MilestoneTracker />
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Key Success Factors" subtitle="Core focuses and cornerstones" icon={<Lightbulb className="w-5 h-5" />} defaultOpen={false}>
+          <KeySuccessFactors />
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Travel & Itinerary" subtitle="Cross-Pacific flights" icon={<Plane className="w-5 h-5" />} defaultOpen={false}>
+          <ItineraryTracker />
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Memory Vault" subtitle="Moments across Kanagawa and Texas" icon={<ImageIcon className="w-5 h-5" />} defaultOpen={false}>
+          <MemoryVault />
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Our Notes" subtitle="Shared thoughts and messages" icon={<MessageSquare className="w-5 h-5" />} defaultOpen={false}>
+          <SanctuaryNotes />
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Schedule Sync" subtitle="Coordinating JST & CDT time zones" icon={<Clock className="w-5 h-5" />} defaultOpen={false}>
+          <DualZoneCalendar />
+        </CollapsibleSection>
       </div>
     </main>
   );

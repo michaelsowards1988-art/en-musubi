@@ -10,7 +10,11 @@ interface TimeLeft {
   seconds: number;
 }
 
-export default function CountdownTicker() {
+interface CountdownTickerProps {
+  lang: 'en' | 'ja';
+}
+
+export default function CountdownTicker({ lang }: CountdownTickerProps) {
   const targetDate = useMemo(() => new Date('2026-12-15T00:00:00'), []);
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
@@ -33,33 +37,39 @@ export default function CountdownTicker() {
   }, [targetDate]);
 
   return (
-    <div className="w-full max-w-4xl p-5 rounded-2xl bg-zinc-950 text-zinc-100 border border-zinc-800 shadow-2xl flex items-center justify-between mb-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-purple-400">
-          <Timer className="w-4 h-4" />
+    <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] mb-6 transition-all">
+      <div className="flex items-center justify-between p-6">
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 rounded-xl bg-purple-950/20 border border-purple-800/30 text-purple-400 shadow-inner">
+            <Timer className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-light tracking-wide text-zinc-100">
+              {lang === 'ja' ? '次の目標期間' : 'Next Window Target'}
+            </h2>
+            <p className="text-xs text-zinc-400 font-mono mt-0.5">
+              {lang === 'ja' ? '年末の訪問' : 'End-of-Year Visit'}
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-400">Next Window Target</h3>
-          <p className="text-sm font-medium text-zinc-200">End-of-Year Visit</p>
-        </div>
-      </div>
 
-      <div className="flex items-center gap-3 font-mono text-xs">
-        <div className="text-center px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800/80">
-          <span className="text-sm font-semibold text-zinc-100">{timeLeft.days}</span>
-          <span className="block text-[10px] text-zinc-500 uppercase">Days</span>
-        </div>
-        <div className="text-center px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800/80">
-          <span className="text-sm font-semibold text-zinc-100">{timeLeft.hours}</span>
-          <span className="block text-[10px] text-zinc-500 uppercase">Hours</span>
-        </div>
-        <div className="text-center px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800/80">
-          <span className="text-sm font-semibold text-zinc-100">{timeLeft.minutes}</span>
-          <span className="block text-[10px] text-zinc-500 uppercase">Mins</span>
-        </div>
-        <div className="text-center px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800/80">
-          <span className="text-sm font-semibold text-zinc-100">{timeLeft.seconds}</span>
-          <span className="block text-[10px] text-zinc-500 uppercase">Secs</span>
+        <div className="flex items-center gap-3 font-mono text-xs">
+          <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
+            <span className="text-base font-semibold text-zinc-100">{timeLeft.days}</span>
+            <span className="block text-[10px] text-zinc-500 uppercase mt-0.5">{lang === 'ja' ? '日' : 'Days'}</span>
+          </div>
+          <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
+            <span className="text-base font-semibold text-zinc-100">{timeLeft.hours}</span>
+            <span className="block text-[10px] text-zinc-500 uppercase mt-0.5">{lang === 'ja' ? '時間' : 'Hours'}</span>
+          </div>
+          <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
+            <span className="text-base font-semibold text-zinc-100">{timeLeft.minutes}</span>
+            <span className="block text-[10px] text-zinc-500 uppercase mt-0.5">{lang === 'ja' ? '分' : 'Mins'}</span>
+          </div>
+          <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
+            <span className="text-base font-semibold text-zinc-100">{timeLeft.seconds}</span>
+            <span className="block text-[10px] text-zinc-500 uppercase mt-0.5">{lang === 'ja' ? '秒' : 'Secs'}</span>
+          </div>
         </div>
       </div>
     </div>
