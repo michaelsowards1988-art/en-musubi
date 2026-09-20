@@ -97,7 +97,6 @@ export default function Home() {
   if (!session) {
     return (
       <main className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-8 selection:bg-stone-800 relative overflow-hidden">
-        {/* Soft, warm ambient glow replacing neon purple/blue */}
         <div className="absolute w-125 h-125 bg-amber-900/10 rounded-full blur-3xl pointer-events-none -top-48 -left-48"></div>
         <div className="absolute w-125 h-125 bg-stone-800/20 rounded-full blur-3xl pointer-events-none -bottom-48 -right-48"></div>
 
@@ -170,20 +169,20 @@ export default function Home() {
           <MilestoneTracker />
         </CollapsibleSection>
 
-        <CollapsibleSection title={currentLang.ksf} subtitle={currentLang.ksf_sub} icon={<Lightbulb className="w-5 h-5" />} defaultOpen={false}>
-          <KeySuccessFactors />
-        </CollapsibleSection>
-
-        <CollapsibleSection title={currentLang.travel} subtitle={currentLang.travel_sub} icon={<Plane className="w-5 h-5" />} defaultOpen={false}>
-          <ItineraryTracker />
-        </CollapsibleSection>
-
         <CollapsibleSection title={currentLang.vault} subtitle={currentLang.vault_sub} icon={<ImageIcon className="w-5 h-5" />} defaultOpen={false}>
           <MemoryVault />
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.notes} subtitle={currentLang.notes_sub} icon={<MessageSquare className="w-5 h-5" />} defaultOpen={false}>
           <SanctuaryNotes />
+        </CollapsibleSection>
+
+        <CollapsibleSection title={currentLang.ksf} subtitle={currentLang.ksf_sub} icon={<Lightbulb className="w-5 h-5" />} defaultOpen={false}>
+          <KeySuccessFactors />
+        </CollapsibleSection>
+
+        <CollapsibleSection title={currentLang.travel} subtitle={currentLang.travel_sub} icon={<Plane className="w-5 h-5" />} defaultOpen={false}>
+          <ItineraryTracker />
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.sync} subtitle={currentLang.sync_sub} icon={<Clock className="w-5 h-5" />} defaultOpen={false}>
