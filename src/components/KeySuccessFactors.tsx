@@ -1,21 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, CheckCircle2, Clock, Plus, Loader2 } from 'lucide-react';
+import { Lightbulb, Plus, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-interface Milestone {
+interface Factor {
   id: string;
   title: string;
-  target_date: string;
-  status: 'planned' | 'in_progress' | 'achieved';
+  status: 'active' | 'achieved';
 }
 
-export default function MilestoneTracker() {
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
+export default function KeySuccessFactors() {
+  const [factors, setFactors] = useState<Factor[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
-  const [newDate, setNewDate] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
@@ -23,13 +21,13 @@ export default function MilestoneTracker() {
 
     async function loadData() {
       const { data, error } = await supabase
-        .from('milestones')
+        .from('success_factors')
         .select('*')
-        .order('target_date', { ascending: true });
+        .order('created_at', { ascending: true });
 
       if (isMounted) {
         if (!error && data) {
-          setMilestones(data);
+          setFactors(data);
         }
         setLoading(false);
       }
@@ -42,30 +40,29 @@ export default function MilestoneTracker() {
     };
   }, []);
 
-  const toggleStatus = async (id: string, currentStatus: Milestone['status']) => {
-    const nextStatus: Milestone['status'] = currentStatus === 'achieved' ? 'planned' : 'achieved';
+  const toggleStatus = async (id: string, currentStatus: Factor['status']) => {
+    const nextStatus: Factor['status'] = currentStatus === 'achieved' ? 'active' : 'achieved';
     
-    setMilestones(milestones.map(m => m.id === id ? { ...m, status: nextStatus } : m));
+    setFactors(factors.map(f => f.id === id ? { ...f, status: nextStatus } : f));
 
     await supabase
-      .from('milestones')
+      .from('success_factors')
       .update({ status: nextStatus })
       .eq('id', id);
   };
 
-  const addMilestone = async (e: React.FormEvent) => {
+  const addFactor = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle || !newDate) return;
+    if (!newTitle) return;
 
     const { data, error } = await supabase
-      .from('milestones')
-      .insert([{ title: newTitle, target_date: newDate, status: 'planned' }])
+      .from('success_factors')
+      .insert([{ title: newTitle, status: 'active' }])
       .select();
 
     if (!error && data) {
-      setMilestones([...milestones, data[0] as Milestone]);
+      setFactors([...factors, data[0] as Factor]);
       setNewTitle('');
-      setNewDate('');
       setIsAdding(false);
     }
   };
@@ -73,7 +70,7 @@ export default function MilestoneTracker() {
   if (loading) {
     return (
       <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Milestones...
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Key Success Factors...
       </div>
     );
   }
@@ -82,41 +79,36 @@ export default function MilestoneTracker() {
     <div>
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800/40">
         <div>
-          <h3 className="text-sm font-medium text-zinc-200">Milestones</h3>
-          <p className="text-xs text-zinc-400 mt-0.5">Shared goals and upcoming dates</p>
+          <h3 className="text-sm font-medium text-zinc-200">Key Success Factors</h3>
+          <p className="text-xs text-zinc-400 mt-0.5">Core focuses and relationship cornerstones</p>
         </div>
         <button 
           onClick={() => setIsAdding(!isAdding)}
           className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>Add Target</span>
+          <span>Add Focus</span>
         </button>
       </div>
 
       {isAdding && (
-        <form onSubmit={addMilestone} className="mb-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row gap-3">
+        <form onSubmit={addFactor} className="mb-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex gap-3">
           <input
             type="text"
-            placeholder="Milestone title (e.g., Summer Visit)"
+            placeholder="Focus area (e.g., Daily Japanese & English practice)"
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500"
           />
-          <input
-            type="date"
-            value={newDate}
-            onChange={(e) => setNewDate(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-purple-500"
-          />
-          <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
-            Save
+          <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+            <span>Save</span>
           </button>
         </form>
       )}
 
       <div className="space-y-3">
-        {milestones.map((item) => (
+        {factors.map((item) => (
           <div 
             key={item.id} 
             onClick={() => toggleStatus(item.id, item.status)}
@@ -126,17 +118,16 @@ export default function MilestoneTracker() {
               {item.status === 'achieved' ? (
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
               ) : (
-                <Clock className="w-4 h-4 text-zinc-500 transition-transform group-hover:scale-110" />
+                <Lightbulb className="w-4 h-4 text-purple-400 transition-transform group-hover:scale-110" />
               )}
               <span className={`text-sm font-medium transition-colors ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
                 {item.title}
               </span>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800/60">
-              <Calendar className="w-3.5 h-3.5 text-zinc-500" />
-              <span>{item.target_date}</span>
-            </div>
+            <span className="text-[10px] font-mono uppercase px-2.5 py-1 rounded-lg bg-zinc-950 border border-zinc-800/60 text-zinc-400">
+              {item.status}
+            </span>
           </div>
         ))}
       </div>

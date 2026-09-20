@@ -37,9 +37,9 @@ export default function SanctuaryNotes() {
 
     fetchNotes();
 
-    // Setup real-time listener
+    // Correct chaining order: .channel() -> .on() -> .subscribe()
     const channel = supabase
-      .channel('public:notes')
+      .channel('public-notes-channel')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notes' },
@@ -69,23 +69,23 @@ export default function SanctuaryNotes() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-4xl p-8 rounded-2xl bg-zinc-950 text-zinc-500 border border-zinc-800 shadow-2xl mt-8 flex items-center justify-center font-mono text-xs">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Sanctuary Notes...
+      <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Notes...
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-4xl p-6 rounded-2xl bg-zinc-950 text-zinc-100 border border-zinc-800 shadow-2xl mt-8">
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800/50">
+    <div>
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800/40">
         <div>
-          <h2 className="text-xl font-light tracking-wide text-zinc-200">Sanctuary Log</h2>
-          <p className="text-sm text-zinc-500 mt-1">Shared notes and operational alignment</p>
+          <h3 className="text-sm font-medium text-zinc-200">Our Notes</h3>
+          <p className="text-xs text-zinc-400 mt-0.5">Quick thoughts and messages back and forth</p>
         </div>
-        <MessageSquare className="w-5 h-5 text-zinc-600" />
+        <MessageSquare className="w-4 h-4 text-zinc-500" />
       </div>
 
-      <form onSubmit={postNote} className="mb-6 flex flex-col md:flex-row gap-3">
+      <form onSubmit={postNote} className="mb-4 flex flex-col md:flex-row gap-3">
         <select
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
@@ -96,7 +96,7 @@ export default function SanctuaryNotes() {
         </select>
         <input
           type="text"
-          placeholder="Drop a note or update..."
+          placeholder="Drop a note..."
           value={newContent}
           onChange={(e) => setNewContent(e.target.value)}
           className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-purple-500"

@@ -6,11 +6,13 @@ import SanctuaryStatus from '@/components/SanctuaryStatus';
 import CountdownTicker from '@/components/CountdownTicker';
 import DualZoneCalendar from '@/components/DualZoneCalendar';
 import MilestoneTracker from '@/components/MilestoneTracker';
+import KeySuccessFactors from '@/components/KeySuccessFactors';
 import ItineraryTracker from '@/components/ItineraryTracker';
 import MemoryVault from '@/components/MemoryVault';
 import SanctuaryNotes from '@/components/SanctuaryNotes';
+import CollapsibleSection from '@/components/CollapsibleSection';
 import { supabase } from '@/lib/supabase';
-import { Sparkles, Lock } from 'lucide-react';
+import { Sparkles, Lock, Target, Lightbulb, Plane, Image as ImageIcon, MessageSquare, Clock } from 'lucide-react';
 
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
@@ -96,10 +98,20 @@ export default function Home() {
 
       <div className="w-full max-w-4xl mb-6 flex justify-between items-end border-b border-zinc-900 pb-6 relative z-10">
         <div>
-          <h1 className="text-3xl font-light tracking-widest text-zinc-100">
-            縁結び
+          <h1 className="text-3xl font-light tracking-widest text-zinc-100 flex items-center gap-3">
+            縁結び 
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-full overflow-hidden border border-purple-500/40 bg-zinc-900 inline-block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png" alt="Michael" className="w-full h-full object-cover" />
+              </span>
+              <span className="w-7 h-7 rounded-full overflow-hidden border border-purple-500/40 bg-zinc-900 inline-block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png" alt="Tamae" className="w-full h-full object-cover" />
+              </span>
+            </div>
           </h1>
-          <p className="text-zinc-500 text-xs font-mono mt-1">Texas — Kanagawa Logistical Bridge</p>
+          <p className="text-zinc-500 text-xs font-mono mt-1">Texas — Kanagawa Sanctuary</p>
         </div>
 
         <button 
@@ -114,11 +126,30 @@ export default function Home() {
       <div className="w-full max-w-4xl space-y-6 relative z-10">
         <SanctuaryStatus />
         <CountdownTicker />
-        <DualZoneCalendar />
-        <MilestoneTracker />
-        <ItineraryTracker />
-        <MemoryVault />
-        <SanctuaryNotes />
+
+        <CollapsibleSection title="Milestones" subtitle="Upcoming horizon targets" icon={<Target className="w-4 h-4" />} defaultOpen={false}>
+          <MilestoneTracker />
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Key Success Factors" subtitle="Core focuses and cornerstones" icon={<Lightbulb className="w-4 h-4" />} defaultOpen={false}>
+          <KeySuccessFactors />
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Travel & Itinerary" subtitle="Cross-Pacific flights" icon={<Plane className="w-4 h-4" />} defaultOpen={false}>
+          <ItineraryTracker />
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Memory Vault" subtitle="Moments across Texas and Kanagawa" icon={<ImageIcon className="w-4 h-4" />} defaultOpen={false}>
+          <MemoryVault />
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Our Notes" subtitle="Shared thoughts and messages" icon={<MessageSquare className="w-4 h-4" />} defaultOpen={false}>
+          <SanctuaryNotes />
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Schedule Sync" subtitle="Coordinating CDT & JST time zones" icon={<Clock className="w-4 h-4" />} defaultOpen={false}>
+          <DualZoneCalendar />
+        </CollapsibleSection>
       </div>
     </main>
   );
