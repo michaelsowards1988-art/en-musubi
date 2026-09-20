@@ -126,11 +126,7 @@ export default function MemoryVault() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800/40">
-        <div>
-          <h3 className="text-sm font-medium text-stone-200">Our Records</h3>
-          <p className="text-xs text-stone-400 mt-0.5">Shared music, vibes, and captured moments</p>
-        </div>
+      <div className="flex items-center justify-end mb-4 pb-3 border-b border-zinc-800/40">
         <button 
           onClick={() => setIsAdding(!isAdding)}
           className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all"

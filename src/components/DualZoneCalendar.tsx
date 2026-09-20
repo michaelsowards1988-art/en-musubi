@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { format, addHours, startOfDay } from 'date-fns';
+import { addHours, startOfDay } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
-import { Clock, MapPin } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 
 const TIMEZONES = {
   texas: 'America/Chicago',
@@ -11,19 +11,11 @@ const TIMEZONES = {
 };
 
 export default function DualZoneCalendar() {
-  const [baseDate, setBaseDate] = useState(new Date());
+  const [baseDate] = useState(new Date());
   const timeBlocks = Array.from({ length: 12 }).map((_, i) => addHours(startOfDay(baseDate), i + 8));
 
   return (
-    <div className="w-full max-w-4xl p-6 rounded-2xl bg-zinc-950 text-zinc-100 border border-zinc-800 shadow-2xl">
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-zinc-800/50">
-        <div>
-          <h2 className="text-xl font-light tracking-wide text-zinc-200">Schedule Sync</h2>
-          <p className="text-sm text-zinc-500 mt-1">Coordinating CDT & JST</p>
-        </div>
-        <Clock className="w-5 h-5 text-zinc-600" />
-      </div>
-
+    <div className="w-full">
       <div className="grid grid-cols-2 gap-8 relative">
         <div className="absolute left-1/2 top-0 bottom-0 w-px bg-zinc-800/50 -translate-x-1/2"></div>
 

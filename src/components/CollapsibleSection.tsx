@@ -27,12 +27,10 @@ export default function CollapsibleSection({
         className="flex items-center justify-between p-6 cursor-pointer select-none hover:bg-zinc-900/30 transition-colors border-b border-zinc-800/40"
       >
         <div className="flex items-center gap-4">
-          {/* Muted Stone Background & Warm Amber Icon */}
           <div className="p-2.5 rounded-xl bg-stone-900/50 border border-stone-800/50 text-amber-600/80 shadow-inner">
             {icon}
           </div>
           <div>
-            {/* Hover transitions to a soft warm off-white/amber */}
             <h2 className="text-lg font-light tracking-wide text-stone-100 group-hover:text-amber-100/90 transition-colors">{title}</h2>
             <p className="text-xs text-stone-400 font-mono mt-0.5">{subtitle}</p>
           </div>
@@ -45,11 +43,9 @@ export default function CollapsibleSection({
         </div>
       </div>
 
-      {isOpen && (
-        <div className="p-6 pt-5 animate-in fade-in duration-300">
-          {children}
-        </div>
-      )}
+      <div className={`p-6 pt-5 transition-all duration-300 ${isOpen ? 'block animate-in fade-in' : 'hidden'}`}>
+        {children}
+      </div>
     </div>
   );
 }

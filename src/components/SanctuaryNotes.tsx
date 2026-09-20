@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MessageSquare, Send, Loader2 } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface Note {
@@ -81,14 +81,6 @@ export default function SanctuaryNotes() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800/40">
-        <div>
-          <h3 className="text-sm font-medium text-stone-200">Our Notes</h3>
-          <p className="text-xs text-stone-400 mt-0.5">Quick thoughts and messages back and forth</p>
-        </div>
-        <MessageSquare className="w-4 h-4 text-stone-500" />
-      </div>
-
       <form onSubmit={postNote} className="mb-5 flex flex-col md:flex-row gap-3">
         <select
           value={author}

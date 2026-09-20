@@ -63,6 +63,7 @@ src/
     SanctuaryNotes.tsx
     SanctuaryStatus.tsx
   lib/
+    musicScraper.ts
     supabase.ts
 .gitignore
 AGENTS.md
@@ -159,64 +160,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 }
 </file>
 
-<file path="src/components/CollapsibleSection.tsx">
-'use client';
-
-import { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-
-interface CollapsibleSectionProps {
-  title: string;
-  subtitle: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}
-
-export default function CollapsibleSection({
-  title,
-  subtitle,
-  icon,
-  children,
-  defaultOpen = true,
-}: CollapsibleSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  return (
-    <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all overflow-hidden group">
-      <div 
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between p-6 cursor-pointer select-none hover:bg-zinc-900/30 transition-colors border-b border-zinc-800/40"
-      >
-        <div className="flex items-center gap-4">
-          {/* Muted Stone Background & Warm Amber Icon */}
-          <div className="p-2.5 rounded-xl bg-stone-900/50 border border-stone-800/50 text-amber-600/80 shadow-inner">
-            {icon}
-          </div>
-          <div>
-            {/* Hover transitions to a soft warm off-white/amber */}
-            <h2 className="text-lg font-light tracking-wide text-stone-100 group-hover:text-amber-100/90 transition-colors">{title}</h2>
-            <p className="text-xs text-stone-400 font-mono mt-0.5">{subtitle}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors">
-            {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </div>
-        </div>
-      </div>
-
-      {isOpen && (
-        <div className="p-6 pt-5 animate-in fade-in duration-300">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-</file>
-
 <file path="src/components/DualZoneCalendar.tsx">
 'use client';
 
@@ -297,6 +240,271 @@ export default function DualZoneCalendar() {
           })}
         </div>
       </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/lib/musicScraper.ts">
+'use server';
+
+export async function fetchAppleMusicArt(url: string) {
+  try {
+    const res = await fetch(url, { 
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; EnMusubiBot/1.0)' }
+    });
+    const html = await res.text();
+    
+    // Scrape the OpenGraph image tag that Apple automatically generates for links
+    const match = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i);
+    
+    return match ? match[1] : null;
+  } catch (error) {
+    console.error('Failed to fetch album art:', error);
+    return null;
+  }
+}
+</file>
+
+<file path="src/lib/supabase.ts">
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+</file>
+
+<file path=".gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+</file>
+
+<file path="AGENTS.md">
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
+</file>
+
+<file path="CLAUDE.md">
+@AGENTS.md
+</file>
+
+<file path="eslint.config.mjs">
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+</file>
+
+<file path="next.config.ts">
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default nextConfig;
+</file>
+
+<file path="postcss.config.mjs">
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+</file>
+
+<file path="README.md">
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+</file>
+
+<file path="src/components/CollapsibleSection.tsx">
+'use client';
+
+import { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+
+interface CollapsibleSectionProps {
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+export default function CollapsibleSection({
+  title,
+  subtitle,
+  icon,
+  children,
+  defaultOpen = true,
+}: CollapsibleSectionProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all overflow-hidden group">
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between p-6 cursor-pointer select-none hover:bg-zinc-900/30 transition-colors border-b border-zinc-800/40"
+      >
+        <div className="flex items-center gap-4">
+          {/* Muted Stone Background & Warm Amber Icon */}
+          <div className="p-2.5 rounded-xl bg-stone-900/50 border border-stone-800/50 text-amber-600/80 shadow-inner">
+            {icon}
+          </div>
+          <div>
+            {/* Hover transitions to a soft warm off-white/amber */}
+            <h2 className="text-lg font-light tracking-wide text-stone-100 group-hover:text-amber-100/90 transition-colors">{title}</h2>
+            <p className="text-xs text-stone-400 font-mono mt-0.5">{subtitle}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors">
+            {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </div>
+        </div>
+      </div>
+
+      {isOpen && (
+        <div className="p-6 pt-5 animate-in fade-in duration-300">
+          {children}
+        </div>
+      )}
     </div>
   );
 }
@@ -603,29 +811,37 @@ export default function KeySuccessFactors() {
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Image as ImageIcon, Plus, Loader2, Sparkles } from 'lucide-react';
+import { Image as ImageIcon, Music, Plus, Loader2, Sparkles, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { fetchAppleMusicArt } from '@/lib/musicScraper';
 
-interface Memory {
+interface SharedRecord {
   id: string;
   image_url: string;
   caption: string;
   location: string;
+  media_type: 'image' | 'music';
+  external_link: string | null;
   created_at: string;
 }
 
 export default function MemoryVault() {
-  const [memories, setMemories] = useState<Memory[]>([]);
+  const [records, setRecords] = useState<SharedRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Form State
+  const [mediaType, setMediaType] = useState<'image' | 'music'>('image');
   const [caption, setCaption] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [location, setLocation] = useState('Texas');
+  const [externalLink, setExternalLink] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function fetchMemories() {
+    async function fetchRecords() {
       const { data, error } = await supabase
         .from('memories')
         .select('*')
@@ -633,13 +849,13 @@ export default function MemoryVault() {
 
       if (isMounted) {
         if (!error && data) {
-          setMemories(data);
+          setRecords(data);
         }
         setLoading(false);
       }
     }
 
-    fetchMemories();
+    fetchRecords();
 
     const channel = supabase
       .channel('public:memories')
@@ -647,8 +863,8 @@ export default function MemoryVault() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'memories' },
         (payload) => {
-          const newMemory = payload.new as Memory;
-          setMemories((prev) => [newMemory, ...prev]);
+          const newRecord = payload.new as SharedRecord;
+          setRecords((prev) => [newRecord, ...prev]);
         }
       )
       .subscribe();
@@ -659,652 +875,201 @@ export default function MemoryVault() {
     };
   }, []);
 
-  const addMemory = async (e: React.FormEvent) => {
+  const addRecord = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!imageUrl || !caption) return;
+    if (!caption) return;
+    if (mediaType === 'image' && !imageFile) return;
+    if (mediaType === 'music' && !externalLink) return;
 
-    await supabase
-      .from('memories')
-      .insert([{ image_url: imageUrl, caption, location }]);
+    setIsSaving(true);
+    let finalImageUrl = '';
 
-    setImageUrl('');
-    setCaption('');
-    setIsAdding(false);
+    try {
+      if (mediaType === 'image' && imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `vault/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('photos')
+          .upload(fileName, imageFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('photos')
+          .getPublicUrl(fileName);
+
+        finalImageUrl = publicUrl;
+      } else if (mediaType === 'music') {
+        const scrapedArt = await fetchAppleMusicArt(externalLink);
+        finalImageUrl = scrapedArt || 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=500&auto=format&fit=crop';
+      }
+
+      await supabase
+        .from('memories')
+        .insert([{ 
+          image_url: finalImageUrl, 
+          caption, 
+          location,
+          media_type: mediaType,
+          external_link: externalLink || null
+        }]);
+
+      setImageFile(null);
+      setCaption('');
+      setExternalLink('');
+      setIsAdding(false);
+    } catch (error) {
+      console.error('Error saving record:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (loading) {
     return (
-      <div className="w-full max-w-4xl p-8 rounded-2xl bg-zinc-950 text-zinc-500 border border-zinc-800 shadow-2xl mt-8 flex items-center justify-center font-mono text-xs">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Memory Vault...
+      <div className="flex items-center justify-center text-stone-500 font-mono text-xs py-4">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Records...
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-4xl p-6 rounded-2xl bg-zinc-950 text-zinc-100 border border-zinc-800 shadow-2xl mt-8">
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800/50">
+    <div>
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800/40">
         <div>
-          <h2 className="text-xl font-light tracking-wide text-zinc-200">Memory Vault</h2>
-          <p className="text-sm text-zinc-500 mt-1">Captured moments across Texas and Kanagawa</p>
+          <h3 className="text-sm font-medium text-stone-200">Our Records</h3>
+          <p className="text-xs text-stone-400 mt-0.5">Shared music, vibes, and captured moments</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setIsAdding(!isAdding)}
-            className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Moment</span>
-          </button>
-          <ImageIcon className="w-5 h-5 text-zinc-600" />
-        </div>
+        <button 
+          onClick={() => setIsAdding(!isAdding)}
+          className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>Add Record</span>
+        </button>
       </div>
 
       {isAdding && (
-        <form onSubmit={addMemory} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col gap-3">
+        <form onSubmit={addRecord} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col gap-3">
+          <div className="flex gap-3 mb-1">
+            <button
+              type="button"
+              onClick={() => { setMediaType('image'); setExternalLink(''); }}
+              className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all ${mediaType === 'image' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+            >
+              <ImageIcon className="w-3.5 h-3.5" /> Photo
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMediaType('music'); setImageFile(null); }}
+              className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all ${mediaType === 'music' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+            >
+              <Music className="w-3.5 h-3.5" /> Music
+            </button>
+          </div>
+
           <div className="flex gap-3">
             <select
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-xs font-mono text-zinc-300 focus:outline-none focus:border-stone-500"
+              className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-xs font-mono text-stone-300 focus:outline-none focus:border-stone-500"
             >
               <option value="Texas">Texas</option>
               <option value="Kanagawa">Kanagawa</option>
             </select>
-            <input
-              type="text"
-              placeholder="Image URL (direct link)"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500 font-mono"
-            />
+            
+            {mediaType === 'image' ? (
+              <input
+                key="image-upload-input"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                className="flex-1 block w-full text-sm text-stone-400 file:mr-3 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-mono file:bg-stone-800 file:text-stone-300 hover:file:bg-stone-700 transition-all bg-zinc-950 border border-zinc-800 rounded-lg cursor-pointer focus:outline-none focus:border-stone-500"
+              />
+            ) : (
+              <input
+                key="music-link-input"
+                type="text"
+                placeholder="Paste Apple Music Link..."
+                value={externalLink}
+                onChange={(e) => setExternalLink(e.target.value)}
+                className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500 font-mono"
+              />
+            )}
           </div>
+          
           <input
             type="text"
-            placeholder="Caption (e.g., Sunset walk by the lake)"
+            placeholder={mediaType === 'music' ? 'Caption (e.g., Gesaffelstein - Pursuit)' : 'Caption (e.g., Sunset by the lake)'}
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
+            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500"
           />
-          <button type="submit" className="py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-600" />
-            <span>Save to Vault</span>
+
+          <button 
+            type="submit" 
+            disabled={isSaving}
+            className="py-2.5 mt-1 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {isSaving ? (
+              <Loader2 className="w-4 h-4 text-zinc-950 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4 text-amber-700" />
+            )}
+            <span>{isSaving ? 'Fetching & Saving...' : 'Save to Records'}</span>
           </button>
         </form>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {memories.length === 0 ? (
-          <p className="text-xs text-zinc-600 font-mono text-center py-8 col-span-2">No memories logged in the vault yet.</p>
+        {records.length === 0 ? (
+          <p className="text-xs text-stone-600 font-mono text-center py-8 col-span-2">No records logged yet.</p>
         ) : (
-          memories.map((memory) => (
-            <div key={memory.id} className="rounded-xl overflow-hidden bg-zinc-900/40 border border-zinc-800/40 group">
-              <div className="h-48 overflow-hidden relative bg-zinc-950">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={memory.image_url} 
-                  alt={memory.caption} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" 
-                />
-                <span className="absolute top-3 left-3 px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-zinc-300 border border-zinc-800">
-                  {memory.location}
-                </span>
+          records.map((record) => {
+            const isMusic = record.media_type === 'music';
+            
+            return (
+              <div key={record.id} className="rounded-xl overflow-hidden bg-zinc-900/40 border border-zinc-800/60 group relative flex flex-col">
+                <div className={`${isMusic ? 'h-32' : 'h-48'} overflow-hidden relative bg-zinc-950`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src={record.image_url} 
+                    alt={record.caption} 
+                    className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80 ${isMusic ? 'blur-[2px] scale-105 group-hover:blur-none' : ''}`} 
+                  />
+                  <div className="absolute top-3 left-3 flex gap-2">
+                    <span className="px-2 py-1 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-stone-300 border border-zinc-800 flex items-center gap-1.5">
+                      {isMusic ? <Music className="w-3 h-3 text-amber-500" /> : <ImageIcon className="w-3 h-3 text-stone-400" />}
+                      {record.location}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="p-4 flex-1 flex flex-col justify-between bg-zinc-900/40">
+                  <div>
+                    <p className="text-sm font-medium text-stone-200">{record.caption}</p>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-[10px] font-mono text-stone-500">
+                      {new Date(record.created_at).toLocaleDateString()}
+                    </span>
+                    {isMusic && record.external_link && (
+                      <a 
+                        href={record.external_link} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors"
+                      >
+                        Listen <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="p-4">
-                <p className="text-sm font-medium text-zinc-200">{memory.caption}</p>
-                <span className="block text-[10px] font-mono text-zinc-600 mt-2">
-                  {new Date(memory.created_at).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="src/lib/supabase.ts">
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-</file>
-
-<file path=".gitignore">
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-</file>
-
-<file path="AGENTS.md">
-<!-- BEGIN:nextjs-agent-rules -->
-
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
-</file>
-
-<file path="CLAUDE.md">
-@AGENTS.md
-</file>
-
-<file path="eslint.config.mjs">
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
-
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-]);
-
-export default eslintConfig;
-</file>
-
-<file path="next.config.ts">
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
-};
-
-export default nextConfig;
-</file>
-
-<file path="postcss.config.mjs">
-const config = {
-  plugins: {
-    "@tailwindcss/postcss": {},
-  },
-};
-
-export default config;
-</file>
-
-<file path="README.md">
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-</file>
-
-<file path="tsconfig.json">
-{
-  "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "**/*.mts"
-  ],
-  "exclude": ["node_modules"]
-}
-</file>
-
-<file path="src/components/CountdownTicker.tsx">
-'use client';
-
-import { useState, useEffect, useMemo } from 'react';
-import { Timer } from 'lucide-react';
-
-interface TimeLeft {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
-
-interface CountdownTickerProps {
-  lang: 'en' | 'ja';
-}
-
-export default function CountdownTicker({ lang }: CountdownTickerProps) {
-  const targetDate = useMemo(() => new Date('2026-12-15T00:00:00'), []);
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    function calculateTime() {
-      const difference = targetDate.getTime() - new Date().getTime();
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-        });
-      }
-    }
-
-    calculateTime();
-    const interval = setInterval(calculateTime, 1000);
-    return () => clearInterval(interval);
-  }, [targetDate]);
-
-  return (
-    <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] mb-6 transition-all">
-      <div className="flex items-center justify-between p-6">
-        <div className="flex items-center gap-4">
-          <div className="p-2.5 rounded-xl bg-stone-900/50 border border-stone-800/50 text-amber-600/80 shadow-inner">
-            <Timer className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-light tracking-wide text-stone-100">
-              {lang === 'ja' ? '次の目標期間' : 'Next Window Target'}
-            </h2>
-            <p className="text-xs text-stone-400 font-mono mt-0.5">
-              {lang === 'ja' ? '年末の訪問' : 'End-of-Year Visit'}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 font-mono text-xs">
-          <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
-            <span className="text-base font-semibold text-stone-100">{timeLeft.days}</span>
-            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '日' : 'Days'}</span>
-          </div>
-          <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
-            <span className="text-base font-semibold text-stone-100">{timeLeft.hours}</span>
-            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '時間' : 'Hours'}</span>
-          </div>
-          <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
-            <span className="text-base font-semibold text-stone-100">{timeLeft.minutes}</span>
-            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '分' : 'Mins'}</span>
-          </div>
-          <div className="text-center px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
-            <span className="text-base font-semibold text-stone-100">{timeLeft.seconds}</span>
-            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '秒' : 'Secs'}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="src/components/MilestoneTracker.tsx">
-'use client';
-
-import { useState, useEffect } from 'react';
-import { Calendar, CheckCircle2, Clock, Plus, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-
-interface Milestone {
-  id: string;
-  title: string;
-  target_date: string;
-  status: 'planned' | 'in_progress' | 'achieved';
-}
-
-export default function MilestoneTracker() {
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newTitle, setNewTitle] = useState('');
-  const [newDate, setNewDate] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadData() {
-      const { data, error } = await supabase
-        .from('milestones')
-        .select('*')
-        .order('target_date', { ascending: true });
-
-      if (isMounted) {
-        if (!error && data) {
-          setMilestones(data);
-        }
-        setLoading(false);
-      }
-    }
-
-    loadData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const toggleStatus = async (id: string, currentStatus: Milestone['status']) => {
-    const nextStatus: Milestone['status'] = currentStatus === 'achieved' ? 'planned' : 'achieved';
-    
-    setMilestones(milestones.map(m => m.id === id ? { ...m, status: nextStatus } : m));
-
-    await supabase
-      .from('milestones')
-      .update({ status: nextStatus })
-      .eq('id', id);
-  };
-
-  const addMilestone = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle || !newDate) return;
-
-    const { data, error } = await supabase
-      .from('milestones')
-      .insert([{ title: newTitle, target_date: newDate, status: 'planned' }])
-      .select();
-
-    if (!error && data) {
-      setMilestones([...milestones, data[0] as Milestone]);
-      setNewTitle('');
-      setNewDate('');
-      setIsAdding(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Milestones...
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800/40">
-        <div>
-          <h3 className="text-sm font-medium text-zinc-200">Milestones</h3>
-          <p className="text-xs text-zinc-400 mt-0.5">Shared goals and upcoming dates</p>
-        </div>
-        <button 
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Add Target</span>
-        </button>
-      </div>
-
-      {isAdding && (
-        <form onSubmit={addMilestone} className="mb-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="Milestone title (e.g., Summer Visit)"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
-          />
-          <input
-            type="date"
-            value={newDate}
-            onChange={(e) => setNewDate(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500"
-          />
-          <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
-            Save
-          </button>
-        </form>
-      )}
-
-      <div className="space-y-3">
-        {milestones.map((item) => (
-          <div 
-            key={item.id} 
-            onClick={() => toggleStatus(item.id, item.status)}
-            className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:border-zinc-700/60 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center gap-3">
-              {item.status === 'achieved' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
-              ) : (
-                <Clock className="w-4 h-4 text-zinc-500 transition-transform group-hover:scale-110" />
-              )}
-              <span className={`text-sm font-medium transition-colors ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
-                {item.title}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800/60">
-              <Calendar className="w-3.5 h-3.5 text-zinc-500" />
-              <span>{item.target_date}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="src/components/SanctuaryNotes.tsx">
-'use client';
-
-import { useState, useEffect } from 'react';
-import { MessageSquare, Send, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-
-interface Note {
-  id: string;
-  content: string;
-  author: string;
-  created_at: string;
-}
-
-export default function SanctuaryNotes() {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [newContent, setNewContent] = useState('');
-  const [author, setAuthor] = useState('Texas');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function fetchNotes() {
-      const { data, error } = await supabase
-        .from('notes')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (isMounted) {
-        if (!error && data) {
-          setNotes(data);
-        }
-        setLoading(false);
-      }
-    }
-
-    fetchNotes();
-
-    // Correct chaining order: .channel() -> .on() -> .subscribe()
-    const channel = supabase
-      .channel('public-notes-channel')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notes' },
-        (payload) => {
-          const newNote = payload.new as Note;
-          setNotes((prev) => [newNote, ...prev.filter((n) => n.id !== newNote.id)]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      isMounted = false;
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const postNote = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newContent.trim()) return;
-
-    await supabase
-      .from('notes')
-      .insert([{ content: newContent, author }]);
-
-    setNewContent('');
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Notes...
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800/40">
-        <div>
-          <h3 className="text-sm font-medium text-zinc-200">Our Notes</h3>
-          <p className="text-xs text-zinc-400 mt-0.5">Quick thoughts and messages back and forth</p>
-        </div>
-        <MessageSquare className="w-4 h-4 text-zinc-500" />
-      </div>
-
-      <form onSubmit={postNote} className="mb-4 flex flex-col md:flex-row gap-3">
-        <select
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 focus:outline-none focus:border-stone-500"
-        >
-          <option value="Texas">Texas</option>
-          <option value="Kanagawa">Kanagawa</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Drop a note..."
-          value={newContent}
-          onChange={(e) => setNewContent(e.target.value)}
-          className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
-        />
-        <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2">
-          <Send className="w-3.5 h-3.5" />
-          <span>Send</span>
-        </button>
-      </form>
-
-      <div className="space-y-3">
-        {notes.length === 0 ? (
-          <p className="text-xs text-zinc-600 font-mono text-center py-4">No notes recorded yet.</p>
-        ) : (
-          notes.map((note) => (
-            <div key={note.id} className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 flex items-start justify-between">
-              <div>
-                <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-900 text-zinc-400 border border-zinc-800 mb-1.5">
-                  {note.author}
-                </span>
-                <p className="text-sm text-zinc-200">{note.content}</p>
-              </div>
-              <span className="text-[10px] font-mono text-zinc-600">
-                {new Date(note.created_at).toLocaleDateString()}
-              </span>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
@@ -1480,6 +1245,383 @@ export default function SanctuaryStatus({ lang }: SanctuaryStatusProps) {
 }
 </file>
 
+<file path="src/components/MilestoneTracker.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Calendar, CheckCircle2, Clock, Plus, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+interface Milestone {
+  id: string;
+  title: string;
+  target_date: string;
+  status: 'planned' | 'in_progress' | 'achieved';
+}
+
+export default function MilestoneTracker() {
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDate, setNewDate] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadData() {
+      const { data, error } = await supabase
+        .from('milestones')
+        .select('*')
+        .order('target_date', { ascending: true });
+
+      if (isMounted) {
+        if (!error && data) {
+          setMilestones(data);
+        }
+        setLoading(false);
+      }
+    }
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const toggleStatus = async (id: string, currentStatus: Milestone['status']) => {
+    const nextStatus: Milestone['status'] = currentStatus === 'achieved' ? 'planned' : 'achieved';
+    
+    setMilestones(milestones.map(m => m.id === id ? { ...m, status: nextStatus } : m));
+
+    await supabase
+      .from('milestones')
+      .update({ status: nextStatus })
+      .eq('id', id);
+  };
+
+  const addMilestone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle || !newDate) return;
+
+    const { data, error } = await supabase
+      .from('milestones')
+      .insert([{ title: newTitle, target_date: newDate, status: 'planned' }])
+      .select();
+
+    if (!error && data) {
+      setMilestones([...milestones, data[0] as Milestone]);
+      setNewTitle('');
+      setNewDate('');
+      setIsAdding(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Milestones...
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800/40">
+        <div>
+          <h3 className="text-sm font-medium text-zinc-200">Milestones</h3>
+          <p className="text-xs text-zinc-400 mt-0.5">Shared goals and upcoming dates</p>
+        </div>
+        <button 
+          onClick={() => setIsAdding(!isAdding)}
+          className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>Add Target</span>
+        </button>
+      </div>
+
+      {isAdding && (
+        <form onSubmit={addMilestone} className="mb-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row gap-3">
+          <input
+            type="text"
+            placeholder="Milestone title (e.g., Summer Visit)"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
+          />
+          <input
+            type="date"
+            value={newDate}
+            onChange={(e) => setNewDate(e.target.value)}
+            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500"
+          />
+          <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
+            Save
+          </button>
+        </form>
+      )}
+
+      <div className="space-y-3">
+        {milestones.map((item) => (
+          <div 
+            key={item.id} 
+            onClick={() => toggleStatus(item.id, item.status)}
+            className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:border-zinc-700/60 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center gap-3">
+              {item.status === 'achieved' ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
+              ) : (
+                <Clock className="w-4 h-4 text-zinc-500 transition-transform group-hover:scale-110" />
+              )}
+              <span className={`text-sm font-medium transition-colors ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
+                {item.title}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800/60">
+              <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+              <span>{item.target_date}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/CountdownTicker.tsx">
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { Timer } from 'lucide-react';
+
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+interface CountdownTickerProps {
+  lang: 'en' | 'ja';
+}
+
+export default function CountdownTicker({ lang }: CountdownTickerProps) {
+  const targetDate = useMemo(() => new Date('2026-12-15T00:00:00'), []);
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    function calculateTime() {
+      const difference = targetDate.getTime() - new Date().getTime();
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        });
+      }
+    }
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
+    return () => clearInterval(interval);
+  }, [targetDate]);
+
+  return (
+    <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] mb-6 transition-all">
+      <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-5">
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 rounded-xl bg-stone-900/50 border border-stone-800/50 text-amber-600/80 shadow-inner shrink-0">
+            <Timer className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-light tracking-wide text-stone-100">
+              {lang === 'ja' ? '次の目標期間' : 'Next Window Target'}
+            </h2>
+            <p className="text-xs text-stone-400 font-mono mt-0.5">
+              {lang === 'ja' ? '年末の訪問' : 'End-of-Year Visit'}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-4 md:flex items-center gap-2 md:gap-3 font-mono text-xs w-full md:w-auto">
+          <div className="text-center px-2 md:px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col justify-center">
+            <span className="text-base font-semibold text-stone-100">{timeLeft.days}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '日' : 'Days'}</span>
+          </div>
+          <div className="text-center px-2 md:px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col justify-center">
+            <span className="text-base font-semibold text-stone-100">{timeLeft.hours}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '時間' : 'Hours'}</span>
+          </div>
+          <div className="text-center px-2 md:px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col justify-center">
+            <span className="text-base font-semibold text-stone-100">{timeLeft.minutes}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '分' : 'Mins'}</span>
+          </div>
+          <div className="text-center px-2 md:px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col justify-center">
+            <span className="text-base font-semibold text-stone-100">{timeLeft.seconds}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '秒' : 'Secs'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/SanctuaryNotes.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { MessageSquare, Send, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+interface Note {
+  id: string;
+  content: string;
+  author: string;
+  created_at: string;
+}
+
+const AVATARS = {
+  Kanagawa: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png',
+  Texas: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png'
+};
+
+export default function SanctuaryNotes() {
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [newContent, setNewContent] = useState('');
+  const [author, setAuthor] = useState('Texas');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchNotes() {
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (isMounted) {
+        if (!error && data) {
+          setNotes(data);
+        }
+        setLoading(false);
+      }
+    }
+
+    fetchNotes();
+
+    const channel = supabase
+      .channel('public-notes-channel')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notes' },
+        (payload) => {
+          const newNote = payload.new as Note;
+          setNotes((prev) => [newNote, ...prev.filter((n) => n.id !== newNote.id)]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const postNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newContent.trim()) return;
+
+    await supabase
+      .from('notes')
+      .insert([{ content: newContent, author }]);
+
+    setNewContent('');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center text-stone-500 font-mono text-xs py-4">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Notes...
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-800/40">
+        <div>
+          <h3 className="text-sm font-medium text-stone-200">Our Notes</h3>
+          <p className="text-xs text-stone-400 mt-0.5">Quick thoughts and messages back and forth</p>
+        </div>
+        <MessageSquare className="w-4 h-4 text-stone-500" />
+      </div>
+
+      <form onSubmit={postNote} className="mb-5 flex flex-col md:flex-row gap-3">
+        <select
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-xs font-mono text-stone-300 focus:outline-none focus:border-stone-500"
+        >
+          <option value="Texas">Texas</option>
+          <option value="Kanagawa">Kanagawa</option>
+        </select>
+        <input
+          type="text"
+          placeholder="Drop a note..."
+          value={newContent}
+          onChange={(e) => setNewContent(e.target.value)}
+          className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500"
+        />
+        <button type="submit" className="px-4 py-2.5 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2">
+          <Send className="w-3.5 h-3.5" />
+          <span>Send</span>
+        </button>
+      </form>
+
+      <div className="space-y-3">
+        {notes.length === 0 ? (
+          <p className="text-xs text-stone-600 font-mono text-center py-4">No notes recorded yet.</p>
+        ) : (
+          notes.map((note) => (
+            <div key={note.id} className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60 flex items-start gap-3.5">
+              <div className="w-8 h-8 rounded-full overflow-hidden border border-stone-500/30 bg-zinc-900 shrink-0 mt-0.5 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={AVATARS[note.author as keyof typeof AVATARS] || AVATARS.Texas} 
+                  alt={note.author} 
+                  className="w-full h-full object-cover" 
+                />
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-mono text-stone-400 tracking-widest uppercase">
+                    {note.author === 'Kanagawa' ? 'Tamae' : 'Michael'}
+                  </span>
+                  <span className="text-[10px] font-mono text-stone-600">
+                    {new Date(note.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-sm text-stone-200 leading-relaxed">{note.content}</p>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+</file>
+
 <file path="src/app/page.tsx">
 'use client';
 
@@ -1580,7 +1722,6 @@ export default function Home() {
   if (!session) {
     return (
       <main className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-8 selection:bg-stone-800 relative overflow-hidden">
-        {/* Soft, warm ambient glow replacing neon purple/blue */}
         <div className="absolute w-125 h-125 bg-amber-900/10 rounded-full blur-3xl pointer-events-none -top-48 -left-48"></div>
         <div className="absolute w-125 h-125 bg-stone-800/20 rounded-full blur-3xl pointer-events-none -bottom-48 -right-48"></div>
 
@@ -1653,20 +1794,20 @@ export default function Home() {
           <MilestoneTracker />
         </CollapsibleSection>
 
-        <CollapsibleSection title={currentLang.ksf} subtitle={currentLang.ksf_sub} icon={<Lightbulb className="w-5 h-5" />} defaultOpen={false}>
-          <KeySuccessFactors />
-        </CollapsibleSection>
-
-        <CollapsibleSection title={currentLang.travel} subtitle={currentLang.travel_sub} icon={<Plane className="w-5 h-5" />} defaultOpen={false}>
-          <ItineraryTracker />
-        </CollapsibleSection>
-
         <CollapsibleSection title={currentLang.vault} subtitle={currentLang.vault_sub} icon={<ImageIcon className="w-5 h-5" />} defaultOpen={false}>
           <MemoryVault />
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.notes} subtitle={currentLang.notes_sub} icon={<MessageSquare className="w-5 h-5" />} defaultOpen={false}>
           <SanctuaryNotes />
+        </CollapsibleSection>
+
+        <CollapsibleSection title={currentLang.ksf} subtitle={currentLang.ksf_sub} icon={<Lightbulb className="w-5 h-5" />} defaultOpen={false}>
+          <KeySuccessFactors />
+        </CollapsibleSection>
+
+        <CollapsibleSection title={currentLang.travel} subtitle={currentLang.travel_sub} icon={<Plane className="w-5 h-5" />} defaultOpen={false}>
+          <ItineraryTracker />
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.sync} subtitle={currentLang.sync_sub} icon={<Clock className="w-5 h-5" />} defaultOpen={false}>
