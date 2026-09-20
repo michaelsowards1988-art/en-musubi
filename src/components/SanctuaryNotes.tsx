@@ -30,7 +30,7 @@ export default function SanctuaryNotes() {
         .from('notes')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(10);
 
       if (isMounted) {
         if (!error && data) {
