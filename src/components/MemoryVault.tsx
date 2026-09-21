@@ -217,15 +217,29 @@ export default function MemoryVault() {
             
             return (
               <div key={record.id} className="rounded-xl overflow-hidden bg-zinc-900/40 border border-zinc-800/60 group relative flex flex-col">
-                <div className={`${isMusic ? 'h-32' : 'h-48'} overflow-hidden relative bg-zinc-950`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={record.image_url} 
-                    alt={record.caption} 
-                    className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80 ${isMusic ? 'blur-[2px] scale-105 group-hover:blur-none' : ''}`} 
-                  />
-                  <div className="absolute top-3 left-3 flex gap-2">
-                    <span className="px-2 py-1 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-stone-300 border border-zinc-800 flex items-center gap-1.5">
+                <div className={`${isMusic ? 'h-56 sm:h-64' : 'h-48 md:h-56'} overflow-hidden relative bg-zinc-950`}>
+                  {/* Make the image clickable if it is music and has a link */}
+                  {isMusic && record.external_link ? (
+                    <a href={record.external_link} target="_blank" rel="noreferrer" className="block w-full h-full cursor-pointer">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img 
+                        src={record.image_url} 
+                        alt={record.caption} 
+                        className={`w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 ${isMusic ? 'blur-[2px] scale-105 group-hover:blur-none' : ''}`} 
+                      />
+                    </a>
+                  ) : (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img 
+                      src={record.image_url} 
+                      alt={record.caption} 
+                      className={`w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 ${isMusic ? 'blur-[2px] scale-105 group-hover:blur-none' : ''}`} 
+                    />
+                  )}
+                  
+                  {/* Badge overlay with pointer-events-none so it doesn't block the link click */}
+                  <div className="absolute top-3 left-3 flex gap-2 pointer-events-none">
+                    <span className="px-2 py-1 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-stone-300 border border-zinc-800 flex items-center gap-1.5 shadow-sm">
                       {isMusic ? <Music className="w-3 h-3 text-amber-500" /> : <ImageIcon className="w-3 h-3 text-stone-400" />}
                       {record.location}
                     </span>
@@ -246,7 +260,7 @@ export default function MemoryVault() {
                         href={record.external_link} 
                         target="_blank" 
                         rel="noreferrer"
-                        className="flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors"
+                        className="flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10"
                       >
                         Listen <ExternalLink className="w-3 h-3" />
                       </a>

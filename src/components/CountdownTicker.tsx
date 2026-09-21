@@ -114,7 +114,7 @@ export default function CountdownTicker({ lang }: CountdownTickerProps) {
             <h2 className="text-lg font-light tracking-wide text-stone-100">
               {lang === 'ja' ? '次の目標期間' : 'Next Window Target'}
             </h2>
-            <p className="text-xs text-stone-400 font-mono mt-0.5 truncate max-w-[200px] md:max-w-xs">
+            <p className="text-xs text-stone-400 font-mono mt-0.5 truncate max-w-50 md:max-w-xs">
               {targetEvent.title}
             </p>
           </div>
