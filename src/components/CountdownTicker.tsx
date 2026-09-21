@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Timer } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Timer, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface TimeLeft {
   days: number;
@@ -15,12 +16,65 @@ interface CountdownTickerProps {
 }
 
 export default function CountdownTicker({ lang }: CountdownTickerProps) {
-  const targetDate = useMemo(() => new Date('2026-12-15T00:00:00'), []);
+  const [targetEvent, setTargetEvent] = useState<{title: string, date: Date} | null>(null);
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [loading, setLoading] = useState(true);
 
+  // Fetch the next upcoming milestone from Supabase
   useEffect(() => {
+    let isMounted = true;
+    
+    const fetchNextMilestone = async () => {
+      const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
+      
+      const { data, error } = await supabase
+        .from('milestones')
+        .select('title, target_date')
+        .gte('target_date', today)
+        .neq('status', 'achieved')
+        .order('target_date', { ascending: true })
+        .limit(1);
+        
+      if (isMounted) {
+        if (!error && data && data.length > 0) {
+          // Append T00:00:00 to ensure it parses correctly at midnight local time
+          setTargetEvent({
+            title: data[0].title,
+            date: new Date(`${data[0].target_date}T00:00:00`)
+          });
+        } else {
+          setTargetEvent(null);
+        }
+        setLoading(false);
+      }
+    };
+
+    fetchNextMilestone();
+
+    // Listen for real-time updates so the countdown switches immediately when new milestones are added
+    const channel = supabase
+      .channel('public:milestones:countdown')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'milestones' },
+        () => {
+          fetchNextMilestone();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Handle the live ticking countdown
+  useEffect(() => {
+    if (!targetEvent) return;
+
     function calculateTime() {
-      const difference = targetDate.getTime() - new Date().getTime();
+      const difference = targetEvent!.date.getTime() - new Date().getTime();
       if (difference > 0) {
         setTimeLeft({
           days: Math.floor(difference / (1000 * 60 * 60 * 24)),
@@ -28,13 +82,26 @@ export default function CountdownTicker({ lang }: CountdownTickerProps) {
           minutes: Math.floor((difference / 1000 / 60) % 60),
           seconds: Math.floor((difference / 1000) % 60),
         });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
     }
 
     calculateTime();
     const interval = setInterval(calculateTime, 1000);
     return () => clearInterval(interval);
-  }, [targetDate]);
+  }, [targetEvent]);
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] mb-6 p-6 flex items-center justify-center font-mono text-xs text-stone-500">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Syncing Next Target...
+      </div>
+    );
+  }
+
+  // If there are no future milestones planned, hide the ticker entirely
+  if (!targetEvent) return null;
 
   return (
     <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] mb-6 transition-all">
@@ -47,8 +114,8 @@ export default function CountdownTicker({ lang }: CountdownTickerProps) {
             <h2 className="text-lg font-light tracking-wide text-stone-100">
               {lang === 'ja' ? '次の目標期間' : 'Next Window Target'}
             </h2>
-            <p className="text-xs text-stone-400 font-mono mt-0.5">
-              {lang === 'ja' ? '年末の訪問' : 'End-of-Year Visit'}
+            <p className="text-xs text-stone-400 font-mono mt-0.5 truncate max-w-[200px] md:max-w-xs">
+              {targetEvent.title}
             </p>
           </div>
         </div>

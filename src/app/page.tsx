@@ -19,7 +19,8 @@ export default function Home() {
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [lang, setLang] = useState<'en' | 'ja'>('en');
+  // Default language is now set to 'ja'
+  const [lang, setLang] = useState<'en' | 'ja'>('ja');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {

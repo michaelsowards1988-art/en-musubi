@@ -11,8 +11,8 @@ interface SanctuaryStatusProps {
 
 export default function SanctuaryStatus({ lang }: SanctuaryStatusProps) {
   const [now, setNow] = useState(new Date());
-  const [jpWeather, setJpWeather] = useState<{ tempC: number | null, code: number | null }>({ tempC: null, code: null });
-  const [txWeather, setTxWeather] = useState<{ tempC: number | null, code: number | null }>({ tempC: null, code: null });
+  const [jpWeather, setJpWeather] = useState<{ tempC: number | null, code: number | null, isDay: boolean | null }>({ tempC: null, code: null, isDay: null });
+  const [txWeather, setTxWeather] = useState<{ tempC: number | null, code: number | null, isDay: boolean | null }>({ tempC: null, code: null, isDay: null });
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -20,16 +20,16 @@ export default function SanctuaryStatus({ lang }: SanctuaryStatusProps) {
   }, []);
 
   useEffect(() => {
-    // Fetch live weather for Kanagawa (Yokohama) and Texas (Hawkins)
+    // Fetch live weather + day/night status for Kanagawa (Yokohama) and Texas (Hawkins)
     Promise.all([
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=35.4478&longitude=139.6425&current=temperature_2m,weather_code'),
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=32.5896&longitude=-95.1972&current=temperature_2m,weather_code')
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=35.4478&longitude=139.6425&current=temperature_2m,weather_code,is_day'),
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=32.5896&longitude=-95.1972&current=temperature_2m,weather_code,is_day')
     ])
     .then(async ([jpRes, txRes]) => {
       const jpData = await jpRes.json();
       const txData = await txRes.json();
-      setJpWeather({ tempC: jpData.current.temperature_2m, code: jpData.current.weather_code });
-      setTxWeather({ tempC: txData.current.temperature_2m, code: txData.current.weather_code });
+      setJpWeather({ tempC: jpData.current.temperature_2m, code: jpData.current.weather_code, isDay: jpData.current.is_day === 1 });
+      setTxWeather({ tempC: txData.current.temperature_2m, code: txData.current.weather_code, isDay: txData.current.is_day === 1 });
     })
     .catch(console.error);
   }, []);
@@ -37,8 +37,9 @@ export default function SanctuaryStatus({ lang }: SanctuaryStatusProps) {
   const texasHour = parseInt(formatInTimeZone(now, 'America/Chicago', 'H'), 10);
   const japanHour = parseInt(formatInTimeZone(now, 'Asia/Tokyo', 'H'), 10);
 
-  const isTexasDay = texasHour >= 6 && texasHour < 20;
-  const isJapanDay = japanHour >= 6 && japanHour < 20;
+  // Use the API's real day/night status, fallback to a safer time window if the API hasn't loaded yet
+  const isTexasDay = txWeather.isDay !== null ? txWeather.isDay : (texasHour >= 6 && texasHour < 19);
+  const isJapanDay = jpWeather.isDay !== null ? jpWeather.isDay : (japanHour >= 6 && japanHour < 19);
 
   const locale = lang === 'ja' ? ja : enUS;
   const formatStr = lang === 'ja' ? 'M月d日 (EEEE)' : 'EEEE, MMM d';
