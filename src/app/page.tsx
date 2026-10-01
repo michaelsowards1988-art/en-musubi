@@ -21,6 +21,9 @@ export default function Home() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState<'en' | 'ja'>('ja');
+  
+  // Track who is actively looking at the app
+  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -37,15 +40,43 @@ export default function Home() {
     return () => subscription.unsubscribe();
   }, []);
 
+  const currentUser = session?.user?.email === 'michael@en-musubi.local' ? 'Michael' : 'Tamae';
+
+  // Handle Realtime Presence (Who is online right now)
+  useEffect(() => {
+    if (!session) return;
+
+    const presenceChannel = supabase.channel('online-presence', {
+      config: {
+        presence: {
+          key: currentUser,
+        },
+      },
+    });
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        setOnlineUsers(Object.keys(state));
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({ online: true });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, [session, currentUser]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
-    // Magic Routing: If you type your specific passcode, it logs in as you.
-    // Otherwise, it defaults to Tamae's account.
-    // Make sure to replace 'YourSecretPasscode123' with your actual Supabase user password.
+    // Magic Routing: If you type YOUR passcode, it logs in as you.
     let targetEmail = 'sync@en-musubi.local'; 
-    if (passcode === 'YourSecretPasscode123') {
+    if (passcode === 'enmusubi') {
       targetEmail = 'michael@en-musubi.local'; 
     }
     
@@ -56,8 +87,6 @@ export default function Home() {
 
     if (error) setError('Incorrect passcode.');
   };
-
-  const currentUser = session?.user?.email === 'michael@en-musubi.local' ? 'Michael' : 'Tamae';
 
   const t = {
     en: {
@@ -150,11 +179,11 @@ export default function Home() {
           <h1 className="text-4xl font-bold tracking-widest text-stone-100 flex items-center gap-4">
             縁結び 
             <div className="flex items-center gap-3">
-              <span className="w-10 h-10 rounded-full overflow-hidden border border-stone-500/40 bg-zinc-900 inline-block shadow-md shrink-0">
+              <span className={`w-10 h-10 rounded-full overflow-hidden border inline-block shadow-md shrink-0 transition-all duration-700 ${onlineUsers.includes('Tamae') ? 'border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.3)] scale-105' : 'border-stone-500/40 bg-zinc-900'}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png" alt="Tamae" className="w-full h-full object-cover" />
               </span>
-              <span className="w-10 h-10 rounded-full overflow-hidden border border-stone-500/40 bg-zinc-900 inline-block shadow-md shrink-0">
+              <span className={`w-10 h-10 rounded-full overflow-hidden border inline-block shadow-md shrink-0 transition-all duration-700 ${onlineUsers.includes('Michael') ? 'border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.3)] scale-105' : 'border-stone-500/40 bg-zinc-900'}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png" alt="Michael" className="w-full h-full object-cover" />
               </span>
