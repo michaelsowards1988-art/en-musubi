@@ -24,6 +24,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
   const [presenceChannel, setPresenceChannel] = useState<RealtimeChannel | null>(null);
   const [activeFlare, setActiveFlare] = useState<'Michael' | 'Tamae' | null>(null);
+  const [screenPulse, setScreenPulse] = useState(false);
 
   useEffect(() => {
     const savedLang = localStorage.getItem('preferredLang');
@@ -59,13 +60,17 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         // Flare the sender's avatar on the UI
         setActiveFlare(from);
         
-        // If the ripple is meant for the person holding this device, vibrate!
-        if (to === currentUser && typeof navigator !== 'undefined' && navigator.vibrate) {
-          navigator.vibrate([30, 50, 30]); // Gentle heartbeat vibration
+        // If the ripple is meant for the person holding this device, flash the screen!
+        if (to === currentUser) {
+          setScreenPulse(true);
+          if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            navigator.vibrate([30, 50, 30]); // Gentle heartbeat vibration
+          }
         }
         
         setTimeout(() => {
           setActiveFlare(null);
+          setScreenPulse(false);
         }, 1500);
       })
       .subscribe(async (status) => {
@@ -157,6 +162,13 @@ export default function Dashboard({ currentUser }: DashboardProps) {
 
   return (
     <div className="w-full flex flex-col items-center">
+      {/* The Ambient Screen Ripple Overlay */}
+      <div 
+        className={`fixed inset-0 z-50 pointer-events-none transition-all duration-1000 ${
+          screenPulse ? 'bg-amber-600/15 backdrop-brightness-110' : 'bg-transparent backdrop-brightness-100'
+        }`}
+      ></div>
+
       <div className="w-full max-w-4xl mb-6 flex justify-between items-end border-b border-zinc-900 pb-6 relative z-10">
         <div>
           <h1 className="text-4xl font-bold tracking-widest text-stone-100 flex items-center gap-4">
@@ -174,7 +186,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                   onClick={() => handlePoke('Tamae')}
                   className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 
                     ${tamaeOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}
-                    ${bothOnline && currentUser === 'Michael' ? 'cursor-pointer hover:border-amber-400 hover:scale-115' : ''}
+                    ${bothOnline && currentUser === 'Michael' ? 'cursor-pointer hover:border-amber-400 hover:scale-110' : ''}
                   `}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -194,7 +206,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                   onClick={() => handlePoke('Michael')}
                   className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 
                     ${michaelOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}
-                    ${bothOnline && currentUser === 'Tamae' ? 'cursor-pointer hover:border-amber-400 hover:scale-115' : ''}
+                    ${bothOnline && currentUser === 'Tamae' ? 'cursor-pointer hover:border-amber-400 hover:scale-110' : ''}
                   `}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
