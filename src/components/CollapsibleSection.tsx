@@ -9,6 +9,10 @@ interface CollapsibleSectionProps {
   icon: React.ReactNode;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  isControlled?: boolean;
+  isOpen?: boolean;
+  onToggle?: (open: boolean) => void;
+  actionButton?: React.ReactNode;
 }
 
 export default function CollapsibleSection({
@@ -17,13 +21,27 @@ export default function CollapsibleSection({
   icon,
   children,
   defaultOpen = true,
+  isControlled = false,
+  isOpen = false,
+  onToggle,
+  actionButton
 }: CollapsibleSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
+
+  const actualIsOpen = isControlled ? isOpen : internalIsOpen;
+
+  const handleToggle = () => {
+    if (isControlled && onToggle) {
+      onToggle(!actualIsOpen);
+    } else {
+      setInternalIsOpen(!actualIsOpen);
+    }
+  };
 
   return (
     <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all overflow-hidden group">
       <div 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className="flex items-center justify-between p-6 cursor-pointer select-none hover:bg-zinc-900/30 transition-colors border-b border-zinc-800/40"
       >
         <div className="flex items-center gap-4">
@@ -37,13 +55,18 @@ export default function CollapsibleSection({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors">
-            {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {actionButton && (
+            <div onClick={(e) => e.stopPropagation()}>
+              {actionButton}
+            </div>
+          )}
+          <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors pointer-events-none">
+            {actualIsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </div>
         </div>
       </div>
 
-      <div className={`p-6 pt-5 transition-all duration-300 ${isOpen ? 'block animate-in fade-in' : 'hidden'}`}>
+      <div className={`p-6 pt-5 transition-all duration-300 ${actualIsOpen ? 'block animate-in fade-in' : 'hidden'}`}>
         {children}
       </div>
     </div>

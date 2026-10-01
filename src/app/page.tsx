@@ -71,7 +71,6 @@ export default function Home() {
         const state = channel.presenceState();
         setOnlineUsers(Object.keys(state));
       })
-      // If we ever broadcast a custom "force-refresh" event, the client will instantly reload
       .on('broadcast', { event: 'force-refresh' }, () => {
         window.location.reload();
       })
@@ -199,6 +198,10 @@ export default function Home() {
     );
   }
 
+  const tamaeOnline = onlineUsers.includes('Tamae');
+  const michaelOnline = onlineUsers.includes('Michael');
+  const bothOnline = tamaeOnline && michaelOnline;
+
   return (
     <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-stone-800 relative overflow-hidden text-stone-100">
       <div className="absolute w-200 h-200 bg-stone-800/10 rounded-full blur-3xl pointer-events-none -top-96 left-1/2 -translate-x-1/2"></div>
@@ -207,16 +210,21 @@ export default function Home() {
         <div>
           <h1 className="text-4xl font-bold tracking-widest text-stone-100 flex items-center gap-4">
             縁結び 
-            <div className="flex items-center gap-3">
-              <span className={`w-10 h-10 rounded-full overflow-hidden border inline-block shadow-md shrink-0 transition-all duration-700 ${onlineUsers.includes('Tamae') ? 'border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.3)] scale-105' : 'border-stone-500/40 bg-zinc-900'}`}>
+            
+            <div className="flex items-center">
+              <span className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 ${tamaeOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png" alt="Tamae" className="w-full h-full object-cover" />
               </span>
-              <span className={`w-10 h-10 rounded-full overflow-hidden border inline-block shadow-md shrink-0 transition-all duration-700 ${onlineUsers.includes('Michael') ? 'border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.3)] scale-105' : 'border-stone-500/40 bg-zinc-900'}`}>
+              
+              <div className={`transition-all duration-1000 h-0.5 ${bothOnline ? 'w-6 bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]' : 'w-3 bg-transparent'}`}></div>
+              
+              <span className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 ${michaelOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png" alt="Michael" className="w-full h-full object-cover" />
               </span>
             </div>
+
           </h1>
           <p className="text-stone-400 text-sm font-mono mt-2 tracking-wider font-medium">{currentLang.title}</p>
         </div>
@@ -256,13 +264,19 @@ export default function Home() {
         
         <CountdownTicker lang={lang} />
 
-        <CollapsibleSection title={currentLang.milestones} subtitle={currentLang.milestones_sub} icon={<Target className="w-5 h-5" />} defaultOpen={false}>
-          <MilestoneTracker currentUser={currentUser} />
-        </CollapsibleSection>
+        <MilestoneTracker 
+          currentUser={currentUser} 
+          title={currentLang.milestones} 
+          subtitle={currentLang.milestones_sub} 
+          icon={<Target className="w-5 h-5" />} 
+        />
 
-        <CollapsibleSection title={currentLang.vault} subtitle={currentLang.vault_sub} icon={<ImageIcon className="w-5 h-5" />} defaultOpen={false}>
-          <MemoryVault currentUser={currentUser} />
-        </CollapsibleSection>
+        <MemoryVault 
+          currentUser={currentUser} 
+          title={currentLang.vault} 
+          subtitle={currentLang.vault_sub} 
+          icon={<ImageIcon className="w-5 h-5" />} 
+        />
 
         <CollapsibleSection title={currentLang.notes} subtitle={currentLang.notes_sub} icon={<MessageSquare className="w-5 h-5" />} defaultOpen={false}>
           <SanctuaryNotes currentUser={currentUser} />
@@ -272,13 +286,18 @@ export default function Home() {
           <AvailabilityCalendar currentUser={currentUser} lang={lang} />
         </CollapsibleSection>
 
-        <CollapsibleSection title={currentLang.travel} subtitle={currentLang.travel_sub} icon={<Plane className="w-5 h-5" />} defaultOpen={false}>
-          <ItineraryTracker currentUser={currentUser} />
-        </CollapsibleSection>
+        <ItineraryTracker 
+          currentUser={currentUser} 
+          title={currentLang.travel} 
+          subtitle={currentLang.travel_sub} 
+          icon={<Plane className="w-5 h-5" />} 
+        />
 
-        <CollapsibleSection title={currentLang.ksf} subtitle={currentLang.ksf_sub} icon={<Lightbulb className="w-5 h-5" />} defaultOpen={false}>
-          <KeySuccessFactors />
-        </CollapsibleSection>
+        <KeySuccessFactors 
+          title={currentLang.ksf} 
+          subtitle={currentLang.ksf_sub} 
+          icon={<Lightbulb className="w-5 h-5" />} 
+        />
       </div>
     </main>
   );

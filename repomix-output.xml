@@ -53,6 +53,7 @@ src/
     layout.tsx
     page.tsx
   components/
+    AvailabilityCalendar.tsx
     CollapsibleSection.tsx
     CountdownTicker.tsx
     DualZoneCalendar.tsx
@@ -126,6 +127,197 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+</file>
+
+<file path="src/components/AvailabilityCalendar.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Loader2, Info } from 'lucide-react';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday } from 'date-fns';
+import { supabase } from '@/lib/supabase';
+
+interface Availability {
+  id: string;
+  date: string;
+  user_id: string;
+  status: 'free' | 'busy';
+}
+
+interface AvailabilityCalendarProps {
+  currentUser: 'Michael' | 'Tamae';
+  lang: 'en' | 'ja';
+}
+
+export default function AvailabilityCalendar({ currentUser, lang }: AvailabilityCalendarProps) {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [availabilities, setAvailabilities] = useState<Availability[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchAvailabilities() {
+      const { data, error } = await supabase
+        .from('availability')
+        .select('*');
+
+      if (isMounted) {
+        if (!error && data) setAvailabilities(data);
+        setLoading(false);
+      }
+    }
+
+    fetchAvailabilities();
+
+    const channel = supabase
+      .channel('public:availability')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'availability' },
+        (payload) => {
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            setAvailabilities((prev) => {
+              const filtered = prev.filter(a => a.id !== payload.new.id);
+              return [...filtered, payload.new as Availability];
+            });
+          } else if (payload.eventType === 'DELETE') {
+            setAvailabilities((prev) => prev.filter(a => a.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleDayClick = async (dateStr: string) => {
+    const existing = availabilities.find(a => a.date === dateStr && a.user_id === currentUser);
+    
+    // Cycle: null -> 'free' -> 'busy' -> null
+    let nextStatus: 'free' | 'busy' | null = 'free';
+    if (existing?.status === 'free') nextStatus = 'busy';
+    if (existing?.status === 'busy') nextStatus = null;
+
+    if (nextStatus === null && existing) {
+      // Optimistic UI update
+      setAvailabilities(prev => prev.filter(a => a.id !== existing.id));
+      await supabase.from('availability').delete().eq('id', existing.id);
+    } else if (nextStatus !== null) {
+      // eslint-disable-next-line react-hooks/purity
+      const tempId = existing?.id || Date.now().toString();
+      
+      // Optimistic UI update
+      setAvailabilities(prev => {
+        const filtered = prev.filter(a => !(a.date === dateStr && a.user_id === currentUser));
+        return [...filtered, { id: tempId, date: dateStr, user_id: currentUser, status: nextStatus as 'free' | 'busy' }];
+      });
+
+      await supabase
+        .from('availability')
+        .upsert({ date: dateStr, user_id: currentUser, status: nextStatus }, { onConflict: 'date,user_id' });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full p-8 rounded-2xl bg-zinc-950 flex items-center justify-center font-mono text-xs text-zinc-500">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Syncing Calendar...
+      </div>
+    );
+  }
+
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const startDate = startOfWeek(monthStart);
+  const endDate = endOfWeek(monthEnd);
+
+  const days = eachDayOfInterval({ start: startDate, end: endDate });
+
+  const getDayStatus = (dateStr: string, user: 'Michael' | 'Tamae') => {
+    return availabilities.find(a => a.date === dateStr && a.user_id === user)?.status;
+  };
+
+  return (
+    <div className="w-full">
+      {/* Header Controls */}
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-light text-stone-100 flex items-center gap-2">
+          {format(currentMonth, 'MMMM yyyy')}
+        </h3>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+            className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-stone-400 hover:text-stone-200 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+            className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-stone-400 hover:text-stone-200 transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-4 mb-4 text-[10px] font-mono text-stone-500 uppercase tracking-wider bg-zinc-900/40 p-3 rounded-xl border border-zinc-800/40">
+        <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500/80"></div> {lang === 'ja' ? '空き' : 'Free'}</span>
+        <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500/80"></div> {lang === 'ja' ? '予定あり' : 'Busy'}</span>
+        <div className="ml-auto flex items-center gap-2 text-stone-600">
+          <Info className="w-3 h-3" />
+          <span className="hidden md:inline">{lang === 'ja' ? '左: Tamae / 右: Michael' : 'Left: Tamae / Right: Michael'}</span>
+          <span className="md:hidden">L:T / R:M</span>
+        </div>
+      </div>
+
+      {/* Days of Week */}
+      <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2 text-center text-[10px] font-mono text-stone-500 uppercase">
+        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+          <div key={day} className="py-1">{day}</div>
+        ))}
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-1 md:gap-2">
+        {days.map(day => {
+          const dateStr = format(day, 'yyyy-MM-dd');
+          const isCurrentMonth = isSameMonth(day, currentMonth);
+          const isTodayDate = isToday(day);
+          
+          const tamaeStatus = getDayStatus(dateStr, 'Tamae');
+          const michaelStatus = getDayStatus(dateStr, 'Michael');
+
+          return (
+            <div 
+              key={dateStr}
+              onClick={() => handleDayClick(dateStr)}
+              className={`
+                relative h-14 md:h-20 rounded-xl border transition-all cursor-pointer overflow-hidden flex flex-col items-center justify-center group
+                ${isCurrentMonth ? 'bg-zinc-900/40 border-zinc-800/60 hover:bg-zinc-800/60' : 'bg-zinc-950/50 border-zinc-900/50 opacity-50'}
+                ${isTodayDate ? 'ring-1 ring-amber-500/50' : ''}
+              `}
+            >
+              <span className={`text-xs md:text-sm font-mono mb-2 ${isTodayDate ? 'text-amber-400 font-bold' : 'text-stone-300'}`}>
+                {format(day, 'd')}
+              </span>
+
+              {/* Status Indicators (Left: Tamae, Right: Michael) */}
+              <div className="absolute bottom-1.5 left-0 right-0 px-1.5 flex gap-1 h-1.5 md:h-2">
+                <div className={`w-1/2 rounded-full transition-colors ${tamaeStatus === 'free' ? 'bg-emerald-500/80' : tamaeStatus === 'busy' ? 'bg-red-500/80' : 'bg-zinc-800/30 group-hover:bg-zinc-700/50'}`}></div>
+                <div className={`w-1/2 rounded-full transition-colors ${michaelStatus === 'free' ? 'bg-emerald-500/80' : michaelStatus === 'busy' ? 'bg-red-500/80' : 'bg-zinc-800/30 group-hover:bg-zinc-700/50'}`}></div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 </file>
 
@@ -614,6 +806,10 @@ interface CollapsibleSectionProps {
   icon: React.ReactNode;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  isControlled?: boolean;
+  isOpen?: boolean;
+  onToggle?: (open: boolean) => void;
+  actionButton?: React.ReactNode;
 }
 
 export default function CollapsibleSection({
@@ -622,13 +818,27 @@ export default function CollapsibleSection({
   icon,
   children,
   defaultOpen = true,
+  isControlled = false,
+  isOpen = false,
+  onToggle,
+  actionButton
 }: CollapsibleSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
+
+  const actualIsOpen = isControlled ? isOpen : internalIsOpen;
+
+  const handleToggle = () => {
+    if (isControlled && onToggle) {
+      onToggle(!actualIsOpen);
+    } else {
+      setInternalIsOpen(!actualIsOpen);
+    }
+  };
 
   return (
     <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all overflow-hidden group">
       <div 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className="flex items-center justify-between p-6 cursor-pointer select-none hover:bg-zinc-900/30 transition-colors border-b border-zinc-800/40"
       >
         <div className="flex items-center gap-4">
@@ -642,13 +852,18 @@ export default function CollapsibleSection({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors">
-            {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {actionButton && (
+            <div onClick={(e) => e.stopPropagation()}>
+              {actionButton}
+            </div>
+          )}
+          <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors pointer-events-none">
+            {actualIsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </div>
         </div>
       </div>
 
-      <div className={`p-6 pt-5 transition-all duration-300 ${isOpen ? 'block animate-in fade-in' : 'hidden'}`}>
+      <div className={`p-6 pt-5 transition-all duration-300 ${actualIsOpen ? 'block animate-in fade-in' : 'hidden'}`}>
         {children}
       </div>
     </div>
@@ -760,6 +975,7 @@ export default function DualZoneCalendar() {
 import { useState, useEffect } from 'react';
 import { Lightbulb, Plus, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import CollapsibleSection from './CollapsibleSection';
 
 interface Factor {
   id: string;
@@ -767,10 +983,18 @@ interface Factor {
   status: 'active' | 'achieved';
 }
 
-export default function KeySuccessFactors() {
+interface KeySuccessFactorsProps {
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+}
+
+export default function KeySuccessFactors({ title, subtitle, icon }: KeySuccessFactorsProps) {
   const [factors, setFactors] = useState<Factor[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
+  
+  const [isOpen, setIsOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
@@ -799,13 +1023,8 @@ export default function KeySuccessFactors() {
 
   const toggleStatus = async (id: string, currentStatus: Factor['status']) => {
     const nextStatus: Factor['status'] = currentStatus === 'achieved' ? 'active' : 'achieved';
-    
     setFactors(factors.map(f => f.id === id ? { ...f, status: nextStatus } : f));
-
-    await supabase
-      .from('success_factors')
-      .update({ status: nextStatus })
-      .eq('id', id);
+    await supabase.from('success_factors').update({ status: nextStatus }).eq('id', id);
   };
 
   const addFactor = async (e: React.FormEvent) => {
@@ -824,67 +1043,86 @@ export default function KeySuccessFactors() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Key Success Factors...
-      </div>
-    );
-  }
+  const handleAddClick = () => {
+    if (!isOpen) {
+      setIsOpen(true);
+      setIsAdding(true);
+    } else {
+      setIsAdding(!isAdding);
+    }
+  };
+
+  const actionButton = (
+    <button 
+      onClick={handleAddClick}
+      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
+    >
+      <Plus className="w-3.5 h-3.5" />
+      <span className="hidden md:inline">Add Focus</span>
+      <span className="md:hidden">Add</span>
+    </button>
+  );
 
   return (
-    <div>
-      <div className="flex items-center justify-end mb-4 pb-3 border-b border-zinc-800/40">
-        <button 
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Add Focus</span>
-        </button>
-      </div>
+    <CollapsibleSection
+      title={title}
+      subtitle={subtitle}
+      icon={icon}
+      isControlled={true}
+      isOpen={isOpen}
+      onToggle={setIsOpen}
+      actionButton={actionButton}
+    >
+      {loading ? (
+        <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Key Success Factors...
+        </div>
+      ) : (
+        <>
+          {isAdding && (
+            <form onSubmit={addFactor} className="mb-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex gap-3">
+              <input
+                type="text"
+                placeholder="Focus area (e.g., Daily Japanese & English practice)"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
+                autoFocus
+              />
+              <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                <span>Save</span>
+              </button>
+            </form>
+          )}
 
-      {isAdding && (
-        <form onSubmit={addFactor} className="mb-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex gap-3">
-          <input
-            type="text"
-            placeholder="Focus area (e.g., Daily Japanese & English practice)"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
-          />
-          <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-            <span>Save</span>
-          </button>
-        </form>
-      )}
+          <div className="space-y-3">
+            {factors.map((item) => (
+              <div 
+                key={item.id} 
+                onClick={() => toggleStatus(item.id, item.status)}
+                className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:border-zinc-700/60 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center gap-3">
+                  {item.status === 'achieved' ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
+                  ) : (
+                    <Lightbulb className="w-4 h-4 text-purple-400 transition-transform group-hover:scale-110" />
+                  )}
+                  <span className={`text-sm font-medium transition-colors ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
+                    {item.title}
+                  </span>
+                </div>
 
-      <div className="space-y-3">
-        {factors.map((item) => (
-          <div 
-            key={item.id} 
-            onClick={() => toggleStatus(item.id, item.status)}
-            className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:border-zinc-700/60 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center gap-3">
-              {item.status === 'achieved' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
-              ) : (
-                <Lightbulb className="w-4 h-4 text-purple-400 transition-transform group-hover:scale-110" />
-              )}
-              <span className={`text-sm font-medium transition-colors ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
-                {item.title}
-              </span>
-            </div>
-
-            <span className="text-[10px] font-mono uppercase px-2.5 py-1 rounded-lg bg-zinc-950 border border-zinc-800/60 text-zinc-400">
-              {item.status}
-            </span>
+                <span className="text-[10px] font-mono uppercase px-2.5 py-1 rounded-lg bg-zinc-950 border border-zinc-800/60 text-zinc-400">
+                  {item.status}
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-    </div>
+        </>
+      )}
+    </CollapsibleSection>
   );
 }
 </file>
@@ -893,8 +1131,9 @@ export default function KeySuccessFactors() {
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plane, Calendar, Plus, Loader2 } from 'lucide-react';
+import { Calendar, Plus, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import CollapsibleSection from './CollapsibleSection';
 
 interface Itinerary {
   id: string;
@@ -907,14 +1146,20 @@ interface Itinerary {
 
 interface ItineraryTrackerProps {
   currentUser: 'Michael' | 'Tamae';
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
 }
 
-export default function ItineraryTracker({ currentUser }: ItineraryTrackerProps) {
+export default function ItineraryTracker({ currentUser, title, subtitle, icon }: ItineraryTrackerProps) {
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [loading, setLoading] = useState(true);
+  
   const [flightNumber, setFlightNumber] = useState('');
   const [route, setRoute] = useState('');
   const [travelDate, setTravelDate] = useState('');
+  
+  const [isOpen, setIsOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
@@ -968,82 +1213,97 @@ export default function ItineraryTracker({ currentUser }: ItineraryTrackerProps)
     setIsAdding(false);
   };
 
-  if (loading) {
-    return (
-      <div className="w-full p-8 rounded-2xl bg-zinc-950 text-zinc-500 flex items-center justify-center font-mono text-xs">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Itineraries...
-      </div>
-    );
-  }
+  const handleAddClick = () => {
+    if (!isOpen) {
+      setIsOpen(true);
+      setIsAdding(true);
+    } else {
+      setIsAdding(!isAdding);
+    }
+  };
+
+  const actionButton = (
+    <button 
+      onClick={handleAddClick}
+      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
+    >
+      <Plus className="w-3.5 h-3.5" />
+      <span className="hidden md:inline">Add Flight</span>
+      <span className="md:hidden">Add</span>
+    </button>
+  );
 
   return (
-    <div>
-      <div className="flex items-center justify-end mb-6 pb-4 border-b border-zinc-800/50">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setIsAdding(!isAdding)}
-            className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Flight</span>
-          </button>
-          <Plane className="w-5 h-5 text-zinc-600" />
+    <CollapsibleSection
+      title={title}
+      subtitle={subtitle}
+      icon={icon}
+      isControlled={true}
+      isOpen={isOpen}
+      onToggle={setIsOpen}
+      actionButton={actionButton}
+    >
+      {loading ? (
+        <div className="w-full p-8 rounded-2xl bg-zinc-950 text-zinc-500 flex items-center justify-center font-mono text-xs">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Itineraries...
         </div>
-      </div>
+      ) : (
+        <>
+          {isAdding && (
+            <form onSubmit={addItinerary} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row gap-3">
+              <input
+                type="text"
+                placeholder="Flight # (e.g., JL012)"
+                value={flightNumber}
+                onChange={(e) => setFlightNumber(e.target.value)}
+                className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500 font-mono"
+              />
+              <input
+                type="text"
+                placeholder="Route (e.g., DFW -> HND)"
+                value={route}
+                onChange={(e) => setRoute(e.target.value)}
+                className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
+              />
+              <input
+                type="date"
+                value={travelDate}
+                onChange={(e) => setTravelDate(e.target.value)}
+                className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500"
+              />
+              <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
+                Save
+              </button>
+            </form>
+          )}
 
-      {isAdding && (
-        <form onSubmit={addItinerary} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="Flight # (e.g., JL012)"
-            value={flightNumber}
-            onChange={(e) => setFlightNumber(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500 font-mono"
-          />
-          <input
-            type="text"
-            placeholder="Route (e.g., DFW -> HND)"
-            value={route}
-            onChange={(e) => setRoute(e.target.value)}
-            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
-          />
-          <input
-            type="date"
-            value={travelDate}
-            onChange={(e) => setTravelDate(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500"
-          />
-          <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
-            Save
-          </button>
-        </form>
+          <div className="space-y-3">
+            {itineraries.length === 0 ? (
+              <p className="text-xs text-zinc-600 font-mono text-center py-4">No active flight itineraries recorded.</p>
+            ) : (
+              itineraries.map((item) => (
+                <div key={item.id} className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-purple-400 font-mono text-xs">
+                      {item.flight_number}
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-zinc-200">{item.route}</span>
+                      <span className="block text-[10px] font-mono text-zinc-500 uppercase">{item.status}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800/60">
+                    <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>{item.travel_date}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </>
       )}
-
-      <div className="space-y-3">
-        {itineraries.length === 0 ? (
-          <p className="text-xs text-zinc-600 font-mono text-center py-4">No active flight itineraries recorded.</p>
-        ) : (
-          itineraries.map((item) => (
-            <div key={item.id} className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-purple-400 font-mono text-xs">
-                  {item.flight_number}
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-zinc-200">{item.route}</span>
-                  <span className="block text-[10px] font-mono text-zinc-500 uppercase">{item.status}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800/60">
-                <Calendar className="w-3.5 h-3.5 text-zinc-500" />
-                <span>{item.travel_date}</span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+    </CollapsibleSection>
   );
 }
 </file>
@@ -1193,6 +1453,7 @@ import { useState, useEffect } from 'react';
 import { Image as ImageIcon, Music, Plus, Loader2, Sparkles, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { fetchAppleMusicArt } from '@/lib/musicScraper';
+import CollapsibleSection from './CollapsibleSection';
 
 interface SharedRecord {
   id: string;
@@ -1206,9 +1467,12 @@ interface SharedRecord {
 
 interface MemoryVaultProps {
   currentUser: 'Michael' | 'Tamae';
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
 }
 
-export default function MemoryVault({ currentUser }: MemoryVaultProps) {
+export default function MemoryVault({ currentUser, title, subtitle, icon }: MemoryVaultProps) {
   const [records, setRecords] = useState<SharedRecord[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -1216,6 +1480,8 @@ export default function MemoryVault({ currentUser }: MemoryVaultProps) {
   const [caption, setCaption] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [externalLink, setExternalLink] = useState('');
+  
+  const [isOpen, setIsOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -1286,8 +1552,8 @@ export default function MemoryVault({ currentUser }: MemoryVaultProps) {
         finalImageUrl = scrapedArt || 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=500&auto=format&fit=crop';
       }
 
-      // Frictionless location assignment
-      const location = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+      // Location mapping direct to user
+      const location = currentUser === 'Michael' ? 'Michael' : 'Tamae';
 
       await supabase
         .from('memories')
@@ -1310,152 +1576,173 @@ export default function MemoryVault({ currentUser }: MemoryVaultProps) {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center text-stone-500 font-mono text-xs py-4">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Records...
-      </div>
-    );
-  }
+  const handleAddClick = () => {
+    if (!isOpen) {
+      setIsOpen(true);
+      setIsAdding(true);
+    } else {
+      setIsAdding(!isAdding);
+    }
+  };
+
+  const actionButton = (
+    <button 
+      onClick={handleAddClick}
+      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all"
+    >
+      <Plus className="w-3.5 h-3.5" />
+      <span className="hidden md:inline">Add Record</span>
+      <span className="md:hidden">Add</span>
+    </button>
+  );
 
   return (
-    <div>
-      <div className="flex items-center justify-end mb-4 pb-3 border-b border-zinc-800/40">
-        <button 
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Add Record</span>
-        </button>
-      </div>
-
-      {isAdding && (
-        <form onSubmit={addRecord} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col gap-3">
-          <div className="flex gap-3 mb-1">
-            <button
-              type="button"
-              onClick={() => { setMediaType('image'); setExternalLink(''); }}
-              className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all ${mediaType === 'image' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
-            >
-              <ImageIcon className="w-3.5 h-3.5" /> Photo
-            </button>
-            <button
-              type="button"
-              onClick={() => { setMediaType('music'); setImageFile(null); }}
-              className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all ${mediaType === 'music' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
-            >
-              <Music className="w-3.5 h-3.5" /> Music
-            </button>
-          </div>
-
-          <div className="flex gap-3">
-            {mediaType === 'image' ? (
-              <input
-                key="image-upload-input"
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                className="flex-1 block w-full text-sm text-stone-400 file:mr-3 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-mono file:bg-stone-800 file:text-stone-300 hover:file:bg-stone-700 transition-all bg-zinc-950 border border-zinc-800 rounded-lg cursor-pointer focus:outline-none focus:border-stone-500"
-              />
-            ) : (
-              <input
-                key="music-link-input"
-                type="text"
-                placeholder="Paste Apple Music Link..."
-                value={externalLink}
-                onChange={(e) => setExternalLink(e.target.value)}
-                className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500 font-mono"
-              />
-            )}
-          </div>
-          
-          <input
-            type="text"
-            placeholder={mediaType === 'music' ? 'Caption (e.g., Gesaffelstein - Pursuit)' : 'Caption (e.g., Sunset by the lake)'}
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500"
-          />
-
-          <button 
-            type="submit" 
-            disabled={isSaving}
-            className="py-2.5 mt-1 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 text-zinc-950 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4 text-amber-700" />
-            )}
-            <span>{isSaving ? 'Fetching & Saving...' : 'Save to Records'}</span>
-          </button>
-        </form>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {records.length === 0 ? (
-          <p className="text-xs text-stone-600 font-mono text-center py-8 col-span-2">No records logged yet.</p>
-        ) : (
-          records.map((record) => {
-            const isMusic = record.media_type === 'music';
-            
-            return (
-              <div key={record.id} className="rounded-xl overflow-hidden bg-zinc-900/40 border border-zinc-800/60 group relative flex flex-col">
-                <div className={`${isMusic ? 'h-56 sm:h-64' : 'h-48 md:h-56'} overflow-hidden relative bg-zinc-950`}>
-                  {isMusic && record.external_link ? (
-                    <a href={record.external_link} target="_blank" rel="noreferrer" className="block w-full h-full cursor-pointer">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img 
-                        src={record.image_url} 
-                        alt={record.caption} 
-                        className={`w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 ${isMusic ? 'blur-[2px] scale-105 group-hover:blur-none' : ''}`} 
-                      />
-                    </a>
-                  ) : (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img 
-                      src={record.image_url} 
-                      alt={record.caption} 
-                      className={`w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 ${isMusic ? 'blur-[2px] scale-105 group-hover:blur-none' : ''}`} 
-                    />
-                  )}
-                  
-                  <div className="absolute top-3 left-3 flex gap-2 pointer-events-none">
-                    <span className="px-2 py-1 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-stone-300 border border-zinc-800 flex items-center gap-1.5 shadow-sm">
-                      {isMusic ? <Music className="w-3 h-3 text-amber-500" /> : <ImageIcon className="w-3 h-3 text-stone-400" />}
-                      {record.location}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="p-4 flex-1 flex flex-col justify-between bg-zinc-900/40">
-                  <div>
-                    <p className="text-sm font-medium text-stone-200">{record.caption}</p>
-                  </div>
-                  
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-[10px] font-mono text-stone-500">
-                      {new Date(record.created_at).toLocaleDateString()}
-                    </span>
-                    {isMusic && record.external_link && (
-                      <a 
-                        href={record.external_link} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10"
-                      >
-                        Listen <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-                </div>
+    <CollapsibleSection
+      title={title}
+      subtitle={subtitle}
+      icon={icon}
+      isControlled={true}
+      isOpen={isOpen}
+      onToggle={setIsOpen}
+      actionButton={actionButton}
+    >
+      {loading ? (
+        <div className="flex items-center justify-center text-stone-500 font-mono text-xs py-4">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Records...
+        </div>
+      ) : (
+        <>
+          {isAdding && (
+            <form onSubmit={addRecord} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col gap-3">
+              <div className="flex gap-3 mb-1">
+                <button
+                  type="button"
+                  onClick={() => { setMediaType('image'); setExternalLink(''); }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all ${mediaType === 'image' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+                >
+                  <ImageIcon className="w-3.5 h-3.5" /> Photo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setMediaType('music'); setImageFile(null); }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all ${mediaType === 'music' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+                >
+                  <Music className="w-3.5 h-3.5" /> Music
+                </button>
               </div>
-            );
-          })
-        )}
-      </div>
-    </div>
+
+              <div className="flex gap-3">
+                {mediaType === 'image' ? (
+                  <input
+                    key="image-upload-input"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    className="flex-1 block w-full text-sm text-stone-400 file:mr-3 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-mono file:bg-stone-800 file:text-stone-300 hover:file:bg-stone-700 transition-all bg-zinc-950 border border-zinc-800 rounded-lg cursor-pointer focus:outline-none focus:border-stone-500"
+                  />
+                ) : (
+                  <input
+                    key="music-link-input"
+                    type="text"
+                    placeholder="Paste Apple Music Link..."
+                    value={externalLink}
+                    onChange={(e) => setExternalLink(e.target.value)}
+                    className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500 font-mono"
+                  />
+                )}
+              </div>
+              
+              <input
+                type="text"
+                placeholder={mediaType === 'music' ? 'Caption (e.g., Gesaffelstein - Pursuit)' : 'Caption (e.g., Sunset by the lake)'}
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500"
+              />
+
+              <button 
+                type="submit" 
+                disabled={isSaving}
+                className="py-2.5 mt-1 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 text-zinc-950 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 text-amber-700" />
+                )}
+                <span>{isSaving ? 'Fetching & Saving...' : 'Save to Records'}</span>
+              </button>
+            </form>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {records.length === 0 ? (
+              <p className="text-xs text-stone-600 font-mono text-center py-8 col-span-2">No records logged yet.</p>
+            ) : (
+              records.map((record) => {
+                const isMusic = record.media_type === 'music';
+                
+                // Backwards compatibility map for older database records
+                const displayLocation = record.location === 'Texas' ? 'Michael' : record.location === 'Kanagawa' ? 'Tamae' : record.location;
+                
+                return (
+                  <div key={record.id} className="rounded-xl overflow-hidden bg-zinc-900/40 border border-zinc-800/60 group relative flex flex-col">
+                    <div className={`${isMusic ? 'h-56 sm:h-64' : 'h-48 md:h-56'} overflow-hidden relative bg-zinc-950`}>
+                      {isMusic && record.external_link ? (
+                        <a href={record.external_link} target="_blank" rel="noreferrer" className="block w-full h-full cursor-pointer">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img 
+                            src={record.image_url} 
+                            alt={record.caption} 
+                            className={`w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 ${isMusic ? 'blur-[2px] scale-105 group-hover:blur-none' : ''}`} 
+                          />
+                        </a>
+                      ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img 
+                          src={record.image_url} 
+                          alt={record.caption} 
+                          className={`w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 ${isMusic ? 'blur-[2px] scale-105 group-hover:blur-none' : ''}`} 
+                        />
+                      )}
+                      
+                      <div className="absolute top-3 left-3 flex gap-2 pointer-events-none">
+                        <span className="px-2 py-1 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-stone-300 border border-zinc-800 flex items-center gap-1.5 shadow-sm">
+                          {isMusic ? <Music className="w-3 h-3 text-amber-500" /> : <ImageIcon className="w-3 h-3 text-stone-400" />}
+                          {displayLocation}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 flex-1 flex flex-col justify-between bg-zinc-900/40">
+                      <div>
+                        <p className="text-sm font-medium text-stone-200">{record.caption}</p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-[10px] font-mono text-stone-500">
+                          {new Date(record.created_at).toLocaleDateString()}
+                        </span>
+                        {isMusic && record.external_link && (
+                          <a 
+                            href={record.external_link} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10"
+                          >
+                            Listen <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </>
+      )}
+    </CollapsibleSection>
   );
 }
 </file>
@@ -1464,8 +1751,9 @@ export default function MemoryVault({ currentUser }: MemoryVaultProps) {
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, CheckCircle2, Clock, Plus, Loader2 } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, Plus, Loader2, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import CollapsibleSection from './CollapsibleSection';
 
 interface Milestone {
   id: string;
@@ -1477,14 +1765,24 @@ interface Milestone {
 
 interface MilestoneTrackerProps {
   currentUser: 'Michael' | 'Tamae';
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
 }
 
-export default function MilestoneTracker({ currentUser }: MilestoneTrackerProps) {
+export default function MilestoneTracker({ currentUser, title, subtitle, icon }: MilestoneTrackerProps) {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
+  
   const [newTitle, setNewTitle] = useState('');
   const [newDate, setNewDate] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDate, setEditDate] = useState('');
+
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -1512,13 +1810,8 @@ export default function MilestoneTracker({ currentUser }: MilestoneTrackerProps)
 
   const toggleStatus = async (id: string, currentStatus: Milestone['status']) => {
     const nextStatus: Milestone['status'] = currentStatus === 'achieved' ? 'planned' : 'achieved';
-    
     setMilestones(milestones.map(m => m.id === id ? { ...m, status: nextStatus } : m));
-
-    await supabase
-      .from('milestones')
-      .update({ status: nextStatus })
-      .eq('id', id);
+    await supabase.from('milestones').update({ status: nextStatus }).eq('id', id);
   };
 
   const addMilestone = async (e: React.FormEvent) => {
@@ -1538,73 +1831,152 @@ export default function MilestoneTracker({ currentUser }: MilestoneTrackerProps)
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Milestones...
-      </div>
-    );
-  }
+  const startEditing = (item: Milestone) => {
+    setEditingId(item.id);
+    setEditTitle(item.title);
+    setEditDate(item.target_date);
+  };
+
+  const saveEdit = async (e: React.FormEvent, id: string) => {
+    e.preventDefault();
+    if (!editTitle || !editDate) return;
+
+    setMilestones(milestones.map(m => m.id === id ? { ...m, title: editTitle, target_date: editDate } : m));
+    setEditingId(null);
+    await supabase.from('milestones').update({ title: editTitle, target_date: editDate }).eq('id', id);
+  };
+
+  const handleAddClick = () => {
+    if (!isOpen) {
+      setIsOpen(true);
+      setIsAdding(true);
+    } else {
+      setIsAdding(!isAdding);
+    }
+  };
+
+  const actionButton = (
+    <button 
+      onClick={handleAddClick}
+      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
+    >
+      <Plus className="w-3.5 h-3.5" />
+      <span className="hidden md:inline">Add Target</span>
+      <span className="md:hidden">Add</span>
+    </button>
+  );
 
   return (
-    <div>
-      <div className="flex items-center justify-end mb-4 pb-3 border-b border-zinc-800/40">
-        <button 
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Add Target</span>
-        </button>
-      </div>
+    <CollapsibleSection
+      title={title}
+      subtitle={subtitle}
+      icon={icon}
+      isControlled={true}
+      isOpen={isOpen}
+      onToggle={setIsOpen}
+      actionButton={actionButton}
+    >
+      {loading ? (
+        <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Milestones...
+        </div>
+      ) : (
+        <>
+          {isAdding && (
+            <form onSubmit={addMilestone} className="mb-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row gap-3">
+              <input
+                type="text"
+                placeholder="Milestone title (e.g., Summer Visit)"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
+                autoFocus
+              />
+              <input
+                type="date"
+                value={newDate}
+                onChange={(e) => setNewDate(e.target.value)}
+                className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500"
+              />
+              <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
+                Save
+              </button>
+            </form>
+          )}
 
-      {isAdding && (
-        <form onSubmit={addMilestone} className="mb-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="Milestone title (e.g., Summer Visit)"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
-          />
-          <input
-            type="date"
-            value={newDate}
-            onChange={(e) => setNewDate(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500"
-          />
-          <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
-            Save
-          </button>
-        </form>
-      )}
+          <div className="space-y-3">
+            {milestones.map((item) => (
+              <div 
+                key={item.id} 
+                className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:border-zinc-700/60 transition-all group"
+              >
+                {editingId === item.id ? (
+                  <form onSubmit={(e) => saveEdit(e, item.id)} className="flex flex-col md:flex-row gap-3">
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="flex-1 p-2 rounded-lg bg-zinc-950 border border-amber-900/50 text-sm text-zinc-200 focus:outline-none focus:border-amber-500"
+                      autoFocus
+                    />
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      className="p-2 rounded-lg bg-zinc-950 border border-amber-900/50 text-sm font-mono text-zinc-200 focus:outline-none focus:border-amber-500"
+                    />
+                    <div className="flex gap-2">
+                      <button type="submit" className="px-4 py-2 rounded-lg bg-amber-600/80 hover:bg-amber-500 text-white text-xs font-medium transition-all">
+                        Save
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => setEditingId(null)}
+                        className="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-all flex items-center justify-center"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div 
+                        onClick={() => toggleStatus(item.id, item.status)}
+                        className="p-1 -ml-1 rounded-md hover:bg-zinc-800/50 cursor-pointer shrink-0"
+                        title="Toggle Status"
+                      >
+                        {item.status === 'achieved' ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 transition-transform hover:scale-110" />
+                        ) : (
+                          <Clock className="w-4 h-4 text-zinc-500 transition-transform hover:scale-110" />
+                        )}
+                      </div>
+                      <span 
+                        onClick={() => startEditing(item)}
+                        className={`text-sm font-medium transition-colors cursor-pointer hover:text-amber-400 truncate flex-1 ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}
+                        title="Click to edit"
+                      >
+                        {item.title}
+                      </span>
+                    </div>
 
-      <div className="space-y-3">
-        {milestones.map((item) => (
-          <div 
-            key={item.id} 
-            onClick={() => toggleStatus(item.id, item.status)}
-            className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:border-zinc-700/60 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center gap-3">
-              {item.status === 'achieved' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
-              ) : (
-                <Clock className="w-4 h-4 text-zinc-500 transition-transform group-hover:scale-110" />
-              )}
-              <span className={`text-sm font-medium transition-colors ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
-                {item.title}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800/60">
-              <Calendar className="w-3.5 h-3.5 text-zinc-500" />
-              <span>{item.target_date}</span>
-            </div>
+                    <div 
+                      onClick={() => startEditing(item)}
+                      className="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800/60 cursor-pointer hover:border-amber-900/50 hover:text-amber-400/80 transition-all shrink-0 ml-3"
+                      title="Click to edit"
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>{item.target_date}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-    </div>
+        </>
+      )}
+    </CollapsibleSection>
   );
 }
 </file>
@@ -1899,11 +2271,11 @@ export default function SanctuaryNotes({ currentUser }: SanctuaryNotesProps) {
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Session } from '@supabase/supabase-js';
+import { Session, RealtimeChannel } from '@supabase/supabase-js';
 import SanctuaryStatus from '@/components/SanctuaryStatus';
 import WeeklyUnlock from '@/components/WeeklyUnlock';
 import CountdownTicker from '@/components/CountdownTicker';
-import DualZoneCalendar from '@/components/DualZoneCalendar';
+import AvailabilityCalendar from '@/components/AvailabilityCalendar';
 import MilestoneTracker from '@/components/MilestoneTracker';
 import KeySuccessFactors from '@/components/KeySuccessFactors';
 import ItineraryTracker from '@/components/ItineraryTracker';
@@ -1911,7 +2283,7 @@ import MemoryVault from '@/components/MemoryVault';
 import SanctuaryNotes from '@/components/SanctuaryNotes';
 import CollapsibleSection from '@/components/CollapsibleSection';
 import { supabase } from '@/lib/supabase';
-import { Sparkles, Globe2, Target, Lightbulb, Plane, Image as ImageIcon, MessageSquare, Clock } from 'lucide-react';
+import { Sparkles, Globe2, Target, Lightbulb, Plane, Image as ImageIcon, MessageSquare, CalendarDays } from 'lucide-react';
 
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
@@ -1919,9 +2291,9 @@ export default function Home() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   
-  // Temporarily default to 'ja' to prevent UI flashing before the session determines identity
   const [lang, setLang] = useState<'en' | 'ja'>('ja'); 
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const [presenceChannel, setPresenceChannel] = useState<RealtimeChannel | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1940,7 +2312,7 @@ export default function Home() {
 
   const currentUser = session?.user?.email === 'michael@en-musubi.local' ? 'Michael' : 'Tamae';
 
-  // Smart Language Initialization based on User Identity or LocalStorage Override
+  // Smart Language Initialization
   useEffect(() => {
     if (session) {
       const savedLang = localStorage.getItem('preferredLang');
@@ -1948,36 +2320,38 @@ export default function Home() {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setLang(savedLang);
       } else {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLang(currentUser === 'Michael' ? 'en' : 'ja');
       }
     }
   }, [session, currentUser]);
 
+  // Realtime Presence & Remote Refresh Listener
   useEffect(() => {
     if (!session) return;
 
-    const presenceChannel = supabase.channel('online-presence', {
-      config: {
-        presence: {
-          key: currentUser,
-        },
-      },
+    const channel = supabase.channel('online-presence', {
+      config: { presence: { key: currentUser } },
     });
+    
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPresenceChannel(channel);
 
-    presenceChannel
+    channel
       .on('presence', { event: 'sync' }, () => {
-        const state = presenceChannel.presenceState();
+        const state = channel.presenceState();
         setOnlineUsers(Object.keys(state));
+      })
+      .on('broadcast', { event: 'force-refresh' }, () => {
+        window.location.reload();
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          await presenceChannel.track({ online: true });
+          await channel.track({ online: true });
         }
       });
 
     return () => {
-      supabase.removeChannel(presenceChannel);
+      supabase.removeChannel(channel);
     };
   }, [session, currentUser]);
 
@@ -2003,6 +2377,17 @@ export default function Home() {
     alert(lang === 'ja' ? 'デフォルト言語を保存しました！' : 'Default language saved!');
   };
 
+  const handleAdminSync = async () => {
+    if (presenceChannel) {
+      await presenceChannel.send({
+        type: 'broadcast',
+        event: 'force-refresh',
+        payload: { action: 'refresh' },
+      });
+      window.location.reload();
+    }
+  };
+
   const t = {
     en: {
       title: "Kanagawa — Texas",
@@ -2016,8 +2401,8 @@ export default function Home() {
       vault_sub: "Moments across Kanagawa and Texas",
       notes: "Our Notes",
       notes_sub: "Shared thoughts and messages",
-      sync: "Schedule Sync",
-      sync_sub: "Coordinating JST & CDT time zones",
+      sync: "Availability",
+      sync_sub: "Blackout dates and target visits",
       langToggle: "日本語"
     },
     ja: {
@@ -2032,8 +2417,8 @@ export default function Home() {
       vault_sub: "神奈川とテキサスでの瞬間",
       notes: "私たちのノート",
       notes_sub: "共有する考えとメッセージ",
-      sync: "スケジュール同期",
-      sync_sub: "JSTとCDTのタイムゾーン調整",
+      sync: "スケジュール調整",
+      sync_sub: "訪問可能日と予定",
       langToggle: "English"
     }
   };
@@ -2083,6 +2468,10 @@ export default function Home() {
     );
   }
 
+  const tamaeOnline = onlineUsers.includes('Tamae');
+  const michaelOnline = onlineUsers.includes('Michael');
+  const bothOnline = tamaeOnline && michaelOnline;
+
   return (
     <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-stone-800 relative overflow-hidden text-stone-100">
       <div className="absolute w-200 h-200 bg-stone-800/10 rounded-full blur-3xl pointer-events-none -top-96 left-1/2 -translate-x-1/2"></div>
@@ -2091,16 +2480,21 @@ export default function Home() {
         <div>
           <h1 className="text-4xl font-bold tracking-widest text-stone-100 flex items-center gap-4">
             縁結び 
-            <div className="flex items-center gap-3">
-              <span className={`w-10 h-10 rounded-full overflow-hidden border inline-block shadow-md shrink-0 transition-all duration-700 ${onlineUsers.includes('Tamae') ? 'border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.3)] scale-105' : 'border-stone-500/40 bg-zinc-900'}`}>
+            
+            <div className="flex items-center">
+              <span className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 ${tamaeOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png" alt="Tamae" className="w-full h-full object-cover" />
               </span>
-              <span className={`w-10 h-10 rounded-full overflow-hidden border inline-block shadow-md shrink-0 transition-all duration-700 ${onlineUsers.includes('Michael') ? 'border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.3)] scale-105' : 'border-stone-500/40 bg-zinc-900'}`}>
+              
+              <div className={`transition-all duration-1000 h-0.5 ${bothOnline ? 'w-6 bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]' : 'w-3 bg-transparent'}`}></div>
+              
+              <span className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 ${michaelOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png" alt="Michael" className="w-full h-full object-cover" />
               </span>
             </div>
+
           </h1>
           <p className="text-stone-400 text-sm font-mono mt-2 tracking-wider font-medium">{currentLang.title}</p>
         </div>
@@ -2113,12 +2507,23 @@ export default function Home() {
             <Globe2 className="w-4 h-4 text-stone-400" />
             <span className="font-medium">{currentLang.langToggle}</span>
           </button>
-          <button 
-            onClick={handleSetDefaultLang}
-            className="text-[10px] text-stone-500 hover:text-stone-300 transition-colors uppercase font-mono tracking-wider cursor-pointer"
-          >
-            {lang === 'ja' ? 'デフォルトにする' : 'Make Default'}
-          </button>
+          
+          <div className="flex items-center gap-3 mt-1">
+            {currentUser === 'Michael' && (
+              <button 
+                onClick={handleAdminSync}
+                className="text-[10px] text-red-500/70 hover:text-red-400 transition-colors uppercase font-mono tracking-wider cursor-pointer"
+              >
+                Force Remote Sync
+              </button>
+            )}
+            <button 
+              onClick={handleSetDefaultLang}
+              className="text-[10px] text-stone-500 hover:text-stone-300 transition-colors uppercase font-mono tracking-wider cursor-pointer"
+            >
+              {lang === 'ja' ? 'デフォルトにする' : 'Make Default'}
+            </button>
+          </div>
         </div>
       </div>
       
@@ -2129,29 +2534,40 @@ export default function Home() {
         
         <CountdownTicker lang={lang} />
 
-        <CollapsibleSection title={currentLang.milestones} subtitle={currentLang.milestones_sub} icon={<Target className="w-5 h-5" />} defaultOpen={false}>
-          <MilestoneTracker currentUser={currentUser} />
-        </CollapsibleSection>
+        <MilestoneTracker 
+          currentUser={currentUser} 
+          title={currentLang.milestones} 
+          subtitle={currentLang.milestones_sub} 
+          icon={<Target className="w-5 h-5" />} 
+        />
 
-        <CollapsibleSection title={currentLang.vault} subtitle={currentLang.vault_sub} icon={<ImageIcon className="w-5 h-5" />} defaultOpen={false}>
-          <MemoryVault currentUser={currentUser} />
-        </CollapsibleSection>
+        <MemoryVault 
+          currentUser={currentUser} 
+          title={currentLang.vault} 
+          subtitle={currentLang.vault_sub} 
+          icon={<ImageIcon className="w-5 h-5" />} 
+        />
 
         <CollapsibleSection title={currentLang.notes} subtitle={currentLang.notes_sub} icon={<MessageSquare className="w-5 h-5" />} defaultOpen={false}>
           <SanctuaryNotes currentUser={currentUser} />
         </CollapsibleSection>
 
-        <CollapsibleSection title={currentLang.ksf} subtitle={currentLang.ksf_sub} icon={<Lightbulb className="w-5 h-5" />} defaultOpen={false}>
-          <KeySuccessFactors />
+        <CollapsibleSection title={currentLang.sync} subtitle={currentLang.sync_sub} icon={<CalendarDays className="w-5 h-5" />} defaultOpen={false}>
+          <AvailabilityCalendar currentUser={currentUser} lang={lang} />
         </CollapsibleSection>
 
-        <CollapsibleSection title={currentLang.travel} subtitle={currentLang.travel_sub} icon={<Plane className="w-5 h-5" />} defaultOpen={false}>
-          <ItineraryTracker currentUser={currentUser} />
-        </CollapsibleSection>
+        <ItineraryTracker 
+          currentUser={currentUser} 
+          title={currentLang.travel} 
+          subtitle={currentLang.travel_sub} 
+          icon={<Plane className="w-5 h-5" />} 
+        />
 
-        <CollapsibleSection title={currentLang.sync} subtitle={currentLang.sync_sub} icon={<Clock className="w-5 h-5" />} defaultOpen={false}>
-          <DualZoneCalendar />
-        </CollapsibleSection>
+        <KeySuccessFactors 
+          title={currentLang.ksf} 
+          subtitle={currentLang.ksf_sub} 
+          icon={<Lightbulb className="w-5 h-5" />} 
+        />
       </div>
     </main>
   );
