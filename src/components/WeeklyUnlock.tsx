@@ -27,16 +27,20 @@ export default function WeeklyUnlock({ lang, currentUser }: WeeklyUnlockProps) {
     let isMounted = true;
 
     async function fetchActivePrompt() {
+      // 1. Await the session to ensure the auth token has fully propagated to the REST client
+      await supabase.auth.getSession();
+
       const { data, error } = await supabase
         .from('weekly_prompts')
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle(); 
 
       if (isMounted) {
-        if (!error && data) setPrompt(data);
+        if (error) console.error("Failed to load prompt:", error);
+        if (data) setPrompt(data);
         setLoading(false);
       }
     }
@@ -87,11 +91,16 @@ export default function WeeklyUnlock({ lang, currentUser }: WeeklyUnlockProps) {
     );
   }
 
+  // If there is no active prompt in the database, hide the module entirely
   if (!prompt) return null;
 
   const myCurrentAnswer = currentUser === 'Michael' ? prompt.michael_answer : prompt.tamae_answer;
   const partnerAnswer = currentUser === 'Michael' ? prompt.tamae_answer : prompt.michael_answer;
   const bothAnswered = !!(prompt.michael_answer && prompt.tamae_answer);
+
+  // Dynamic pronouns based on who is logged in
+  const partnerAnsweredTextEn = currentUser === 'Michael' ? 'She has already answered!' : 'He has already answered!';
+  const partnerAnsweredTextJa = currentUser === 'Michael' ? '彼女はすでに答えています！' : '彼はすでに答えています！';
 
   return (
     <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-amber-900/30 shadow-[0_8px_30px_rgb(0,0,0,0.5)] overflow-hidden relative">
@@ -125,7 +134,7 @@ export default function WeeklyUnlock({ lang, currentUser }: WeeklyUnlockProps) {
             />
             <div className="flex justify-between items-center mt-3">
               <span className="text-xs text-stone-500 font-mono">
-                {partnerAnswer ? (lang === 'ja' ? '彼女はすでに答えています！' : 'She has already answered!') : (lang === 'ja' ? 'まだ誰も答えていません' : 'Neither has answered yet.')}
+                {partnerAnswer ? (lang === 'ja' ? partnerAnsweredTextJa : partnerAnsweredTextEn) : (lang === 'ja' ? 'まだ誰も答えていません' : 'Neither has answered yet.')}
               </span>
               <button 
                 type="submit" 
