@@ -23,6 +23,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   const [lang, setLang] = useState<'en' | 'ja'>('ja'); 
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
   const [presenceChannel, setPresenceChannel] = useState<RealtimeChannel | null>(null);
+  const [activeFlare, setActiveFlare] = useState<'Michael' | 'Tamae' | null>(null);
 
   useEffect(() => {
     const savedLang = localStorage.getItem('preferredLang');
@@ -30,6 +31,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLang(savedLang);
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLang(currentUser === 'Michael' ? 'en' : 'ja');
     }
   }, [currentUser]);
@@ -49,6 +51,22 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       })
       .on('broadcast', { event: 'force-refresh' }, () => {
         window.location.reload();
+      })
+      // The "Thinking of You" Ripple Listener
+      .on('broadcast', { event: 'poke' }, ({ payload }) => {
+        const { from, to } = payload;
+        
+        // Flare the sender's avatar on the UI
+        setActiveFlare(from);
+        
+        // If the ripple is meant for the person holding this device, vibrate!
+        if (to === currentUser && typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate([30, 50, 30]); // Gentle heartbeat vibration
+        }
+        
+        setTimeout(() => {
+          setActiveFlare(null);
+        }, 1500);
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -75,6 +93,26 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       });
       window.location.reload();
     }
+  };
+
+  const handlePoke = async (target: 'Michael' | 'Tamae') => {
+    const bothOnline = onlineUsers.includes('Tamae') && onlineUsers.includes('Michael');
+    if (!bothOnline || !presenceChannel || target === currentUser) return;
+
+    // Optimistic UI: Flare your own avatar so you know it sent
+    setActiveFlare(currentUser);
+    setTimeout(() => setActiveFlare(null), 1500);
+
+    // Tiny tactile feedback for the sender
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(15); 
+    }
+
+    await presenceChannel.send({
+      type: 'broadcast',
+      event: 'poke',
+      payload: { from: currentUser, to: target },
+    });
   };
 
   const t = {
@@ -124,18 +162,45 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           <h1 className="text-4xl font-bold tracking-widest text-stone-100 flex items-center gap-4">
             縁結び 
             
+            {/* The Connected Avatars */}
             <div className="flex items-center">
-              <span className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 ${tamaeOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}`}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png" alt="Tamae" className="w-full h-full object-cover" />
-              </span>
               
+              {/* Tamae's Avatar */}
+              <div className="relative flex items-center justify-center">
+                {activeFlare === 'Tamae' && (
+                  <div className="absolute w-11 h-11 rounded-full bg-amber-500 animate-ping opacity-75"></div>
+                )}
+                <span 
+                  onClick={() => handlePoke('Tamae')}
+                  className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 
+                    ${tamaeOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}
+                    ${bothOnline && currentUser === 'Michael' ? 'cursor-pointer hover:border-amber-400 hover:scale-115' : ''}
+                  `}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png" alt="Tamae" className="w-full h-full object-cover" />
+                </span>
+              </div>
+              
+              {/* The Pulse Line */}
               <div className={`transition-all duration-1000 h-0.5 ${bothOnline ? 'w-6 bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]' : 'w-3 bg-transparent'}`}></div>
               
-              <span className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 ${michaelOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}`}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png" alt="Michael" className="w-full h-full object-cover" />
-              </span>
+              {/* Michael's Avatar */}
+              <div className="relative flex items-center justify-center">
+                {activeFlare === 'Michael' && (
+                  <div className="absolute w-11 h-11 rounded-full bg-amber-500 animate-ping opacity-75"></div>
+                )}
+                <span 
+                  onClick={() => handlePoke('Michael')}
+                  className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 
+                    ${michaelOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}
+                    ${bothOnline && currentUser === 'Tamae' ? 'cursor-pointer hover:border-amber-400 hover:scale-115' : ''}
+                  `}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png" alt="Michael" className="w-full h-full object-cover" />
+                </span>
+              </div>
             </div>
 
           </h1>
