@@ -10,9 +10,14 @@ interface Itinerary {
   route: string;
   travel_date: string;
   status: string;
+  created_by?: string;
 }
 
-export default function ItineraryTracker() {
+interface ItineraryTrackerProps {
+  currentUser: 'Michael' | 'Tamae';
+}
+
+export default function ItineraryTracker({ currentUser }: ItineraryTrackerProps) {
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [loading, setLoading] = useState(true);
   const [flightNumber, setFlightNumber] = useState('');
@@ -63,7 +68,7 @@ export default function ItineraryTracker() {
 
     await supabase
       .from('itineraries')
-      .insert([{ flight_number: flightNumber, route, travel_date: travelDate, status: 'Confirmed' }]);
+      .insert([{ flight_number: flightNumber, route, travel_date: travelDate, status: 'Confirmed', created_by: currentUser }]);
 
     setFlightNumber('');
     setRoute('');

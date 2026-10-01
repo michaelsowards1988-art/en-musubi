@@ -7,9 +7,10 @@ import { enUS, ja } from 'date-fns/locale';
 
 interface SanctuaryStatusProps {
   lang: 'en' | 'ja';
+  currentUser: 'Michael' | 'Tamae';
 }
 
-export default function SanctuaryStatus({ lang }: SanctuaryStatusProps) {
+export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusProps) {
   const [now, setNow] = useState(new Date());
   const [jpWeather, setJpWeather] = useState<{ tempC: number | null, code: number | null, isDay: boolean | null }>({ tempC: null, code: null, isDay: null });
   const [txWeather, setTxWeather] = useState<{ tempC: number | null, code: number | null, isDay: boolean | null }>({ tempC: null, code: null, isDay: null });
@@ -20,7 +21,6 @@ export default function SanctuaryStatus({ lang }: SanctuaryStatusProps) {
   }, []);
 
   useEffect(() => {
-    // Fetch live weather + day/night status for Kanagawa (Yokohama) and Texas (Hawkins)
     Promise.all([
       fetch('https://api.open-meteo.com/v1/forecast?latitude=35.4478&longitude=139.6425&current=temperature_2m,weather_code,is_day'),
       fetch('https://api.open-meteo.com/v1/forecast?latitude=32.5896&longitude=-95.1972&current=temperature_2m,weather_code,is_day')
@@ -37,7 +37,6 @@ export default function SanctuaryStatus({ lang }: SanctuaryStatusProps) {
   const texasHour = parseInt(formatInTimeZone(now, 'America/Chicago', 'H'), 10);
   const japanHour = parseInt(formatInTimeZone(now, 'Asia/Tokyo', 'H'), 10);
 
-  // Use the API's real day/night status, fallback to a safer time window if the API hasn't loaded yet
   const isTexasDay = txWeather.isDay !== null ? txWeather.isDay : (texasHour >= 6 && texasHour < 19);
   const isJapanDay = jpWeather.isDay !== null ? jpWeather.isDay : (japanHour >= 6 && japanHour < 19);
 
@@ -67,65 +66,70 @@ export default function SanctuaryStatus({ lang }: SanctuaryStatusProps) {
     return `${Math.round(tempC)}°C / ${Math.round(tempF)}°F`;
   };
 
+  const japanCard = (
+    <div key="jp" className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
+      <div className="flex items-center gap-4">
+        <div className={`p-3.5 rounded-xl border shadow-inner ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+          {isJapanDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+        </div>
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? '神奈川 (JST)' : 'Kanagawa (JST)'}</h4>
+            <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+              <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(jpWeather.tempC)}
+            </span>
+          </div>
+          <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
+            {formatInTimeZone(now, 'Asia/Tokyo', 'h:mm:ss a')}
+          </p>
+          <p className="text-sm text-zinc-300 mt-0.5 font-mono">{japanFormattedDate}</p>
+        </div>
+      </div>
+      <div className="flex flex-col items-end gap-2">
+        <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
+          {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+        </span>
+        <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+          <jpWeatherDetails.Icon className="w-3.5 h-3.5" /> {jpWeatherDetails.text}
+        </span>
+      </div>
+    </div>
+  );
+
+  const texasCard = (
+    <div key="tx" className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
+      <div className="flex items-center gap-4">
+        <div className={`p-3.5 rounded-xl border shadow-inner ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+          {isTexasDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+        </div>
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? 'テキサス (CDT)' : 'Texas (CDT)'}</h4>
+            <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+              <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(txWeather.tempC)}
+            </span>
+          </div>
+          <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
+            {formatInTimeZone(now, 'America/Chicago', 'h:mm:ss a')}
+          </p>
+          <p className="text-sm text-zinc-300 mt-0.5 font-mono">{texasFormattedDate}</p>
+        </div>
+      </div>
+      <div className="flex flex-col items-end gap-2">
+        <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
+          {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+        </span>
+        <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+          <txWeatherDetails.Icon className="w-3.5 h-3.5" /> {txWeatherDetails.text}
+        </span>
+      </div>
+    </div>
+  );
+
   return (
     <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      {/* Kanagawa Status (Tamae First) */}
-      <div className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
-        <div className="flex items-center gap-4">
-          <div className={`p-3.5 rounded-xl border shadow-inner ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
-            {isJapanDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? '神奈川 (JST)' : 'Kanagawa (JST)'}</h4>
-              <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
-                <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(jpWeather.tempC)}
-              </span>
-            </div>
-            <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
-              {formatInTimeZone(now, 'Asia/Tokyo', 'h:mm:ss a')}
-            </p>
-            <p className="text-sm text-zinc-300 mt-0.5 font-mono">{japanFormattedDate}</p>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
-            {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
-          </span>
-          <span className="text-xs text-zinc-400 flex items-center gap-1.5">
-            <jpWeatherDetails.Icon className="w-3.5 h-3.5" /> {jpWeatherDetails.text}
-          </span>
-        </div>
-      </div>
-
-      {/* Texas Status */}
-      <div className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
-        <div className="flex items-center gap-4">
-          <div className={`p-3.5 rounded-xl border shadow-inner ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
-            {isTexasDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? 'テキサス (CDT)' : 'Texas (CDT)'}</h4>
-              <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
-                <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(txWeather.tempC)}
-              </span>
-            </div>
-            <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
-              {formatInTimeZone(now, 'America/Chicago', 'h:mm:ss a')}
-            </p>
-            <p className="text-sm text-zinc-300 mt-0.5 font-mono">{texasFormattedDate}</p>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
-            {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
-          </span>
-          <span className="text-xs text-zinc-400 flex items-center gap-1.5">
-            <txWeatherDetails.Icon className="w-3.5 h-3.5" /> {txWeatherDetails.text}
-          </span>
-        </div>
-      </div>
+      {/* Partner-First Rendering: Show Tamae's card first if Michael is looking, and vice versa */}
+      {currentUser === 'Michael' ? [japanCard, texasCard] : [texasCard, japanCard]}
     </div>
   );
 }

@@ -9,9 +9,14 @@ interface Milestone {
   title: string;
   target_date: string;
   status: 'planned' | 'in_progress' | 'achieved';
+  created_by?: string;
 }
 
-export default function MilestoneTracker() {
+interface MilestoneTrackerProps {
+  currentUser: 'Michael' | 'Tamae';
+}
+
+export default function MilestoneTracker({ currentUser }: MilestoneTrackerProps) {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
@@ -59,7 +64,7 @@ export default function MilestoneTracker() {
 
     const { data, error } = await supabase
       .from('milestones')
-      .insert([{ title: newTitle, target_date: newDate, status: 'planned' }])
+      .insert([{ title: newTitle, target_date: newDate, status: 'planned', created_by: currentUser }])
       .select();
 
     if (!error && data) {

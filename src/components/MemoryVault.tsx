@@ -15,15 +15,17 @@ interface SharedRecord {
   created_at: string;
 }
 
-export default function MemoryVault() {
+interface MemoryVaultProps {
+  currentUser: 'Michael' | 'Tamae';
+}
+
+export default function MemoryVault({ currentUser }: MemoryVaultProps) {
   const [records, setRecords] = useState<SharedRecord[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Form State
   const [mediaType, setMediaType] = useState<'image' | 'music'>('image');
   const [caption, setCaption] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [location, setLocation] = useState('Texas');
   const [externalLink, setExternalLink] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -95,6 +97,9 @@ export default function MemoryVault() {
         finalImageUrl = scrapedArt || 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=500&auto=format&fit=crop';
       }
 
+      // Frictionless location assignment
+      const location = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+
       await supabase
         .from('memories')
         .insert([{ 
@@ -156,15 +161,6 @@ export default function MemoryVault() {
           </div>
 
           <div className="flex gap-3">
-            <select
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-xs font-mono text-stone-300 focus:outline-none focus:border-stone-500"
-            >
-              <option value="Texas">Texas</option>
-              <option value="Kanagawa">Kanagawa</option>
-            </select>
-            
             {mediaType === 'image' ? (
               <input
                 key="image-upload-input"
@@ -218,7 +214,6 @@ export default function MemoryVault() {
             return (
               <div key={record.id} className="rounded-xl overflow-hidden bg-zinc-900/40 border border-zinc-800/60 group relative flex flex-col">
                 <div className={`${isMusic ? 'h-56 sm:h-64' : 'h-48 md:h-56'} overflow-hidden relative bg-zinc-950`}>
-                  {/* Make the image clickable if it is music and has a link */}
                   {isMusic && record.external_link ? (
                     <a href={record.external_link} target="_blank" rel="noreferrer" className="block w-full h-full cursor-pointer">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -237,7 +232,6 @@ export default function MemoryVault() {
                     />
                   )}
                   
-                  {/* Badge overlay with pointer-events-none so it doesn't block the link click */}
                   <div className="absolute top-3 left-3 flex gap-2 pointer-events-none">
                     <span className="px-2 py-1 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-stone-300 border border-zinc-800 flex items-center gap-1.5 shadow-sm">
                       {isMusic ? <Music className="w-3 h-3 text-amber-500" /> : <ImageIcon className="w-3 h-3 text-stone-400" />}

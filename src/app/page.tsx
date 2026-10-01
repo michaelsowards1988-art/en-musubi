@@ -20,9 +20,9 @@ export default function Home() {
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [lang, setLang] = useState<'en' | 'ja'>('ja');
   
-  // Track who is actively looking at the app
+  // Temporarily default to 'ja' to prevent UI flashing before the session determines identity
+  const [lang, setLang] = useState<'en' | 'ja'>('ja'); 
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
   useEffect(() => {
@@ -42,7 +42,20 @@ export default function Home() {
 
   const currentUser = session?.user?.email === 'michael@en-musubi.local' ? 'Michael' : 'Tamae';
 
-  // Handle Realtime Presence (Who is online right now)
+  // Smart Language Initialization based on User Identity or LocalStorage Override
+  useEffect(() => {
+    if (session) {
+      const savedLang = localStorage.getItem('preferredLang');
+      if (savedLang === 'en' || savedLang === 'ja') {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLang(savedLang);
+      } else {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLang(currentUser === 'Michael' ? 'en' : 'ja');
+      }
+    }
+  }, [session, currentUser]);
+
   useEffect(() => {
     if (!session) return;
 
@@ -74,7 +87,6 @@ export default function Home() {
     e.preventDefault();
     setError('');
     
-    // Magic Routing: If you type YOUR passcode, it logs in as you.
     let targetEmail = 'sync@en-musubi.local'; 
     if (passcode === 'enmusubi') {
       targetEmail = 'michael@en-musubi.local'; 
@@ -86,6 +98,11 @@ export default function Home() {
     });
 
     if (error) setError('Incorrect passcode.');
+  };
+
+  const handleSetDefaultLang = () => {
+    localStorage.setItem('preferredLang', lang);
+    alert(lang === 'ja' ? 'デフォルト言語を保存しました！' : 'Default language saved!');
   };
 
   const t = {
@@ -133,7 +150,6 @@ export default function Home() {
     );
   }
 
-  // The locked gateway
   if (!session) {
     return (
       <main className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-8 selection:bg-stone-800 relative overflow-hidden">
@@ -169,7 +185,6 @@ export default function Home() {
     );
   }
 
-  // The unlocked dashboard
   return (
     <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-stone-800 relative overflow-hidden text-stone-100">
       <div className="absolute w-200 h-200 bg-stone-800/10 rounded-full blur-3xl pointer-events-none -top-96 left-1/2 -translate-x-1/2"></div>
@@ -192,32 +207,40 @@ export default function Home() {
           <p className="text-stone-400 text-sm font-mono mt-2 tracking-wider font-medium">{currentLang.title}</p>
         </div>
 
-        <button 
-          onClick={() => setLang(prev => prev === 'en' ? 'ja' : 'en')} 
-          className="flex items-center gap-2 text-sm text-stone-300 hover:text-white bg-zinc-900/90 border border-zinc-800 px-4 py-2.5 rounded-xl transition-all mb-1 shadow-sm cursor-pointer"
-        >
-          <Globe2 className="w-4 h-4 text-stone-400" />
-          <span className="font-medium">{currentLang.langToggle}</span>
-        </button>
+        <div className="flex flex-col items-end gap-1 mb-1">
+          <button 
+            onClick={() => setLang(prev => prev === 'en' ? 'ja' : 'en')} 
+            className="flex items-center gap-2 text-sm text-stone-300 hover:text-white bg-zinc-900/90 border border-zinc-800 px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
+          >
+            <Globe2 className="w-4 h-4 text-stone-400" />
+            <span className="font-medium">{currentLang.langToggle}</span>
+          </button>
+          <button 
+            onClick={handleSetDefaultLang}
+            className="text-[10px] text-stone-500 hover:text-stone-300 transition-colors uppercase font-mono tracking-wider cursor-pointer"
+          >
+            {lang === 'ja' ? 'デフォルトにする' : 'Make Default'}
+          </button>
+        </div>
       </div>
       
       <div className="w-full max-w-4xl space-y-6 relative z-10">
-        <SanctuaryStatus lang={lang} />
+        <SanctuaryStatus lang={lang} currentUser={currentUser} />
         
         <WeeklyUnlock lang={lang} currentUser={currentUser} />
         
         <CountdownTicker lang={lang} />
 
         <CollapsibleSection title={currentLang.milestones} subtitle={currentLang.milestones_sub} icon={<Target className="w-5 h-5" />} defaultOpen={false}>
-          <MilestoneTracker />
+          <MilestoneTracker currentUser={currentUser} />
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.vault} subtitle={currentLang.vault_sub} icon={<ImageIcon className="w-5 h-5" />} defaultOpen={false}>
-          <MemoryVault />
+          <MemoryVault currentUser={currentUser} />
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.notes} subtitle={currentLang.notes_sub} icon={<MessageSquare className="w-5 h-5" />} defaultOpen={false}>
-          <SanctuaryNotes />
+          <SanctuaryNotes currentUser={currentUser} />
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.ksf} subtitle={currentLang.ksf_sub} icon={<Lightbulb className="w-5 h-5" />} defaultOpen={false}>
@@ -225,7 +248,7 @@ export default function Home() {
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.travel} subtitle={currentLang.travel_sub} icon={<Plane className="w-5 h-5" />} defaultOpen={false}>
-          <ItineraryTracker />
+          <ItineraryTracker currentUser={currentUser} />
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.sync} subtitle={currentLang.sync_sub} icon={<Clock className="w-5 h-5" />} defaultOpen={false}>

@@ -11,15 +11,18 @@ interface Note {
   created_at: string;
 }
 
+interface SanctuaryNotesProps {
+  currentUser: 'Michael' | 'Tamae';
+}
+
 const AVATARS = {
   Kanagawa: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png',
   Texas: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png'
 };
 
-export default function SanctuaryNotes() {
+export default function SanctuaryNotes({ currentUser }: SanctuaryNotesProps) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [newContent, setNewContent] = useState('');
-  const [author, setAuthor] = useState('Texas');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,6 +67,9 @@ export default function SanctuaryNotes() {
     e.preventDefault();
     if (!newContent.trim()) return;
 
+    // Frictionless author assignment based on login
+    const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+
     await supabase
       .from('notes')
       .insert([{ content: newContent, author }]);
@@ -82,14 +88,6 @@ export default function SanctuaryNotes() {
   return (
     <div>
       <form onSubmit={postNote} className="mb-5 flex flex-col md:flex-row gap-3">
-        <select
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-xs font-mono text-stone-300 focus:outline-none focus:border-stone-500"
-        >
-          <option value="Texas">Texas</option>
-          <option value="Kanagawa">Kanagawa</option>
-        </select>
         <input
           type="text"
           placeholder="Drop a note..."
