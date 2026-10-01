@@ -62,6 +62,7 @@ src/
     MilestoneTracker.tsx
     SanctuaryNotes.tsx
     SanctuaryStatus.tsx
+    WeeklyUnlock.tsx
   lib/
     musicScraper.ts
     supabase.ts
@@ -371,6 +372,201 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 </file>
 
+<file path="src/components/WeeklyUnlock.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Lock, Unlock, Sparkles, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+interface Prompt {
+  id: string;
+  question_en: string;
+  question_ja: string;
+  michael_answer: string | null;
+  tamae_answer: string | null;
+}
+
+interface WeeklyUnlockProps {
+  lang: 'en' | 'ja';
+  currentUser: 'Michael' | 'Tamae';
+}
+
+export default function WeeklyUnlock({ lang, currentUser }: WeeklyUnlockProps) {
+  const [prompt, setPrompt] = useState<Prompt | null>(null);
+  const [myAnswer, setMyAnswer] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchActivePrompt() {
+      // 1. Await the session to ensure the auth token has fully propagated to the REST client
+      await supabase.auth.getSession();
+
+      const { data, error } = await supabase
+        .from('weekly_prompts')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(); 
+
+      if (isMounted) {
+        if (error) console.error("Failed to load prompt:", error);
+        if (data) setPrompt(data);
+        setLoading(false);
+      }
+    }
+
+    fetchActivePrompt();
+
+    // Listen for real-time un-blurring
+    const channel = supabase
+      .channel('public:weekly_prompts')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'weekly_prompts' },
+        (payload) => {
+          setPrompt(payload.new as Prompt);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!myAnswer.trim() || !prompt) return;
+    setSubmitting(true);
+
+    const updateField = currentUser === 'Michael' ? { michael_answer: myAnswer } : { tamae_answer: myAnswer };
+
+    const { error } = await supabase
+      .from('weekly_prompts')
+      .update(updateField)
+      .eq('id', prompt.id);
+
+    if (!error) {
+      setPrompt({ ...prompt, ...updateField });
+    }
+    setSubmitting(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-4xl p-6 rounded-2xl bg-zinc-950/80 border border-zinc-800 shadow-2xl flex items-center justify-center font-mono text-xs text-stone-500">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Syncing Prompt...
+      </div>
+    );
+  }
+
+  // If there is no active prompt in the database, hide the module entirely
+  if (!prompt) return null;
+
+  const myCurrentAnswer = currentUser === 'Michael' ? prompt.michael_answer : prompt.tamae_answer;
+  const partnerAnswer = currentUser === 'Michael' ? prompt.tamae_answer : prompt.michael_answer;
+  const bothAnswered = !!(prompt.michael_answer && prompt.tamae_answer);
+
+  // Dynamic pronouns based on who is logged in
+  const partnerAnsweredTextEn = currentUser === 'Michael' ? 'She has already answered!' : 'He has already answered!';
+  const partnerAnsweredTextJa = currentUser === 'Michael' ? '彼女はすでに答えています！' : '彼はすでに答えています！';
+
+  return (
+    <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-amber-900/30 shadow-[0_8px_30px_rgb(0,0,0,0.5)] overflow-hidden relative">
+      <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-amber-600 via-stone-500 to-amber-900"></div>
+      
+      <div className="p-6 md:p-8">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-xl bg-amber-950/30 border border-amber-900/50 text-amber-500 shadow-inner">
+            {bothAnswered ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+          </div>
+          <div>
+            <h3 className="text-xs font-mono uppercase tracking-widest text-amber-600 font-semibold">
+              {lang === 'ja' ? '今週のプロンプト' : 'Weekly Prompt'}
+            </h3>
+          </div>
+        </div>
+
+        <h2 className="text-xl md:text-2xl font-light text-stone-100 mb-8 leading-relaxed">
+          {lang === 'ja' ? prompt.question_ja : prompt.question_en}
+        </h2>
+
+        {/* State 1: I haven't answered yet */}
+        {!myCurrentAnswer && (
+          <form onSubmit={handleSubmit} className="relative">
+            <textarea
+              value={myAnswer}
+              onChange={(e) => setMyAnswer(e.target.value)}
+              placeholder={lang === 'ja' ? 'あなたの答え...' : 'Your answer...'}
+              className="w-full p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 text-stone-200 focus:outline-none focus:border-amber-700/50 resize-none min-h-25"
+              required
+            />
+            <div className="flex justify-between items-center mt-3">
+              <span className="text-xs text-stone-500 font-mono">
+                {partnerAnswer ? (lang === 'ja' ? partnerAnsweredTextJa : partnerAnsweredTextEn) : (lang === 'ja' ? 'まだ誰も答えていません' : 'Neither has answered yet.')}
+              </span>
+              <button 
+                type="submit" 
+                disabled={submitting}
+                className="px-6 py-2.5 rounded-lg bg-amber-700/80 hover:bg-amber-600 text-white text-sm font-medium transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                {lang === 'ja' ? 'ロック解除' : 'Submit & Unlock'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* State 2: I answered, displaying both statuses */}
+        {myCurrentAnswer && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* My Answer */}
+            <div className="p-5 rounded-xl bg-zinc-900/40 border border-zinc-800">
+              <span className="text-[10px] font-mono text-stone-500 tracking-widest uppercase mb-2 block">
+                {currentUser}
+              </span>
+              <p className="text-sm text-stone-200 leading-relaxed whitespace-pre-wrap">{myCurrentAnswer}</p>
+            </div>
+
+            {/* Partner's Answer */}
+            <div className={`p-5 rounded-xl border relative overflow-hidden ${bothAnswered ? 'bg-zinc-900/40 border-amber-900/30' : 'bg-zinc-950 border-zinc-800/50'}`}>
+              <span className="text-[10px] font-mono text-stone-500 tracking-widest uppercase mb-2 block">
+                {currentUser === 'Michael' ? 'Tamae' : 'Michael'}
+              </span>
+              
+              {bothAnswered ? (
+                <p className="text-sm text-stone-200 leading-relaxed whitespace-pre-wrap animate-in fade-in duration-1000">
+                  {partnerAnswer}
+                </p>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-4 opacity-50">
+                  <Lock className="w-5 h-5 text-stone-600 mb-2" />
+                  <p className="text-xs text-stone-500 font-mono text-center">
+                    {lang === 'ja' ? 'パートナーの回答待ち...' : 'Waiting for their answer...'}
+                  </p>
+                  {/* Fake blurred text for visual effect */}
+                  <div className="mt-4 space-y-2 w-full select-none blur-sm opacity-30">
+                    <div className="h-2 bg-stone-500 rounded w-3/4"></div>
+                    <div className="h-2 bg-stone-500 rounded w-1/2"></div>
+                    <div className="h-2 bg-stone-500 rounded w-5/6"></div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+</file>
+
 <file path="package.json">
 {
   "name": "en-musubi",
@@ -558,160 +754,6 @@ export default function DualZoneCalendar() {
 }
 </file>
 
-<file path="src/components/ItineraryTracker.tsx">
-'use client';
-
-import { useState, useEffect } from 'react';
-import { Plane, Calendar, Plus, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-
-interface Itinerary {
-  id: string;
-  flight_number: string;
-  route: string;
-  travel_date: string;
-  status: string;
-}
-
-export default function ItineraryTracker() {
-  const [itineraries, setItineraries] = useState<Itinerary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [flightNumber, setFlightNumber] = useState('');
-  const [route, setRoute] = useState('');
-  const [travelDate, setTravelDate] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function fetchItineraries() {
-      const { data, error } = await supabase
-        .from('itineraries')
-        .select('*')
-        .order('travel_date', { ascending: true });
-
-      if (isMounted) {
-        if (!error && data) {
-          setItineraries(data);
-        }
-        setLoading(false);
-      }
-    }
-
-    fetchItineraries();
-
-    const channel = supabase
-      .channel('public:itineraries')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'itineraries' },
-        (payload) => {
-          const newItem = payload.new as Itinerary;
-          setItineraries((prev) => [...prev, newItem]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      isMounted = false;
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const addItinerary = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!flightNumber || !route || !travelDate) return;
-
-    await supabase
-      .from('itineraries')
-      .insert([{ flight_number: flightNumber, route, travel_date: travelDate, status: 'Confirmed' }]);
-
-    setFlightNumber('');
-    setRoute('');
-    setTravelDate('');
-    setIsAdding(false);
-  };
-
-  if (loading) {
-    return (
-      <div className="w-full p-8 rounded-2xl bg-zinc-950 text-zinc-500 flex items-center justify-center font-mono text-xs">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Itineraries...
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className="flex items-center justify-end mb-6 pb-4 border-b border-zinc-800/50">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setIsAdding(!isAdding)}
-            className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Flight</span>
-          </button>
-          <Plane className="w-5 h-5 text-zinc-600" />
-        </div>
-      </div>
-
-      {isAdding && (
-        <form onSubmit={addItinerary} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="Flight # (e.g., JL012)"
-            value={flightNumber}
-            onChange={(e) => setFlightNumber(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500 font-mono"
-          />
-          <input
-            type="text"
-            placeholder="Route (e.g., DFW -> HND)"
-            value={route}
-            onChange={(e) => setRoute(e.target.value)}
-            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
-          />
-          <input
-            type="date"
-            value={travelDate}
-            onChange={(e) => setTravelDate(e.target.value)}
-            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500"
-          />
-          <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
-            Save
-          </button>
-        </form>
-      )}
-
-      <div className="space-y-3">
-        {itineraries.length === 0 ? (
-          <p className="text-xs text-zinc-600 font-mono text-center py-4">No active flight itineraries recorded.</p>
-        ) : (
-          itineraries.map((item) => (
-            <div key={item.id} className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-purple-400 font-mono text-xs">
-                  {item.flight_number}
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-zinc-200">{item.route}</span>
-                  <span className="block text-[10px] font-mono text-zinc-500 uppercase">{item.status}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800/60">
-                <Calendar className="w-3.5 h-3.5 text-zinc-500" />
-                <span>{item.travel_date}</span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-</file>
-
 <file path="src/components/KeySuccessFactors.tsx">
 'use client';
 
@@ -847,6 +889,165 @@ export default function KeySuccessFactors() {
 }
 </file>
 
+<file path="src/components/ItineraryTracker.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Plane, Calendar, Plus, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+interface Itinerary {
+  id: string;
+  flight_number: string;
+  route: string;
+  travel_date: string;
+  status: string;
+  created_by?: string;
+}
+
+interface ItineraryTrackerProps {
+  currentUser: 'Michael' | 'Tamae';
+}
+
+export default function ItineraryTracker({ currentUser }: ItineraryTrackerProps) {
+  const [itineraries, setItineraries] = useState<Itinerary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [flightNumber, setFlightNumber] = useState('');
+  const [route, setRoute] = useState('');
+  const [travelDate, setTravelDate] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchItineraries() {
+      const { data, error } = await supabase
+        .from('itineraries')
+        .select('*')
+        .order('travel_date', { ascending: true });
+
+      if (isMounted) {
+        if (!error && data) {
+          setItineraries(data);
+        }
+        setLoading(false);
+      }
+    }
+
+    fetchItineraries();
+
+    const channel = supabase
+      .channel('public:itineraries')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'itineraries' },
+        (payload) => {
+          const newItem = payload.new as Itinerary;
+          setItineraries((prev) => [...prev, newItem]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const addItinerary = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!flightNumber || !route || !travelDate) return;
+
+    await supabase
+      .from('itineraries')
+      .insert([{ flight_number: flightNumber, route, travel_date: travelDate, status: 'Confirmed', created_by: currentUser }]);
+
+    setFlightNumber('');
+    setRoute('');
+    setTravelDate('');
+    setIsAdding(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full p-8 rounded-2xl bg-zinc-950 text-zinc-500 flex items-center justify-center font-mono text-xs">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Itineraries...
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-end mb-6 pb-4 border-b border-zinc-800/50">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsAdding(!isAdding)}
+            className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Flight</span>
+          </button>
+          <Plane className="w-5 h-5 text-zinc-600" />
+        </div>
+      </div>
+
+      {isAdding && (
+        <form onSubmit={addItinerary} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row gap-3">
+          <input
+            type="text"
+            placeholder="Flight # (e.g., JL012)"
+            value={flightNumber}
+            onChange={(e) => setFlightNumber(e.target.value)}
+            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500 font-mono"
+          />
+          <input
+            type="text"
+            placeholder="Route (e.g., DFW -> HND)"
+            value={route}
+            onChange={(e) => setRoute(e.target.value)}
+            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
+          />
+          <input
+            type="date"
+            value={travelDate}
+            onChange={(e) => setTravelDate(e.target.value)}
+            className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500"
+          />
+          <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
+            Save
+          </button>
+        </form>
+      )}
+
+      <div className="space-y-3">
+        {itineraries.length === 0 ? (
+          <p className="text-xs text-zinc-600 font-mono text-center py-4">No active flight itineraries recorded.</p>
+        ) : (
+          itineraries.map((item) => (
+            <div key={item.id} className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-purple-400 font-mono text-xs">
+                  {item.flight_number}
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-zinc-200">{item.route}</span>
+                  <span className="block text-[10px] font-mono text-zinc-500 uppercase">{item.status}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800/60">
+                <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+                <span>{item.travel_date}</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+</file>
+
 <file path="src/components/SanctuaryStatus.tsx">
 'use client';
 
@@ -857,9 +1058,10 @@ import { enUS, ja } from 'date-fns/locale';
 
 interface SanctuaryStatusProps {
   lang: 'en' | 'ja';
+  currentUser: 'Michael' | 'Tamae';
 }
 
-export default function SanctuaryStatus({ lang }: SanctuaryStatusProps) {
+export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusProps) {
   const [now, setNow] = useState(new Date());
   const [jpWeather, setJpWeather] = useState<{ tempC: number | null, code: number | null, isDay: boolean | null }>({ tempC: null, code: null, isDay: null });
   const [txWeather, setTxWeather] = useState<{ tempC: number | null, code: number | null, isDay: boolean | null }>({ tempC: null, code: null, isDay: null });
@@ -870,7 +1072,6 @@ export default function SanctuaryStatus({ lang }: SanctuaryStatusProps) {
   }, []);
 
   useEffect(() => {
-    // Fetch live weather + day/night status for Kanagawa (Yokohama) and Texas (Hawkins)
     Promise.all([
       fetch('https://api.open-meteo.com/v1/forecast?latitude=35.4478&longitude=139.6425&current=temperature_2m,weather_code,is_day'),
       fetch('https://api.open-meteo.com/v1/forecast?latitude=32.5896&longitude=-95.1972&current=temperature_2m,weather_code,is_day')
@@ -887,7 +1088,6 @@ export default function SanctuaryStatus({ lang }: SanctuaryStatusProps) {
   const texasHour = parseInt(formatInTimeZone(now, 'America/Chicago', 'H'), 10);
   const japanHour = parseInt(formatInTimeZone(now, 'Asia/Tokyo', 'H'), 10);
 
-  // Use the API's real day/night status, fallback to a safer time window if the API hasn't loaded yet
   const isTexasDay = txWeather.isDay !== null ? txWeather.isDay : (texasHour >= 6 && texasHour < 19);
   const isJapanDay = jpWeather.isDay !== null ? jpWeather.isDay : (japanHour >= 6 && japanHour < 19);
 
@@ -917,65 +1117,70 @@ export default function SanctuaryStatus({ lang }: SanctuaryStatusProps) {
     return `${Math.round(tempC)}°C / ${Math.round(tempF)}°F`;
   };
 
+  const japanCard = (
+    <div key="jp" className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
+      <div className="flex items-center gap-4">
+        <div className={`p-3.5 rounded-xl border shadow-inner ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+          {isJapanDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+        </div>
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? '神奈川 (JST)' : 'Kanagawa (JST)'}</h4>
+            <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+              <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(jpWeather.tempC)}
+            </span>
+          </div>
+          <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
+            {formatInTimeZone(now, 'Asia/Tokyo', 'h:mm:ss a')}
+          </p>
+          <p className="text-sm text-zinc-300 mt-0.5 font-mono">{japanFormattedDate}</p>
+        </div>
+      </div>
+      <div className="flex flex-col items-end gap-2">
+        <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
+          {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+        </span>
+        <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+          <jpWeatherDetails.Icon className="w-3.5 h-3.5" /> {jpWeatherDetails.text}
+        </span>
+      </div>
+    </div>
+  );
+
+  const texasCard = (
+    <div key="tx" className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
+      <div className="flex items-center gap-4">
+        <div className={`p-3.5 rounded-xl border shadow-inner ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+          {isTexasDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+        </div>
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? 'テキサス (CDT)' : 'Texas (CDT)'}</h4>
+            <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+              <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(txWeather.tempC)}
+            </span>
+          </div>
+          <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
+            {formatInTimeZone(now, 'America/Chicago', 'h:mm:ss a')}
+          </p>
+          <p className="text-sm text-zinc-300 mt-0.5 font-mono">{texasFormattedDate}</p>
+        </div>
+      </div>
+      <div className="flex flex-col items-end gap-2">
+        <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
+          {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+        </span>
+        <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+          <txWeatherDetails.Icon className="w-3.5 h-3.5" /> {txWeatherDetails.text}
+        </span>
+      </div>
+    </div>
+  );
+
   return (
     <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      {/* Kanagawa Status (Tamae First) */}
-      <div className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
-        <div className="flex items-center gap-4">
-          <div className={`p-3.5 rounded-xl border shadow-inner ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
-            {isJapanDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? '神奈川 (JST)' : 'Kanagawa (JST)'}</h4>
-              <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
-                <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(jpWeather.tempC)}
-              </span>
-            </div>
-            <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
-              {formatInTimeZone(now, 'Asia/Tokyo', 'h:mm:ss a')}
-            </p>
-            <p className="text-sm text-zinc-300 mt-0.5 font-mono">{japanFormattedDate}</p>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
-            {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
-          </span>
-          <span className="text-xs text-zinc-400 flex items-center gap-1.5">
-            <jpWeatherDetails.Icon className="w-3.5 h-3.5" /> {jpWeatherDetails.text}
-          </span>
-        </div>
-      </div>
-
-      {/* Texas Status */}
-      <div className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
-        <div className="flex items-center gap-4">
-          <div className={`p-3.5 rounded-xl border shadow-inner ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
-            {isTexasDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? 'テキサス (CDT)' : 'Texas (CDT)'}</h4>
-              <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
-                <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(txWeather.tempC)}
-              </span>
-            </div>
-            <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
-              {formatInTimeZone(now, 'America/Chicago', 'h:mm:ss a')}
-            </p>
-            <p className="text-sm text-zinc-300 mt-0.5 font-mono">{texasFormattedDate}</p>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
-            {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
-          </span>
-          <span className="text-xs text-zinc-400 flex items-center gap-1.5">
-            <txWeatherDetails.Icon className="w-3.5 h-3.5" /> {txWeatherDetails.text}
-          </span>
-        </div>
-      </div>
+      {/* Partner-First Rendering: Show Tamae's card first if Michael is looking, and vice versa */}
+      {currentUser === 'Michael' ? [japanCard, texasCard] : [texasCard, japanCard]}
     </div>
   );
 }
@@ -999,15 +1204,17 @@ interface SharedRecord {
   created_at: string;
 }
 
-export default function MemoryVault() {
+interface MemoryVaultProps {
+  currentUser: 'Michael' | 'Tamae';
+}
+
+export default function MemoryVault({ currentUser }: MemoryVaultProps) {
   const [records, setRecords] = useState<SharedRecord[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Form State
   const [mediaType, setMediaType] = useState<'image' | 'music'>('image');
   const [caption, setCaption] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [location, setLocation] = useState('Texas');
   const [externalLink, setExternalLink] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -1079,6 +1286,9 @@ export default function MemoryVault() {
         finalImageUrl = scrapedArt || 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=500&auto=format&fit=crop';
       }
 
+      // Frictionless location assignment
+      const location = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+
       await supabase
         .from('memories')
         .insert([{ 
@@ -1140,15 +1350,6 @@ export default function MemoryVault() {
           </div>
 
           <div className="flex gap-3">
-            <select
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-xs font-mono text-stone-300 focus:outline-none focus:border-stone-500"
-            >
-              <option value="Texas">Texas</option>
-              <option value="Kanagawa">Kanagawa</option>
-            </select>
-            
             {mediaType === 'image' ? (
               <input
                 key="image-upload-input"
@@ -1202,7 +1403,6 @@ export default function MemoryVault() {
             return (
               <div key={record.id} className="rounded-xl overflow-hidden bg-zinc-900/40 border border-zinc-800/60 group relative flex flex-col">
                 <div className={`${isMusic ? 'h-56 sm:h-64' : 'h-48 md:h-56'} overflow-hidden relative bg-zinc-950`}>
-                  {/* Make the image clickable if it is music and has a link */}
                   {isMusic && record.external_link ? (
                     <a href={record.external_link} target="_blank" rel="noreferrer" className="block w-full h-full cursor-pointer">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1221,7 +1421,6 @@ export default function MemoryVault() {
                     />
                   )}
                   
-                  {/* Badge overlay with pointer-events-none so it doesn't block the link click */}
                   <div className="absolute top-3 left-3 flex gap-2 pointer-events-none">
                     <span className="px-2 py-1 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-stone-300 border border-zinc-800 flex items-center gap-1.5 shadow-sm">
                       {isMusic ? <Music className="w-3 h-3 text-amber-500" /> : <ImageIcon className="w-3 h-3 text-stone-400" />}
@@ -1273,9 +1472,14 @@ interface Milestone {
   title: string;
   target_date: string;
   status: 'planned' | 'in_progress' | 'achieved';
+  created_by?: string;
 }
 
-export default function MilestoneTracker() {
+interface MilestoneTrackerProps {
+  currentUser: 'Michael' | 'Tamae';
+}
+
+export default function MilestoneTracker({ currentUser }: MilestoneTrackerProps) {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
@@ -1323,7 +1527,7 @@ export default function MilestoneTracker() {
 
     const { data, error } = await supabase
       .from('milestones')
-      .insert([{ title: newTitle, target_date: newDate, status: 'planned' }])
+      .insert([{ title: newTitle, target_date: newDate, status: 'planned', created_by: currentUser }])
       .select();
 
     if (!error && data) {
@@ -1566,15 +1770,18 @@ interface Note {
   created_at: string;
 }
 
+interface SanctuaryNotesProps {
+  currentUser: 'Michael' | 'Tamae';
+}
+
 const AVATARS = {
   Kanagawa: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png',
   Texas: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png'
 };
 
-export default function SanctuaryNotes() {
+export default function SanctuaryNotes({ currentUser }: SanctuaryNotesProps) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [newContent, setNewContent] = useState('');
-  const [author, setAuthor] = useState('Texas');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -1619,6 +1826,9 @@ export default function SanctuaryNotes() {
     e.preventDefault();
     if (!newContent.trim()) return;
 
+    // Frictionless author assignment based on login
+    const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+
     await supabase
       .from('notes')
       .insert([{ content: newContent, author }]);
@@ -1637,14 +1847,6 @@ export default function SanctuaryNotes() {
   return (
     <div>
       <form onSubmit={postNote} className="mb-5 flex flex-col md:flex-row gap-3">
-        <select
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-xs font-mono text-stone-300 focus:outline-none focus:border-stone-500"
-        >
-          <option value="Texas">Texas</option>
-          <option value="Kanagawa">Kanagawa</option>
-        </select>
         <input
           type="text"
           placeholder="Drop a note..."
@@ -1699,6 +1901,7 @@ export default function SanctuaryNotes() {
 import { useState, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import SanctuaryStatus from '@/components/SanctuaryStatus';
+import WeeklyUnlock from '@/components/WeeklyUnlock';
 import CountdownTicker from '@/components/CountdownTicker';
 import DualZoneCalendar from '@/components/DualZoneCalendar';
 import MilestoneTracker from '@/components/MilestoneTracker';
@@ -1715,8 +1918,10 @@ export default function Home() {
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  // Default language is now set to 'ja'
-  const [lang, setLang] = useState<'en' | 'ja'>('ja');
+  
+  // Temporarily default to 'ja' to prevent UI flashing before the session determines identity
+  const [lang, setLang] = useState<'en' | 'ja'>('ja'); 
+  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1733,16 +1938,69 @@ export default function Home() {
     return () => subscription.unsubscribe();
   }, []);
 
+  const currentUser = session?.user?.email === 'michael@en-musubi.local' ? 'Michael' : 'Tamae';
+
+  // Smart Language Initialization based on User Identity or LocalStorage Override
+  useEffect(() => {
+    if (session) {
+      const savedLang = localStorage.getItem('preferredLang');
+      if (savedLang === 'en' || savedLang === 'ja') {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLang(savedLang);
+      } else {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLang(currentUser === 'Michael' ? 'en' : 'ja');
+      }
+    }
+  }, [session, currentUser]);
+
+  useEffect(() => {
+    if (!session) return;
+
+    const presenceChannel = supabase.channel('online-presence', {
+      config: {
+        presence: {
+          key: currentUser,
+        },
+      },
+    });
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        setOnlineUsers(Object.keys(state));
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({ online: true });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, [session, currentUser]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
+    let targetEmail = 'sync@en-musubi.local'; 
+    if (passcode === 'enmusubi') {
+      targetEmail = 'michael@en-musubi.local'; 
+    }
+    
     const { error } = await supabase.auth.signInWithPassword({
-      email: 'sync@en-musubi.local',
+      email: targetEmail,
       password: passcode,
     });
 
     if (error) setError('Incorrect passcode.');
+  };
+
+  const handleSetDefaultLang = () => {
+    localStorage.setItem('preferredLang', lang);
+    alert(lang === 'ja' ? 'デフォルト言語を保存しました！' : 'Default language saved!');
   };
 
   const t = {
@@ -1790,7 +2048,6 @@ export default function Home() {
     );
   }
 
-  // The locked gateway
   if (!session) {
     return (
       <main className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-8 selection:bg-stone-800 relative overflow-hidden">
@@ -1826,7 +2083,6 @@ export default function Home() {
     );
   }
 
-  // The unlocked dashboard
   return (
     <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-stone-800 relative overflow-hidden text-stone-100">
       <div className="absolute w-200 h-200 bg-stone-800/10 rounded-full blur-3xl pointer-events-none -top-96 left-1/2 -translate-x-1/2"></div>
@@ -1836,11 +2092,11 @@ export default function Home() {
           <h1 className="text-4xl font-bold tracking-widest text-stone-100 flex items-center gap-4">
             縁結び 
             <div className="flex items-center gap-3">
-              <span className="w-10 h-10 rounded-full overflow-hidden border border-stone-500/40 bg-zinc-900 inline-block shadow-md shrink-0">
+              <span className={`w-10 h-10 rounded-full overflow-hidden border inline-block shadow-md shrink-0 transition-all duration-700 ${onlineUsers.includes('Tamae') ? 'border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.3)] scale-105' : 'border-stone-500/40 bg-zinc-900'}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png" alt="Tamae" className="w-full h-full object-cover" />
               </span>
-              <span className="w-10 h-10 rounded-full overflow-hidden border border-stone-500/40 bg-zinc-900 inline-block shadow-md shrink-0">
+              <span className={`w-10 h-10 rounded-full overflow-hidden border inline-block shadow-md shrink-0 transition-all duration-700 ${onlineUsers.includes('Michael') ? 'border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.3)] scale-105' : 'border-stone-500/40 bg-zinc-900'}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png" alt="Michael" className="w-full h-full object-cover" />
               </span>
@@ -1849,29 +2105,40 @@ export default function Home() {
           <p className="text-stone-400 text-sm font-mono mt-2 tracking-wider font-medium">{currentLang.title}</p>
         </div>
 
-        <button 
-          onClick={() => setLang(prev => prev === 'en' ? 'ja' : 'en')} 
-          className="flex items-center gap-2 text-sm text-stone-300 hover:text-white bg-zinc-900/90 border border-zinc-800 px-4 py-2.5 rounded-xl transition-all mb-1 shadow-sm cursor-pointer"
-        >
-          <Globe2 className="w-4 h-4 text-stone-400" />
-          <span className="font-medium">{currentLang.langToggle}</span>
-        </button>
+        <div className="flex flex-col items-end gap-1 mb-1">
+          <button 
+            onClick={() => setLang(prev => prev === 'en' ? 'ja' : 'en')} 
+            className="flex items-center gap-2 text-sm text-stone-300 hover:text-white bg-zinc-900/90 border border-zinc-800 px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
+          >
+            <Globe2 className="w-4 h-4 text-stone-400" />
+            <span className="font-medium">{currentLang.langToggle}</span>
+          </button>
+          <button 
+            onClick={handleSetDefaultLang}
+            className="text-[10px] text-stone-500 hover:text-stone-300 transition-colors uppercase font-mono tracking-wider cursor-pointer"
+          >
+            {lang === 'ja' ? 'デフォルトにする' : 'Make Default'}
+          </button>
+        </div>
       </div>
       
       <div className="w-full max-w-4xl space-y-6 relative z-10">
-        <SanctuaryStatus lang={lang} />
+        <SanctuaryStatus lang={lang} currentUser={currentUser} />
+        
+        <WeeklyUnlock lang={lang} currentUser={currentUser} />
+        
         <CountdownTicker lang={lang} />
 
         <CollapsibleSection title={currentLang.milestones} subtitle={currentLang.milestones_sub} icon={<Target className="w-5 h-5" />} defaultOpen={false}>
-          <MilestoneTracker />
+          <MilestoneTracker currentUser={currentUser} />
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.vault} subtitle={currentLang.vault_sub} icon={<ImageIcon className="w-5 h-5" />} defaultOpen={false}>
-          <MemoryVault />
+          <MemoryVault currentUser={currentUser} />
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.notes} subtitle={currentLang.notes_sub} icon={<MessageSquare className="w-5 h-5" />} defaultOpen={false}>
-          <SanctuaryNotes />
+          <SanctuaryNotes currentUser={currentUser} />
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.ksf} subtitle={currentLang.ksf_sub} icon={<Lightbulb className="w-5 h-5" />} defaultOpen={false}>
@@ -1879,7 +2146,7 @@ export default function Home() {
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.travel} subtitle={currentLang.travel_sub} icon={<Plane className="w-5 h-5" />} defaultOpen={false}>
-          <ItineraryTracker />
+          <ItineraryTracker currentUser={currentUser} />
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.sync} subtitle={currentLang.sync_sub} icon={<Clock className="w-5 h-5" />} defaultOpen={false}>

@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Session } from '@supabase/supabase-js';
+import { Session, RealtimeChannel } from '@supabase/supabase-js';
 import SanctuaryStatus from '@/components/SanctuaryStatus';
 import WeeklyUnlock from '@/components/WeeklyUnlock';
 import CountdownTicker from '@/components/CountdownTicker';
-import DualZoneCalendar from '@/components/DualZoneCalendar';
+import AvailabilityCalendar from '@/components/AvailabilityCalendar';
 import MilestoneTracker from '@/components/MilestoneTracker';
 import KeySuccessFactors from '@/components/KeySuccessFactors';
 import ItineraryTracker from '@/components/ItineraryTracker';
@@ -13,7 +13,7 @@ import MemoryVault from '@/components/MemoryVault';
 import SanctuaryNotes from '@/components/SanctuaryNotes';
 import CollapsibleSection from '@/components/CollapsibleSection';
 import { supabase } from '@/lib/supabase';
-import { Sparkles, Globe2, Target, Lightbulb, Plane, Image as ImageIcon, MessageSquare, Clock } from 'lucide-react';
+import { Sparkles, Globe2, Target, Lightbulb, Plane, Image as ImageIcon, MessageSquare, CalendarDays } from 'lucide-react';
 
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
@@ -21,9 +21,9 @@ export default function Home() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   
-  // Temporarily default to 'ja' to prevent UI flashing before the session determines identity
   const [lang, setLang] = useState<'en' | 'ja'>('ja'); 
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const [presenceChannel, setPresenceChannel] = useState<RealtimeChannel | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -42,7 +42,7 @@ export default function Home() {
 
   const currentUser = session?.user?.email === 'michael@en-musubi.local' ? 'Michael' : 'Tamae';
 
-  // Smart Language Initialization based on User Identity or LocalStorage Override
+  // Smart Language Initialization
   useEffect(() => {
     if (session) {
       const savedLang = localStorage.getItem('preferredLang');
@@ -50,36 +50,39 @@ export default function Home() {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setLang(savedLang);
       } else {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLang(currentUser === 'Michael' ? 'en' : 'ja');
       }
     }
   }, [session, currentUser]);
 
+  // Realtime Presence & Remote Refresh Listener
   useEffect(() => {
     if (!session) return;
 
-    const presenceChannel = supabase.channel('online-presence', {
-      config: {
-        presence: {
-          key: currentUser,
-        },
-      },
+    const channel = supabase.channel('online-presence', {
+      config: { presence: { key: currentUser } },
     });
+    
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPresenceChannel(channel);
 
-    presenceChannel
+    channel
       .on('presence', { event: 'sync' }, () => {
-        const state = presenceChannel.presenceState();
+        const state = channel.presenceState();
         setOnlineUsers(Object.keys(state));
+      })
+      // If we ever broadcast a custom "force-refresh" event, the client will instantly reload
+      .on('broadcast', { event: 'force-refresh' }, () => {
+        window.location.reload();
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          await presenceChannel.track({ online: true });
+          await channel.track({ online: true });
         }
       });
 
     return () => {
-      supabase.removeChannel(presenceChannel);
+      supabase.removeChannel(channel);
     };
   }, [session, currentUser]);
 
@@ -105,6 +108,17 @@ export default function Home() {
     alert(lang === 'ja' ? 'デフォルト言語を保存しました！' : 'Default language saved!');
   };
 
+  const handleAdminSync = async () => {
+    if (presenceChannel) {
+      await presenceChannel.send({
+        type: 'broadcast',
+        event: 'force-refresh',
+        payload: { action: 'refresh' },
+      });
+      window.location.reload();
+    }
+  };
+
   const t = {
     en: {
       title: "Kanagawa — Texas",
@@ -118,8 +132,8 @@ export default function Home() {
       vault_sub: "Moments across Kanagawa and Texas",
       notes: "Our Notes",
       notes_sub: "Shared thoughts and messages",
-      sync: "Schedule Sync",
-      sync_sub: "Coordinating JST & CDT time zones",
+      sync: "Availability",
+      sync_sub: "Blackout dates and target visits",
       langToggle: "日本語"
     },
     ja: {
@@ -134,8 +148,8 @@ export default function Home() {
       vault_sub: "神奈川とテキサスでの瞬間",
       notes: "私たちのノート",
       notes_sub: "共有する考えとメッセージ",
-      sync: "スケジュール同期",
-      sync_sub: "JSTとCDTのタイムゾーン調整",
+      sync: "スケジュール調整",
+      sync_sub: "訪問可能日と予定",
       langToggle: "English"
     }
   };
@@ -215,12 +229,23 @@ export default function Home() {
             <Globe2 className="w-4 h-4 text-stone-400" />
             <span className="font-medium">{currentLang.langToggle}</span>
           </button>
-          <button 
-            onClick={handleSetDefaultLang}
-            className="text-[10px] text-stone-500 hover:text-stone-300 transition-colors uppercase font-mono tracking-wider cursor-pointer"
-          >
-            {lang === 'ja' ? 'デフォルトにする' : 'Make Default'}
-          </button>
+          
+          <div className="flex items-center gap-3 mt-1">
+            {currentUser === 'Michael' && (
+              <button 
+                onClick={handleAdminSync}
+                className="text-[10px] text-red-500/70 hover:text-red-400 transition-colors uppercase font-mono tracking-wider cursor-pointer"
+              >
+                Force Remote Sync
+              </button>
+            )}
+            <button 
+              onClick={handleSetDefaultLang}
+              className="text-[10px] text-stone-500 hover:text-stone-300 transition-colors uppercase font-mono tracking-wider cursor-pointer"
+            >
+              {lang === 'ja' ? 'デフォルトにする' : 'Make Default'}
+            </button>
+          </div>
         </div>
       </div>
       
@@ -243,16 +268,16 @@ export default function Home() {
           <SanctuaryNotes currentUser={currentUser} />
         </CollapsibleSection>
 
-        <CollapsibleSection title={currentLang.ksf} subtitle={currentLang.ksf_sub} icon={<Lightbulb className="w-5 h-5" />} defaultOpen={false}>
-          <KeySuccessFactors />
+        <CollapsibleSection title={currentLang.sync} subtitle={currentLang.sync_sub} icon={<CalendarDays className="w-5 h-5" />} defaultOpen={false}>
+          <AvailabilityCalendar currentUser={currentUser} lang={lang} />
         </CollapsibleSection>
 
         <CollapsibleSection title={currentLang.travel} subtitle={currentLang.travel_sub} icon={<Plane className="w-5 h-5" />} defaultOpen={false}>
           <ItineraryTracker currentUser={currentUser} />
         </CollapsibleSection>
 
-        <CollapsibleSection title={currentLang.sync} subtitle={currentLang.sync_sub} icon={<Clock className="w-5 h-5" />} defaultOpen={false}>
-          <DualZoneCalendar />
+        <CollapsibleSection title={currentLang.ksf} subtitle={currentLang.ksf_sub} icon={<Lightbulb className="w-5 h-5" />} defaultOpen={false}>
+          <KeySuccessFactors />
         </CollapsibleSection>
       </div>
     </main>
