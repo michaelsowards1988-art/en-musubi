@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import SanctuaryStatus from '@/components/SanctuaryStatus';
+import WeeklyUnlock from '@/components/WeeklyUnlock';
 import CountdownTicker from '@/components/CountdownTicker';
 import DualZoneCalendar from '@/components/DualZoneCalendar';
 import MilestoneTracker from '@/components/MilestoneTracker';
@@ -19,7 +20,6 @@ export default function Home() {
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  // Default language is now set to 'ja'
   const [lang, setLang] = useState<'en' | 'ja'>('ja');
 
   useEffect(() => {
@@ -41,13 +41,23 @@ export default function Home() {
     e.preventDefault();
     setError('');
     
+    // Magic Routing: If you type your specific passcode, it logs in as you.
+    // Otherwise, it defaults to Tamae's account.
+    // Make sure to replace 'YourSecretPasscode123' with your actual Supabase user password.
+    let targetEmail = 'sync@en-musubi.local'; 
+    if (passcode === 'YourSecretPasscode123') {
+      targetEmail = 'michael@en-musubi.local'; 
+    }
+    
     const { error } = await supabase.auth.signInWithPassword({
-      email: 'sync@en-musubi.local',
+      email: targetEmail,
       password: passcode,
     });
 
     if (error) setError('Incorrect passcode.');
   };
+
+  const currentUser = session?.user?.email === 'michael@en-musubi.local' ? 'Michael' : 'Tamae';
 
   const t = {
     en: {
@@ -164,6 +174,9 @@ export default function Home() {
       
       <div className="w-full max-w-4xl space-y-6 relative z-10">
         <SanctuaryStatus lang={lang} />
+        
+        <WeeklyUnlock lang={lang} currentUser={currentUser} />
+        
         <CountdownTicker lang={lang} />
 
         <CollapsibleSection title={currentLang.milestones} subtitle={currentLang.milestones_sub} icon={<Target className="w-5 h-5" />} defaultOpen={false}>
