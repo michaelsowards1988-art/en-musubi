@@ -32,7 +32,6 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLang(savedLang);
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLang(currentUser === 'Michael' ? 'en' : 'ja');
     }
   }, [currentUser]);
