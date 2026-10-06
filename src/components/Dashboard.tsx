@@ -26,14 +26,37 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   const [activeFlare, setActiveFlare] = useState<'Michael' | 'Tamae' | null>(null);
   const [screenPulse, setScreenPulse] = useState(false);
 
+  // Background Visibility Manager (Prevents Stale Data)
+  useEffect(() => {
+    let hiddenTimestamp = 0;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenTimestamp = Date.now();
+      } else if (document.visibilityState === 'visible') {
+        // If the app was asleep in the background for more than 60 seconds, 
+        // silently reload to ensure websockets and weather are perfectly synced.
+        if (hiddenTimestamp && Date.now() - hiddenTimestamp > 60000) {
+          window.location.reload();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   useEffect(() => {
     const savedLang = localStorage.getItem('preferredLang');
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (savedLang === 'en' || savedLang === 'ja') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLang(savedLang);
     } else {
       setLang(currentUser === 'Michael' ? 'en' : 'ja');
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [currentUser]);
 
   useEffect(() => {
@@ -41,8 +64,9 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       config: { presence: { key: currentUser } },
     });
     
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    /* eslint-disable react-hooks/set-state-in-effect */
     setPresenceChannel(channel);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     channel
       .on('presence', { event: 'sync' }, () => {
@@ -283,6 +307,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         />
 
         <KeySuccessFactors 
+          currentUser={currentUser}
           title={currentLang.ksf} 
           subtitle={currentLang.ksf_sub} 
           icon={<Lightbulb className="w-5 h-5" />} 

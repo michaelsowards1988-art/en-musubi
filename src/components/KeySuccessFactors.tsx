@@ -4,20 +4,24 @@ import { useState, useEffect } from 'react';
 import { Lightbulb, Plus, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import CollapsibleSection from './CollapsibleSection';
+import ReactionThread, { ThreadComment } from './ReactionThread';
 
 interface Factor {
   id: string;
   title: string;
   status: 'active' | 'achieved';
+  hearted_by: string[] | null;
+  comments: ThreadComment[] | null;
 }
 
 interface KeySuccessFactorsProps {
+  currentUser: 'Michael' | 'Tamae';
   title: string;
   subtitle: string;
   icon: React.ReactNode;
 }
 
-export default function KeySuccessFactors({ title, subtitle, icon }: KeySuccessFactorsProps) {
+export default function KeySuccessFactors({ currentUser, title, subtitle, icon }: KeySuccessFactorsProps) {
   const [factors, setFactors] = useState<Factor[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
@@ -35,17 +39,33 @@ export default function KeySuccessFactors({ title, subtitle, icon }: KeySuccessF
         .order('created_at', { ascending: true });
 
       if (isMounted) {
-        if (!error && data) {
-          setFactors(data);
-        }
+        if (!error && data) setFactors(data);
         setLoading(false);
       }
     }
 
     loadData();
 
+    const channel = supabase
+      .channel('public:success_factors')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'success_factors' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setFactors((prev) => [...prev, payload.new as Factor]);
+          } else if (payload.eventType === 'UPDATE') {
+            setFactors((prev) => prev.map((f) => (f.id === payload.new.id ? payload.new as Factor : f)));
+          } else if (payload.eventType === 'DELETE') {
+            setFactors((prev) => prev.filter((f) => f.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       isMounted = false;
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -59,32 +79,34 @@ export default function KeySuccessFactors({ title, subtitle, icon }: KeySuccessF
     e.preventDefault();
     if (!newTitle) return;
 
-    const { data, error } = await supabase
-      .from('success_factors')
-      .insert([{ title: newTitle, status: 'active' }])
-      .select();
-
+    const { data, error } = await supabase.from('success_factors').insert([{ title: newTitle, status: 'active' }]).select();
     if (!error && data) {
-      setFactors([...factors, data[0] as Factor]);
       setNewTitle('');
       setIsAdding(false);
     }
   };
 
+  const toggleHeart = async (factor: Factor) => {
+    const currentHearts = factor.hearted_by || [];
+    const newHearts = currentHearts.includes(currentUser) ? currentHearts.filter(u => u !== currentUser) : [...currentHearts, currentUser];
+    setFactors(factors.map(f => f.id === factor.id ? { ...f, hearted_by: newHearts } : f));
+    await supabase.from('success_factors').update({ hearted_by: newHearts }).eq('id', factor.id);
+  };
+
+  const postReply = async (content: string, factor: Factor) => {
+    const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+    const newComment: ThreadComment = { id: Date.now().toString(), author, content, created_at: new Date().toISOString() };
+    const newComments = [...(factor.comments || []), newComment];
+    setFactors(factors.map(f => f.id === factor.id ? { ...f, comments: newComments } : f));
+    await supabase.from('success_factors').update({ comments: newComments }).eq('id', factor.id);
+  };
+
   const handleAddClick = () => {
-    if (!isOpen) {
-      setIsOpen(true);
-      setIsAdding(true);
-    } else {
-      setIsAdding(!isAdding);
-    }
+    if (!isOpen) { setIsOpen(true); setIsAdding(true); } else { setIsAdding(!isAdding); }
   };
 
   const actionButton = (
-    <button 
-      onClick={handleAddClick}
-      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
-    >
+    <button onClick={handleAddClick} className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all cursor-pointer">
       <Plus className="w-3.5 h-3.5" />
       <span className="hidden md:inline">Add Focus</span>
       <span className="md:hidden">Add</span>
@@ -109,15 +131,8 @@ export default function KeySuccessFactors({ title, subtitle, icon }: KeySuccessF
         <>
           {isAdding && (
             <form onSubmit={addFactor} className="mb-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex gap-3">
-              <input
-                type="text"
-                placeholder="Focus area (e.g., Daily Japanese & English practice)"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
-                autoFocus
-              />
-              <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center gap-2">
+              <input type="text" placeholder="Focus area (e.g., Daily Japanese & English practice)" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500" autoFocus />
+              <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center gap-2 cursor-pointer">
                 <Sparkles className="w-3.5 h-3.5 text-purple-600" />
                 <span>Save</span>
               </button>
@@ -126,25 +141,22 @@ export default function KeySuccessFactors({ title, subtitle, icon }: KeySuccessF
 
           <div className="space-y-3">
             {factors.map((item) => (
-              <div 
-                key={item.id} 
-                onClick={() => toggleStatus(item.id, item.status)}
-                className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:border-zinc-700/60 transition-all cursor-pointer group"
-              >
-                <div className="flex items-center gap-3">
-                  {item.status === 'achieved' ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 transition-transform group-hover:scale-110" />
-                  ) : (
-                    <Lightbulb className="w-4 h-4 text-purple-400 transition-transform group-hover:scale-110" />
-                  )}
-                  <span className={`text-sm font-medium transition-colors ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
-                    {item.title}
-                  </span>
+              <div key={item.id} className="flex flex-col p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:bg-zinc-900/60 transition-all group">
+                <div className="flex items-start gap-3 w-full">
+                  <div onClick={() => toggleStatus(item.id, item.status)} className="mt-0.5 cursor-pointer shrink-0">
+                    {item.status === 'achieved' ? <CheckCircle2 className="w-5 h-5 text-emerald-500 transition-transform hover:scale-110" /> : <Lightbulb className="w-5 h-5 text-purple-400 transition-transform hover:scale-110" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-sm font-medium transition-colors ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>{item.title}</span>
+                    <ReactionThread 
+                      currentUser={currentUser}
+                      heartedBy={item.hearted_by || []}
+                      comments={item.comments || []}
+                      onToggleHeart={() => toggleHeart(item)}
+                      onAddComment={(content) => postReply(content, item)}
+                    />
+                  </div>
                 </div>
-
-                <span className="text-[10px] font-mono uppercase px-2.5 py-1 rounded-lg bg-zinc-950 border border-zinc-800/60 text-zinc-400">
-                  {item.status}
-                </span>
               </div>
             ))}
           </div>
