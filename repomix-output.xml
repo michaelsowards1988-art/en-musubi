@@ -1,0 +1,2986 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+public/
+  file.svg
+  globe.svg
+  next.svg
+  vercel.svg
+  window.svg
+src/
+  app/
+    globals.css
+    icon.svg
+    layout.tsx
+    page.tsx
+  components/
+    AvailabilityCalendar.tsx
+    CollapsibleSection.tsx
+    CountdownTicker.tsx
+    Dashboard.tsx
+    DualZoneCalendar.tsx
+    ItineraryTracker.tsx
+    KeySuccessFactors.tsx
+    MemoryVault.tsx
+    MilestoneTracker.tsx
+    ReactionThread.tsx
+    SanctuaryNotes.tsx
+    SanctuaryStatus.tsx
+    WeeklyUnlock.tsx
+  lib/
+    musicScraper.ts
+    supabase.ts
+.gitignore
+AGENTS.md
+CLAUDE.md
+eslint.config.mjs
+next.config.ts
+package.json
+postcss.config.mjs
+README.md
+tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="public/file.svg">
+<svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
+</file>
+
+<file path="public/globe.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g clip-path="url(#a)"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.27 14.1a6.5 6.5 0 0 0 3.67-3.45q-1.24.21-2.7.34-.31 1.83-.97 3.1M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.48-1.52a7 7 0 0 1-.96 0H7.5a4 4 0 0 1-.84-1.32q-.38-.89-.63-2.08a40 40 0 0 0 3.92 0q-.25 1.2-.63 2.08a4 4 0 0 1-.84 1.31zm2.94-4.76q1.66-.15 2.95-.43a7 7 0 0 0 0-2.58q-1.3-.27-2.95-.43a18 18 0 0 1 0 3.44m-1.27-3.54a17 17 0 0 1 0 3.64 39 39 0 0 1-4.3 0 17 17 0 0 1 0-3.64 39 39 0 0 1 4.3 0m1.1-1.17q1.45.13 2.69.34a6.5 6.5 0 0 0-3.67-3.44q.65 1.26.98 3.1M8.48 1.5l.01.02q.41.37.84 1.31.38.89.63 2.08a40 40 0 0 0-3.92 0q.25-1.2.63-2.08a4 4 0 0 1 .85-1.32 7 7 0 0 1 .96 0m-2.75.4a6.5 6.5 0 0 0-3.67 3.44 29 29 0 0 1 2.7-.34q.31-1.83.97-3.1M4.58 6.28q-1.66.16-2.95.43a7 7 0 0 0 0 2.58q1.3.27 2.95.43a18 18 0 0 1 0-3.44m.17 4.71q-1.45-.12-2.69-.34a6.5 6.5 0 0 0 3.67 3.44q-.65-1.27-.98-3.1" fill="#666"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z"/></clipPath></defs></svg>
+</file>
+
+<file path="public/next.svg">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 394 80"><path fill="#000" d="M262 0h68.5v12.7h-27.2v66.6h-13.6V12.7H262V0ZM149 0v12.7H94v20.4h44.3v12.6H94v21h55v12.6H80.5V0h68.7zm34.3 0h-17.8l63.8 79.4h17.9l-32-39.7 32-39.6h-17.9l-23 28.6-23-28.6zm18.3 56.7-9-11-27.1 33.7h17.8l18.3-22.7z"/><path fill="#000" d="M81 79.3 17 0H0v79.3h13.6V17l50.2 62.3H81Zm252.6-.4c-1 0-1.8-.4-2.5-1s-1.1-1.6-1.1-2.6.3-1.8 1-2.5 1.6-1 2.6-1 1.8.3 2.5 1a3.4 3.4 0 0 1 .6 4.3 3.7 3.7 0 0 1-3 1.8zm23.2-33.5h6v23.3c0 2.1-.4 4-1.3 5.5a9.1 9.1 0 0 1-3.8 3.5c-1.6.8-3.5 1.3-5.7 1.3-2 0-3.7-.4-5.3-1s-2.8-1.8-3.7-3.2c-.9-1.3-1.4-3-1.4-5h6c.1.8.3 1.6.7 2.2s1 1.2 1.6 1.5c.7.4 1.5.5 2.4.5 1 0 1.8-.2 2.4-.6a4 4 0 0 0 1.6-1.8c.3-.8.5-1.8.5-3V45.5zm30.9 9.1a4.4 4.4 0 0 0-2-3.3 7.5 7.5 0 0 0-4.3-1.1c-1.3 0-2.4.2-3.3.5-.9.4-1.6 1-2 1.6a3.5 3.5 0 0 0-.3 4c.3.5.7.9 1.3 1.2l1.8 1 2 .5 3.2.8c1.3.3 2.5.7 3.7 1.2a13 13 0 0 1 3.2 1.8 8.1 8.1 0 0 1 3 6.5c0 2-.5 3.7-1.5 5.1a10 10 0 0 1-4.4 3.5c-1.8.8-4.1 1.2-6.8 1.2-2.6 0-4.9-.4-6.8-1.2-2-.8-3.4-2-4.5-3.5a10 10 0 0 1-1.7-5.6h6a5 5 0 0 0 3.5 4.6c1 .4 2.2.6 3.4.6 1.3 0 2.5-.2 3.5-.6 1-.4 1.8-1 2.4-1.7a4 4 0 0 0 .8-2.4c0-.9-.2-1.6-.7-2.2a11 11 0 0 0-2.1-1.4l-3.2-1-3.8-1c-2.8-.7-5-1.7-6.6-3.2a7.2 7.2 0 0 1-2.4-5.7 8 8 0 0 1 1.7-5 10 10 0 0 1 4.3-3.5c2-.8 4-1.2 6.4-1.2 2.3 0 4.4.4 6.2 1.2 1.8.8 3.2 2 4.3 3.4 1 1.4 1.5 3 1.5 5h-5.8z"/></svg>
+</file>
+
+<file path="public/vercel.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+</file>
+
+<file path="public/window.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+</file>
+
+<file path="src/app/globals.css">
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+</file>
+
+<file path="src/app/icon.svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+  <path d="M20 3v4"/>
+  <path d="M22 5h-4"/>
+  <path d="M4 17v2"/>
+  <path d="M5 18H3"/>
+</svg>
+</file>
+
+<file path="src/components/AvailabilityCalendar.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Loader2, Info } from 'lucide-react';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday } from 'date-fns';
+import { supabase } from '@/lib/supabase';
+
+interface Availability {
+  id: string;
+  date: string;
+  user_id: string;
+  status: 'free' | 'busy';
+}
+
+interface AvailabilityCalendarProps {
+  currentUser: 'Michael' | 'Tamae';
+  lang: 'en' | 'ja';
+}
+
+export default function AvailabilityCalendar({ currentUser, lang }: AvailabilityCalendarProps) {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [availabilities, setAvailabilities] = useState<Availability[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchAvailabilities() {
+      const { data, error } = await supabase
+        .from('availability')
+        .select('*');
+
+      if (isMounted) {
+        if (!error && data) setAvailabilities(data);
+        setLoading(false);
+      }
+    }
+
+    fetchAvailabilities();
+
+    const channel = supabase
+      .channel('public:availability')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'availability' },
+        (payload) => {
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            setAvailabilities((prev) => {
+              const filtered = prev.filter(a => a.id !== payload.new.id);
+              return [...filtered, payload.new as Availability];
+            });
+          } else if (payload.eventType === 'DELETE') {
+            setAvailabilities((prev) => prev.filter(a => a.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleDayClick = async (dateStr: string) => {
+    const existing = availabilities.find(a => a.date === dateStr && a.user_id === currentUser);
+    
+    // Cycle: null -> 'free' -> 'busy' -> null
+    let nextStatus: 'free' | 'busy' | null = 'free';
+    if (existing?.status === 'free') nextStatus = 'busy';
+    if (existing?.status === 'busy') nextStatus = null;
+
+    if (nextStatus === null && existing) {
+      // Optimistic UI update
+      setAvailabilities(prev => prev.filter(a => a.id !== existing.id));
+      await supabase.from('availability').delete().eq('id', existing.id);
+    } else if (nextStatus !== null) {
+      // eslint-disable-next-line react-hooks/purity
+      const tempId = existing?.id || Date.now().toString();
+      
+      // Optimistic UI update
+      setAvailabilities(prev => {
+        const filtered = prev.filter(a => !(a.date === dateStr && a.user_id === currentUser));
+        return [...filtered, { id: tempId, date: dateStr, user_id: currentUser, status: nextStatus as 'free' | 'busy' }];
+      });
+
+      await supabase
+        .from('availability')
+        .upsert({ date: dateStr, user_id: currentUser, status: nextStatus }, { onConflict: 'date,user_id' });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full p-8 rounded-2xl bg-zinc-950 flex items-center justify-center font-mono text-xs text-zinc-500">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Syncing Calendar...
+      </div>
+    );
+  }
+
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const startDate = startOfWeek(monthStart);
+  const endDate = endOfWeek(monthEnd);
+
+  const days = eachDayOfInterval({ start: startDate, end: endDate });
+
+  const getDayStatus = (dateStr: string, user: 'Michael' | 'Tamae') => {
+    return availabilities.find(a => a.date === dateStr && a.user_id === user)?.status;
+  };
+
+  return (
+    <div className="w-full">
+      {/* Header Controls */}
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-light text-stone-100 flex items-center gap-2">
+          {format(currentMonth, 'MMMM yyyy')}
+        </h3>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+            className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-stone-400 hover:text-stone-200 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+            className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-stone-400 hover:text-stone-200 transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-4 mb-4 text-[10px] font-mono text-stone-500 uppercase tracking-wider bg-zinc-900/40 p-3 rounded-xl border border-zinc-800/40">
+        <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500/80"></div> {lang === 'ja' ? '空き' : 'Free'}</span>
+        <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500/80"></div> {lang === 'ja' ? '予定あり' : 'Busy'}</span>
+        <div className="ml-auto flex items-center gap-2 text-stone-600">
+          <Info className="w-3 h-3" />
+          <span className="hidden md:inline">{lang === 'ja' ? '左: Tamae / 右: Michael' : 'Left: Tamae / Right: Michael'}</span>
+          <span className="md:hidden">L:T / R:M</span>
+        </div>
+      </div>
+
+      {/* Days of Week */}
+      <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2 text-center text-[10px] font-mono text-stone-500 uppercase">
+        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+          <div key={day} className="py-1">{day}</div>
+        ))}
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-1 md:gap-2">
+        {days.map(day => {
+          const dateStr = format(day, 'yyyy-MM-dd');
+          const isCurrentMonth = isSameMonth(day, currentMonth);
+          const isTodayDate = isToday(day);
+          
+          const tamaeStatus = getDayStatus(dateStr, 'Tamae');
+          const michaelStatus = getDayStatus(dateStr, 'Michael');
+
+          return (
+            <div 
+              key={dateStr}
+              onClick={() => handleDayClick(dateStr)}
+              className={`
+                relative h-14 md:h-20 rounded-xl border transition-all cursor-pointer overflow-hidden flex flex-col items-center justify-center group
+                ${isCurrentMonth ? 'bg-zinc-900/40 border-zinc-800/60 hover:bg-zinc-800/60' : 'bg-zinc-950/50 border-zinc-900/50 opacity-50'}
+                ${isTodayDate ? 'ring-1 ring-amber-500/50' : ''}
+              `}
+            >
+              <span className={`text-xs md:text-sm font-mono mb-2 ${isTodayDate ? 'text-amber-400 font-bold' : 'text-stone-300'}`}>
+                {format(day, 'd')}
+              </span>
+
+              {/* Status Indicators (Left: Tamae, Right: Michael) */}
+              <div className="absolute bottom-1.5 left-0 right-0 px-1.5 flex gap-1 h-1.5 md:h-2">
+                <div className={`w-1/2 rounded-full transition-colors ${tamaeStatus === 'free' ? 'bg-emerald-500/80' : tamaeStatus === 'busy' ? 'bg-red-500/80' : 'bg-zinc-800/30 group-hover:bg-zinc-700/50'}`}></div>
+                <div className={`w-1/2 rounded-full transition-colors ${michaelStatus === 'free' ? 'bg-emerald-500/80' : michaelStatus === 'busy' ? 'bg-red-500/80' : 'bg-zinc-800/30 group-hover:bg-zinc-700/50'}`}></div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/ReactionThread.tsx">
+import { useState } from 'react';
+import { Heart, MessageCircle, Send } from 'lucide-react';
+
+export interface ThreadComment {
+  id: string;
+  author: string;
+  content: string;
+  created_at: string;
+}
+
+interface ReactionThreadProps {
+  currentUser: 'Michael' | 'Tamae';
+  heartedBy: string[];
+  comments: ThreadComment[];
+  onToggleHeart: () => void;
+  onAddComment: (content: string) => void;
+}
+
+const AVATARS = {
+  Kanagawa: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png',
+  Texas: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png'
+};
+
+export default function ReactionThread({ currentUser, heartedBy, comments, onToggleHeart, onAddComment }: ReactionThreadProps) {
+  const [isReplying, setIsReplying] = useState(false);
+  const [replyContent, setReplyContent] = useState('');
+
+  const hasHearted = heartedBy.includes(currentUser);
+  const heartCount = heartedBy.length;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!replyContent.trim()) return;
+    onAddComment(replyContent);
+    setReplyContent('');
+    setIsReplying(false);
+  };
+
+  return (
+    <div className="w-full">
+      {/* Action Bar */}
+      <div className="flex items-center gap-4 mt-3">
+        <button 
+          onClick={onToggleHeart}
+          className={`flex items-center gap-1.5 text-xs transition-all cursor-pointer ${hasHearted ? 'text-rose-500' : 'text-stone-500 hover:text-stone-300'}`}
+        >
+          <Heart className={`w-3.5 h-3.5 transition-transform ${hasHearted ? 'fill-current scale-110' : ''}`} />
+          {heartCount > 0 && <span className="font-mono text-[10px]">{heartCount}</span>}
+        </button>
+        <button 
+          onClick={() => setIsReplying(!isReplying)}
+          className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-300 transition-colors cursor-pointer"
+        >
+          <MessageCircle className="w-3.5 h-3.5" />
+          {comments.length > 0 && <span className="font-mono text-[10px]">{comments.length}</span>}
+        </button>
+      </div>
+
+      {/* Comments Thread */}
+      {(comments.length > 0 || isReplying) && (
+        <div className="ml-1 pl-4 border-l-2 border-zinc-800/50 flex flex-col gap-3 mt-4">
+          {comments.map((comment) => (
+            <div key={comment.id} className="flex items-start gap-2.5">
+              <div className="w-5 h-5 rounded-full overflow-hidden border border-stone-500/20 bg-zinc-950 shrink-0 mt-0.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={AVATARS[comment.author as keyof typeof AVATARS] || AVATARS.Texas} 
+                  alt={comment.author} 
+                  className="w-full h-full object-cover" 
+                />
+              </div>
+              <div className="flex-1 min-w-0 bg-zinc-950/50 p-2.5 rounded-lg border border-zinc-800/40">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-[9px] font-mono text-stone-500 uppercase">
+                    {comment.author === 'Kanagawa' ? 'Tamae' : 'Michael'}
+                  </span>
+                </div>
+                <p className="text-xs text-stone-300 whitespace-pre-wrap">{comment.content}</p>
+              </div>
+            </div>
+          ))}
+
+          {isReplying && (
+            <form onSubmit={handleSubmit} className="flex items-center gap-2 mt-1 animate-in fade-in duration-300">
+              <input
+                type="text"
+                autoFocus
+                placeholder="Add a thought..."
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                className="flex-1 p-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-stone-200 focus:outline-none focus:border-stone-500"
+              />
+              <button type="submit" disabled={!replyContent.trim()} className="p-2 rounded-lg bg-stone-200 text-zinc-950 hover:bg-white transition-all disabled:opacity-50 disabled:hover:bg-stone-200 cursor-pointer">
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </form>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="src/lib/musicScraper.ts">
+'use server';
+
+export async function fetchAppleMusicArt(url: string) {
+  try {
+    const res = await fetch(url, { 
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; EnMusubiBot/1.0)' }
+    });
+    const html = await res.text();
+    
+    // Scrape the OpenGraph image tag that Apple automatically generates for links
+    const match = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i);
+    
+    return match ? match[1] : null;
+  } catch (error) {
+    console.error('Failed to fetch album art:', error);
+    return null;
+  }
+}
+</file>
+
+<file path="src/lib/supabase.ts">
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+</file>
+
+<file path=".gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+</file>
+
+<file path="AGENTS.md">
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
+</file>
+
+<file path="CLAUDE.md">
+@AGENTS.md
+</file>
+
+<file path="eslint.config.mjs">
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+</file>
+
+<file path="next.config.ts">
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default nextConfig;
+</file>
+
+<file path="postcss.config.mjs">
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+</file>
+
+<file path="README.md">
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+</file>
+
+<file path="src/app/layout.tsx">
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+
+// Add these two lines to bust the Next.js and Safari caches
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Create Next App",
+  description: "Generated by create next app",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col">{children}</body>
+    </html>
+  );
+}
+</file>
+
+<file path="package.json">
+{
+  "name": "en-musubi",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "date-fns-tz": "^3.2.0",
+    "lucide-react": "^1.47.0",
+    "next": "16.3.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "tailwind-merge": "^3.7.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.5",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
+</file>
+
+<file path="src/components/DualZoneCalendar.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { formatInTimeZone } from 'date-fns-tz';
+import { MapPin } from 'lucide-react';
+
+const TIMEZONES = {
+  texas: 'America/Chicago',
+  japan: 'Asia/Tokyo',
+};
+
+export default function DualZoneCalendar() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  // Avoid visual flashing and server/client time mismatches
+  if (!mounted) return null;
+
+  // 1. Get the current date in Japan (YYYY-MM-DD)
+  const jstDateStr = formatInTimeZone(new Date(), TIMEZONES.japan, 'yyyy-MM-dd');
+  
+  // 2. Generate 12 hourly blocks starting at 8:00 AM JST
+  const timeBlocks = Array.from({ length: 12 }).map((_, i) => {
+    const hour = (i + 8).toString().padStart(2, '0');
+    // The +09:00 forces Javascript to interpret this exact hour as Japan Standard Time
+    return new Date(`${jstDateStr}T${hour}:00:00+09:00`);
+  });
+
+  return (
+    <div className="w-full">
+      <div className="grid grid-cols-2 gap-8 relative">
+        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-zinc-800/50 -translate-x-1/2"></div>
+
+        {/* Japan Column (Anchor) */}
+        <div className="space-y-4 pr-4">
+          <div className="flex items-center gap-2 mb-6 text-zinc-400">
+            <MapPin className="w-4 h-4" />
+            <span className="text-sm font-medium tracking-widest uppercase">Japan (JST)</span>
+          </div>
+
+          {timeBlocks.map((time, idx) => (
+            <div 
+              key={`jp-${idx}`} 
+              className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/30 hover:border-zinc-700 transition-colors text-zinc-300"
+            >
+              <span className="font-mono text-sm">
+                {formatInTimeZone(time, TIMEZONES.japan, 'h:mm a')}
+              </span>
+              <span className="text-xs opacity-70">
+                {formatInTimeZone(time, TIMEZONES.japan, 'MMM d')}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Texas Column (Reactionary) */}
+        <div className="space-y-4 pl-4">
+          <div className="flex items-center gap-2 mb-6 text-zinc-400">
+            <MapPin className="w-4 h-4" />
+            <span className="text-sm font-medium tracking-widest uppercase">Texas (CDT)</span>
+          </div>
+          
+          {timeBlocks.map((time, idx) => {
+            // Check if Texas is asleep (before 6 AM or after 10 PM)
+            const txHour = parseInt(formatInTimeZone(time, TIMEZONES.texas, 'H'), 10);
+            const isNight = txHour < 6 || txHour > 22;
+
+            return (
+              <div 
+                key={`tx-${idx}`} 
+                className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                  isNight 
+                    ? 'bg-zinc-950 border-zinc-900 text-zinc-600' 
+                    : 'bg-zinc-900/50 border-zinc-800/30 hover:border-zinc-700 text-zinc-300'
+                }`}
+              >
+                <span className="font-mono text-sm">
+                  {formatInTimeZone(time, TIMEZONES.texas, 'h:mm a')}
+                </span>
+                <span className="text-xs opacity-70">
+                  {formatInTimeZone(time, TIMEZONES.texas, 'MMM d')}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/CollapsibleSection.tsx">
+'use client';
+
+import { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+
+interface CollapsibleSectionProps {
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  isControlled?: boolean;
+  isOpen?: boolean;
+  onToggle?: (open: boolean) => void;
+  actionButton?: React.ReactNode;
+}
+
+export default function CollapsibleSection({
+  title,
+  subtitle,
+  icon,
+  children,
+  defaultOpen = true,
+  isControlled = false,
+  isOpen = false,
+  onToggle,
+  actionButton
+}: CollapsibleSectionProps) {
+  const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
+
+  const actualIsOpen = isControlled ? isOpen : internalIsOpen;
+
+  const handleToggle = () => {
+    if (isControlled && onToggle) {
+      onToggle(!actualIsOpen);
+    } else {
+      setInternalIsOpen(!actualIsOpen);
+    }
+  };
+
+  return (
+    <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all overflow-hidden group">
+      <div 
+        onClick={handleToggle}
+        className="flex items-center justify-between p-6 cursor-pointer select-none hover:bg-zinc-900/30 transition-colors border-b border-zinc-800/40"
+      >
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 rounded-xl bg-stone-900/50 border border-stone-800/50 text-amber-600/80 shadow-inner">
+            {icon}
+          </div>
+          <div>
+            <h2 className="text-lg font-light tracking-wide text-stone-100 group-hover:text-amber-100/90 transition-colors">{title}</h2>
+            <p className="text-xs text-stone-400 font-mono mt-0.5">{subtitle}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {actionButton && (
+            <div onClick={(e) => e.stopPropagation()}>
+              {actionButton}
+            </div>
+          )}
+          <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors pointer-events-none">
+            {actualIsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </div>
+        </div>
+      </div>
+
+      <div className={`p-6 pt-5 transition-all duration-300 ${actualIsOpen ? 'block animate-in fade-in' : 'hidden'}`}>
+        {children}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/Dashboard.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { RealtimeChannel } from '@supabase/supabase-js';
+import SanctuaryStatus from '@/components/SanctuaryStatus';
+import WeeklyUnlock from '@/components/WeeklyUnlock';
+import CountdownTicker from '@/components/CountdownTicker';
+import AvailabilityCalendar from '@/components/AvailabilityCalendar';
+import MilestoneTracker from '@/components/MilestoneTracker';
+import KeySuccessFactors from '@/components/KeySuccessFactors';
+import ItineraryTracker from '@/components/ItineraryTracker';
+import MemoryVault from '@/components/MemoryVault';
+import SanctuaryNotes from '@/components/SanctuaryNotes';
+import CollapsibleSection from '@/components/CollapsibleSection';
+import { supabase } from '@/lib/supabase';
+import { Globe2, Target, Lightbulb, Plane, Image as ImageIcon, MessageSquare, CalendarDays } from 'lucide-react';
+
+interface DashboardProps {
+  currentUser: 'Michael' | 'Tamae';
+}
+
+export default function Dashboard({ currentUser }: DashboardProps) {
+  const [lang, setLang] = useState<'en' | 'ja'>('ja'); 
+  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const [presenceChannel, setPresenceChannel] = useState<RealtimeChannel | null>(null);
+  const [activeFlare, setActiveFlare] = useState<'Michael' | 'Tamae' | null>(null);
+  const [screenPulse, setScreenPulse] = useState(false);
+
+  // Background Visibility Manager (Prevents Stale Data)
+  useEffect(() => {
+    let hiddenTimestamp = 0;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenTimestamp = Date.now();
+      } else if (document.visibilityState === 'visible') {
+        // If the app was asleep in the background for more than 60 seconds, 
+        // silently reload to ensure websockets and weather are perfectly synced.
+        if (hiddenTimestamp && Date.now() - hiddenTimestamp > 60000) {
+          window.location.reload();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('preferredLang');
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (savedLang === 'en' || savedLang === 'ja') {
+      setLang(savedLang);
+    } else {
+      setLang(currentUser === 'Michael' ? 'en' : 'ja');
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [currentUser]);
+
+  useEffect(() => {
+    const channel = supabase.channel('online-presence', {
+      config: { presence: { key: currentUser } },
+    });
+    
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setPresenceChannel(channel);
+    /* eslint-enable react-hooks/set-state-in-effect */
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        setOnlineUsers(Object.keys(state));
+      })
+      .on('broadcast', { event: 'force-refresh' }, () => {
+        window.location.reload();
+      })
+      // The "Thinking of You" Ripple Listener
+      .on('broadcast', { event: 'poke' }, ({ payload }) => {
+        const { from, to } = payload;
+        
+        // Flare the sender's avatar on the UI
+        setActiveFlare(from);
+        
+        // If the ripple is meant for the person holding this device, flash the screen!
+        if (to === currentUser) {
+          setScreenPulse(true);
+          if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            navigator.vibrate([30, 50, 30]); // Gentle heartbeat vibration
+          }
+        }
+        
+        setTimeout(() => {
+          setActiveFlare(null);
+          setScreenPulse(false);
+        }, 1500);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({ online: true });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser]);
+
+  const handleSetDefaultLang = () => {
+    localStorage.setItem('preferredLang', lang);
+    alert(lang === 'ja' ? 'デフォルト言語を保存しました！' : 'Default language saved!');
+  };
+
+  const handleAdminSync = async () => {
+    if (presenceChannel) {
+      await presenceChannel.send({
+        type: 'broadcast',
+        event: 'force-refresh',
+        payload: { action: 'refresh' },
+      });
+      window.location.reload();
+    }
+  };
+
+  const handlePoke = async (target: 'Michael' | 'Tamae') => {
+    const bothOnline = onlineUsers.includes('Tamae') && onlineUsers.includes('Michael');
+    if (!bothOnline || !presenceChannel || target === currentUser) return;
+
+    // Optimistic UI: Flare your own avatar so you know it sent
+    setActiveFlare(currentUser);
+    setTimeout(() => setActiveFlare(null), 1500);
+
+    // Tiny tactile feedback for the sender
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(15); 
+    }
+
+    await presenceChannel.send({
+      type: 'broadcast',
+      event: 'poke',
+      payload: { from: currentUser, to: target },
+    });
+  };
+
+  const t = {
+    en: {
+      title: "Kanagawa — Texas",
+      milestones: "Milestones",
+      milestones_sub: "Upcoming horizon targets",
+      ksf: "Key Success Factors",
+      ksf_sub: "Core focuses and cornerstones",
+      travel: "Travel & Itinerary",
+      travel_sub: "Cross-Pacific flights",
+      vault: "Memory Vault",
+      vault_sub: "Moments across Kanagawa and Texas",
+      notes: "Our Notes",
+      notes_sub: "Shared thoughts and messages",
+      sync: "Availability",
+      sync_sub: "Blackout dates and target visits",
+      langToggle: "日本語"
+    },
+    ja: {
+      title: "神奈川 — テキサス",
+      milestones: "マイルストーン",
+      milestones_sub: "今後の目標",
+      ksf: "成功の鍵",
+      ksf_sub: "中心となる焦点",
+      travel: "旅行と旅程",
+      travel_sub: "太平洋横断フライト",
+      vault: "私たちの記録",
+      vault_sub: "神奈川とテキサスでの瞬間",
+      notes: "私たちのノート",
+      notes_sub: "共有する考えとメッセージ",
+      sync: "スケジュール調整",
+      sync_sub: "訪問可能日と予定",
+      langToggle: "English"
+    }
+  };
+
+  const currentLang = t[lang];
+  const tamaeOnline = onlineUsers.includes('Tamae');
+  const michaelOnline = onlineUsers.includes('Michael');
+  const bothOnline = tamaeOnline && michaelOnline;
+
+  return (
+    <div className="w-full flex flex-col items-center">
+      {/* The Ambient Screen Ripple Overlay */}
+      <div 
+        className={`fixed inset-0 z-50 pointer-events-none transition-all duration-1000 ${
+          screenPulse ? 'bg-amber-600/15 backdrop-brightness-110' : 'bg-transparent backdrop-brightness-100'
+        }`}
+      ></div>
+
+      <div className="w-full max-w-4xl mb-6 flex justify-between items-end border-b border-zinc-900 pb-6 relative z-10">
+        <div>
+          <h1 className="text-4xl font-bold tracking-widest text-stone-100 flex items-center gap-4">
+            縁結び 
+            
+            {/* The Connected Avatars */}
+            <div className="flex items-center">
+              
+              {/* Tamae's Avatar */}
+              <div className="relative flex items-center justify-center">
+                {activeFlare === 'Tamae' && (
+                  <div className="absolute w-11 h-11 rounded-full bg-amber-500 animate-ping opacity-75"></div>
+                )}
+                <span 
+                  onClick={() => handlePoke('Tamae')}
+                  className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 
+                    ${tamaeOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}
+                    ${bothOnline && currentUser === 'Michael' ? 'cursor-pointer hover:border-amber-400 hover:scale-110' : ''}
+                  `}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png" alt="Tamae" className="w-full h-full object-cover" />
+                </span>
+              </div>
+              
+              {/* The Pulse Line */}
+              <div className={`transition-all duration-1000 h-0.5 ${bothOnline ? 'w-6 bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]' : 'w-3 bg-transparent'}`}></div>
+              
+              {/* Michael's Avatar */}
+              <div className="relative flex items-center justify-center">
+                {activeFlare === 'Michael' && (
+                  <div className="absolute w-11 h-11 rounded-full bg-amber-500 animate-ping opacity-75"></div>
+                )}
+                <span 
+                  onClick={() => handlePoke('Michael')}
+                  className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 
+                    ${michaelOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}
+                    ${bothOnline && currentUser === 'Tamae' ? 'cursor-pointer hover:border-amber-400 hover:scale-110' : ''}
+                  `}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png" alt="Michael" className="w-full h-full object-cover" />
+                </span>
+              </div>
+            </div>
+
+          </h1>
+          <p className="text-stone-400 text-sm font-mono mt-2 tracking-wider font-medium">{currentLang.title}</p>
+        </div>
+
+        <div className="flex flex-col items-end gap-1 mb-1">
+          <button 
+            onClick={() => setLang(prev => prev === 'en' ? 'ja' : 'en')} 
+            className="flex items-center gap-2 text-sm text-stone-300 hover:text-white bg-zinc-900/90 border border-zinc-800 px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
+          >
+            <Globe2 className="w-4 h-4 text-stone-400" />
+            <span className="font-medium">{currentLang.langToggle}</span>
+          </button>
+          
+          <div className="flex items-center gap-3 mt-1">
+            {currentUser === 'Michael' && (
+              <button 
+                onClick={handleAdminSync}
+                className="text-[10px] text-red-500/70 hover:text-red-400 transition-colors uppercase font-mono tracking-wider cursor-pointer"
+              >
+                Force Remote Sync
+              </button>
+            )}
+            <button 
+              onClick={handleSetDefaultLang}
+              className="text-[10px] text-stone-500 hover:text-stone-300 transition-colors uppercase font-mono tracking-wider cursor-pointer"
+            >
+              {lang === 'ja' ? 'デフォルトにする' : 'Make Default'}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div className="w-full max-w-4xl space-y-6 relative z-10">
+        <SanctuaryStatus lang={lang} currentUser={currentUser} />
+        
+        <WeeklyUnlock lang={lang} currentUser={currentUser} />
+        
+        <CountdownTicker lang={lang} />
+
+        <MilestoneTracker 
+          currentUser={currentUser} 
+          title={currentLang.milestones} 
+          subtitle={currentLang.milestones_sub} 
+          icon={<Target className="w-5 h-5" />} 
+        />
+
+        <MemoryVault 
+          currentUser={currentUser} 
+          title={currentLang.vault} 
+          subtitle={currentLang.vault_sub} 
+          icon={<ImageIcon className="w-5 h-5" />} 
+        />
+
+        <CollapsibleSection title={currentLang.notes} subtitle={currentLang.notes_sub} icon={<MessageSquare className="w-5 h-5" />} defaultOpen={false}>
+          <SanctuaryNotes currentUser={currentUser} />
+        </CollapsibleSection>
+
+        <CollapsibleSection title={currentLang.sync} subtitle={currentLang.sync_sub} icon={<CalendarDays className="w-5 h-5" />} defaultOpen={false}>
+          <AvailabilityCalendar currentUser={currentUser} lang={lang} />
+        </CollapsibleSection>
+
+        <ItineraryTracker 
+          currentUser={currentUser} 
+          title={currentLang.travel} 
+          subtitle={currentLang.travel_sub} 
+          icon={<Plane className="w-5 h-5" />} 
+        />
+
+        <KeySuccessFactors 
+          currentUser={currentUser}
+          title={currentLang.ksf} 
+          subtitle={currentLang.ksf_sub} 
+          icon={<Lightbulb className="w-5 h-5" />} 
+        />
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/ItineraryTracker.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Calendar, Plus, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import CollapsibleSection from './CollapsibleSection';
+
+interface Itinerary {
+  id: string;
+  flight_number: string;
+  route: string;
+  travel_date: string;
+  status: string;
+  created_by?: string;
+}
+
+interface ItineraryTrackerProps {
+  currentUser: 'Michael' | 'Tamae';
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+}
+
+export default function ItineraryTracker({ currentUser, title, subtitle, icon }: ItineraryTrackerProps) {
+  const [itineraries, setItineraries] = useState<Itinerary[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const [flightNumber, setFlightNumber] = useState('');
+  const [route, setRoute] = useState('');
+  const [travelDate, setTravelDate] = useState('');
+  
+  const [isOpen, setIsOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchItineraries() {
+      const { data, error } = await supabase
+        .from('itineraries')
+        .select('*')
+        .order('travel_date', { ascending: true });
+
+      if (isMounted) {
+        if (!error && data) {
+          setItineraries(data);
+        }
+        setLoading(false);
+      }
+    }
+
+    fetchItineraries();
+
+    const channel = supabase
+      .channel('public:itineraries')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'itineraries' },
+        (payload) => {
+          const newItem = payload.new as Itinerary;
+          setItineraries((prev) => [...prev, newItem]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const addItinerary = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!flightNumber || !route || !travelDate) return;
+
+    await supabase
+      .from('itineraries')
+      .insert([{ flight_number: flightNumber, route, travel_date: travelDate, status: 'Confirmed', created_by: currentUser }]);
+
+    setFlightNumber('');
+    setRoute('');
+    setTravelDate('');
+    setIsAdding(false);
+  };
+
+  const handleAddClick = () => {
+    if (!isOpen) {
+      setIsOpen(true);
+      setIsAdding(true);
+    } else {
+      setIsAdding(!isAdding);
+    }
+  };
+
+  const actionButton = (
+    <button 
+      onClick={handleAddClick}
+      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
+    >
+      <Plus className="w-3.5 h-3.5" />
+      <span className="hidden md:inline">Add Flight</span>
+      <span className="md:hidden">Add</span>
+    </button>
+  );
+
+  return (
+    <CollapsibleSection
+      title={title}
+      subtitle={subtitle}
+      icon={icon}
+      isControlled={true}
+      isOpen={isOpen}
+      onToggle={setIsOpen}
+      actionButton={actionButton}
+    >
+      {loading ? (
+        <div className="w-full p-8 rounded-2xl bg-zinc-950 text-zinc-500 flex items-center justify-center font-mono text-xs">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Itineraries...
+        </div>
+      ) : (
+        <>
+          {isAdding && (
+            <form onSubmit={addItinerary} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row gap-3">
+              <input
+                type="text"
+                placeholder="Flight # (e.g., JL012)"
+                value={flightNumber}
+                onChange={(e) => setFlightNumber(e.target.value)}
+                className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500 font-mono"
+              />
+              <input
+                type="text"
+                placeholder="Route (e.g., DFW -> HND)"
+                value={route}
+                onChange={(e) => setRoute(e.target.value)}
+                className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500"
+              />
+              <input
+                type="date"
+                value={travelDate}
+                onChange={(e) => setTravelDate(e.target.value)}
+                className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500"
+              />
+              <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
+                Save
+              </button>
+            </form>
+          )}
+
+          <div className="space-y-3">
+            {itineraries.length === 0 ? (
+              <p className="text-xs text-zinc-600 font-mono text-center py-4">No active flight itineraries recorded.</p>
+            ) : (
+              itineraries.map((item) => (
+                <div key={item.id} className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-purple-400 font-mono text-xs">
+                      {item.flight_number}
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-zinc-200">{item.route}</span>
+                      <span className="block text-[10px] font-mono text-zinc-500 uppercase">{item.status}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800/60">
+                    <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>{item.travel_date}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
+    </CollapsibleSection>
+  );
+}
+</file>
+
+<file path="src/components/KeySuccessFactors.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Lightbulb, Plus, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import CollapsibleSection from './CollapsibleSection';
+import ReactionThread, { ThreadComment } from './ReactionThread';
+
+interface Factor {
+  id: string;
+  title: string;
+  status: 'active' | 'achieved';
+  hearted_by: string[] | null;
+  comments: ThreadComment[] | null;
+}
+
+interface KeySuccessFactorsProps {
+  currentUser: 'Michael' | 'Tamae';
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+}
+
+export default function KeySuccessFactors({ currentUser, title, subtitle, icon }: KeySuccessFactorsProps) {
+  const [factors, setFactors] = useState<Factor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newTitle, setNewTitle] = useState('');
+  
+  const [isOpen, setIsOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadData() {
+      const { data, error } = await supabase
+        .from('success_factors')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (isMounted) {
+        if (!error && data) setFactors(data);
+        setLoading(false);
+      }
+    }
+
+    loadData();
+
+    const channel = supabase
+      .channel('public:success_factors')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'success_factors' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setFactors((prev) => [...prev, payload.new as Factor]);
+          } else if (payload.eventType === 'UPDATE') {
+            setFactors((prev) => prev.map((f) => (f.id === payload.new.id ? payload.new as Factor : f)));
+          } else if (payload.eventType === 'DELETE') {
+            setFactors((prev) => prev.filter((f) => f.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const toggleStatus = async (id: string, currentStatus: Factor['status']) => {
+    const nextStatus: Factor['status'] = currentStatus === 'achieved' ? 'active' : 'achieved';
+    setFactors(factors.map(f => f.id === id ? { ...f, status: nextStatus } : f));
+    await supabase.from('success_factors').update({ status: nextStatus }).eq('id', id);
+  };
+
+  const addFactor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle) return;
+
+    const { data, error } = await supabase.from('success_factors').insert([{ title: newTitle, status: 'active' }]).select();
+    if (!error && data) {
+      setNewTitle('');
+      setIsAdding(false);
+    }
+  };
+
+  const toggleHeart = async (factor: Factor) => {
+    const currentHearts = factor.hearted_by || [];
+    const newHearts = currentHearts.includes(currentUser) ? currentHearts.filter(u => u !== currentUser) : [...currentHearts, currentUser];
+    setFactors(factors.map(f => f.id === factor.id ? { ...f, hearted_by: newHearts } : f));
+    await supabase.from('success_factors').update({ hearted_by: newHearts }).eq('id', factor.id);
+  };
+
+  const postReply = async (content: string, factor: Factor) => {
+    const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+    const newComment: ThreadComment = { id: Date.now().toString(), author, content, created_at: new Date().toISOString() };
+    const newComments = [...(factor.comments || []), newComment];
+    setFactors(factors.map(f => f.id === factor.id ? { ...f, comments: newComments } : f));
+    await supabase.from('success_factors').update({ comments: newComments }).eq('id', factor.id);
+  };
+
+  const handleAddClick = () => {
+    if (!isOpen) { setIsOpen(true); setIsAdding(true); } else { setIsAdding(!isAdding); }
+  };
+
+  const actionButton = (
+    <button onClick={handleAddClick} className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all cursor-pointer">
+      <Plus className="w-3.5 h-3.5" />
+      <span className="hidden md:inline">Add Focus</span>
+      <span className="md:hidden">Add</span>
+    </button>
+  );
+
+  return (
+    <CollapsibleSection
+      title={title}
+      subtitle={subtitle}
+      icon={icon}
+      isControlled={true}
+      isOpen={isOpen}
+      onToggle={setIsOpen}
+      actionButton={actionButton}
+    >
+      {loading ? (
+        <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Key Success Factors...
+        </div>
+      ) : (
+        <>
+          {isAdding && (
+            <form onSubmit={addFactor} className="mb-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex gap-3">
+              <input type="text" placeholder="Focus area (e.g., Daily Japanese & English practice)" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500" autoFocus />
+              <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center gap-2 cursor-pointer">
+                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                <span>Save</span>
+              </button>
+            </form>
+          )}
+
+          <div className="space-y-3">
+            {factors.map((item) => (
+              <div key={item.id} className="flex flex-col p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:bg-zinc-900/60 transition-all group">
+                <div className="flex items-start gap-3 w-full">
+                  <div onClick={() => toggleStatus(item.id, item.status)} className="mt-0.5 cursor-pointer shrink-0">
+                    {item.status === 'achieved' ? <CheckCircle2 className="w-5 h-5 text-emerald-500 transition-transform hover:scale-110" /> : <Lightbulb className="w-5 h-5 text-purple-400 transition-transform hover:scale-110" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-sm font-medium transition-colors ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>{item.title}</span>
+                    <ReactionThread 
+                      currentUser={currentUser}
+                      heartedBy={item.hearted_by || []}
+                      comments={item.comments || []}
+                      onToggleHeart={() => toggleHeart(item)}
+                      onAddComment={(content) => postReply(content, item)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </CollapsibleSection>
+  );
+}
+</file>
+
+<file path="src/components/SanctuaryStatus.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Sun, Moon, Cloud, Thermometer, CloudRain, CloudLightning, CloudSnow, CloudFog } from 'lucide-react';
+import { formatInTimeZone } from 'date-fns-tz';
+import { enUS, ja } from 'date-fns/locale';
+
+interface SanctuaryStatusProps {
+  lang: 'en' | 'ja';
+  currentUser: 'Michael' | 'Tamae';
+}
+
+interface Holiday {
+  date: string;
+  name: string;
+  localName: string;
+}
+
+// Cultural Dictionary for Context
+const HOLIDAY_INFO: Record<string, { en: string, ja: string }> = {
+  // Japanese Holidays
+  "New Year's Day": { en: "Celebrating the start of the new year.", ja: "年の初めを祝う日。" },
+  "Coming of Age Day": { en: "Celebrating youth who have reached adulthood.", ja: "新成人を祝い励ます日。" },
+  "National Foundation Day": { en: "Reflecting on the nation's founding.", ja: "建国をしのび、国を愛する心を養う日。" },
+  "The Emperor's Birthday": { en: "Celebrating the reigning Emperor's birthday.", ja: "天皇の誕生日を祝う日。" },
+  "Vernal Equinox Day": { en: "Praising nature and caring for living things.", ja: "自然をたたえ、生物をいつくしむ日。" },
+  "Shōwa Day": { en: "Honoring the birthday of former Emperor Showa.", ja: "激動の日々を経て、復興を遂げた昭和の時代を顧みる日。" },
+  "Constitution Memorial Day": { en: "Commemorates the 1947 Constitution.", ja: "日本国憲法の施行を記念する日。" },
+  "Greenery Day": { en: "A day to commune with nature and be thankful for blessings.", ja: "自然に親しむとともにその恩恵に感謝する日。" },
+  "Children's Day": { en: "Celebrating children's personalities and happiness.", ja: "こどもの人格を重んじ、幸福をはかる日。" },
+  "Marine Day": { en: "Giving thanks to the ocean's bounty.", ja: "海の恩恵に感謝する日。" },
+  "Mountain Day": { en: "Getting familiar with mountains and their blessings.", ja: "山に親しむ機会を得て、山の恩恵に感謝する日。" },
+  "Respect for the Aged Day": { en: "Honoring elderly citizens and celebrating longevity.", ja: "長年社会につくしてきた老人を敬愛し、長寿を祝う日。" },
+  "Autumnal Equinox Day": { en: "Honoring ancestors and remembering the dead.", ja: "祖先をうやまい、なくなった人々をしのぶ日。" },
+  "Sports Day": { en: "Promoting sports and a healthy mind and body.", ja: "スポーツを楽しみ、健康な心身を培う日。" },
+  "Culture Day": { en: "Celebrating peace, freedom, and culture.", ja: "自由と平和を愛し、文化をすすめる日。" },
+  "Labor Thanksgiving Day": { en: "Commending labor and celebrating production.", ja: "勤労をたつとび、生産を祝い、国民たがいに感謝しあう日。" },
+
+  // US Holidays
+  "Independence Day": { en: "Commemorates the Declaration of Independence in 1776.", ja: "1776年の独立宣言を記念する日。" },
+  "Thanksgiving Day": { en: "A national day of giving thanks for the harvest.", ja: "秋の収穫と恩恵に感謝する日。" },
+  "Memorial Day": { en: "Honoring military personnel who died in service.", ja: "兵役中に亡くなった人々を追悼する日。" },
+  "Labor Day": { en: "Honoring the American labor movement.", ja: "アメリカの労働運動と労働者をたたえる日。" },
+  "Veterans Day": { en: "Honoring all military veterans.", ja: "すべての退役軍人をたたえる日。" },
+  "Martin Luther King, Jr. Day": { en: "Celebrating the life of the civil rights leader.", ja: "公民権運動の指導者キング牧師をたたえる日。" },
+  "Washington's Birthday": { en: "Honoring the first US President.", ja: "初代大統領ワシントンをたたえる日（大統領の日）。" },
+  "Juneteenth": { en: "Commemorates the emancipation of enslaved African Americans.", ja: "アフリカ系アメリカ人の奴隷解放を記念する日。" },
+  "Columbus Day": { en: "Commemorates the landing of Christopher Columbus in 1492.", ja: "1492年のコロンブスのアメリカ大陸到達を記念する日。" },
+  "Christmas Day": { en: "Celebrating the birth of Jesus Christ.", ja: "イエス・キリストの降誕を祝う日。" }
+};
+
+export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusProps) {
+  const [now, setNow] = useState(new Date());
+  const [jpWeather, setJpWeather] = useState<{ tempC: number | null, code: number | null, isDay: boolean | null }>({ tempC: null, code: null, isDay: null });
+  const [txWeather, setTxWeather] = useState<{ tempC: number | null, code: number | null, isDay: boolean | null }>({ tempC: null, code: null, isDay: null });
+  
+  const [jpHolidays, setJpHolidays] = useState<Holiday[]>([]);
+  const [txHolidays, setTxHolidays] = useState<Holiday[]>([]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const currentYear = new Date().getFullYear();
+
+    const fetchHolidays = async (countryCode: string) => {
+      try {
+        const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${currentYear}/${countryCode}`);
+        return res.ok ? await res.json() : [];
+      } catch {
+        return [];
+      }
+    };
+
+    Promise.all([
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=35.4478&longitude=139.6425&current=temperature_2m,weather_code,is_day').then(r => r.json()),
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=32.5896&longitude=-95.1972&current=temperature_2m,weather_code,is_day').then(r => r.json()),
+      fetchHolidays('JP'),
+      fetchHolidays('US')
+    ])
+    .then(([jpData, txData, jpD, txD]) => {
+      if (jpData?.current) {
+        setJpWeather({ tempC: jpData.current.temperature_2m, code: jpData.current.weather_code, isDay: jpData.current.is_day === 1 });
+      }
+      if (txData?.current) {
+        setTxWeather({ tempC: txData.current.temperature_2m, code: txData.current.weather_code, isDay: txData.current.is_day === 1 });
+      }
+      setJpHolidays(jpD);
+      setTxHolidays(txD);
+    })
+    .catch(console.error);
+  }, []);
+
+  const texasHour = parseInt(formatInTimeZone(now, 'America/Chicago', 'H'), 10);
+  const japanHour = parseInt(formatInTimeZone(now, 'Asia/Tokyo', 'H'), 10);
+
+  const isTexasDay = txWeather.isDay !== null ? txWeather.isDay : (texasHour >= 6 && texasHour < 19);
+  const isJapanDay = jpWeather.isDay !== null ? jpWeather.isDay : (japanHour >= 6 && japanHour < 19);
+
+  const locale = lang === 'ja' ? ja : enUS;
+  const formatStr = lang === 'ja' ? 'M月d日 (EEEE)' : 'EEEE, MMM d';
+  
+  const texasFormattedDate = formatInTimeZone(now, 'America/Chicago', formatStr, { locale });
+  const japanFormattedDate = formatInTimeZone(now, 'Asia/Tokyo', formatStr, { locale });
+
+  // Holiday Matchers
+  const jpDateStr = formatInTimeZone(now, 'Asia/Tokyo', 'yyyy-MM-dd');
+  const txDateStr = formatInTimeZone(now, 'America/Chicago', 'yyyy-MM-dd');
+  
+  const todayJpHoliday = jpHolidays.find(h => h.date === jpDateStr);
+  const todayTxHoliday = txHolidays.find(h => h.date === txDateStr);
+
+  const displayJpHoliday = todayJpHoliday ? (lang === 'ja' ? todayJpHoliday.localName : todayJpHoliday.name) : null;
+  const displayTxHoliday = todayTxHoliday ? (lang === 'ja' && todayTxHoliday.name === "New Year's Day" ? '元日' : todayTxHoliday.name) : null;
+
+  // Retrieve descriptions from dictionary, falling back gracefully if not found
+  const jpDesc = todayJpHoliday ? HOLIDAY_INFO[todayJpHoliday.name]?.[lang] : null;
+  const txDesc = todayTxHoliday ? HOLIDAY_INFO[todayTxHoliday.name]?.[lang] : null;
+
+  const getWeatherInfo = (code: number | null, isDay: boolean) => {
+    if (code === null) return { Icon: Cloud, text: lang === 'ja' ? '取得中...' : 'Loading...' };
+    if (code === 0) return { Icon: isDay ? Sun : Moon, text: lang === 'ja' ? '快晴' : 'Clear' };
+    if (code <= 3) return { Icon: Cloud, text: lang === 'ja' ? '曇り' : 'Cloudy' };
+    if (code === 45 || code === 48) return { Icon: CloudFog, text: lang === 'ja' ? '霧' : 'Fog' };
+    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return { Icon: CloudRain, text: lang === 'ja' ? '雨' : 'Rain' };
+    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return { Icon: CloudSnow, text: lang === 'ja' ? '雪' : 'Snow' };
+    if (code >= 95) return { Icon: CloudLightning, text: lang === 'ja' ? '雷雨' : 'Storm' };
+    return { Icon: Cloud, text: lang === 'ja' ? '不明' : 'Unknown' };
+  };
+
+  const jpWeatherDetails = getWeatherInfo(jpWeather.code, isJapanDay);
+  const txWeatherDetails = getWeatherInfo(txWeather.code, isTexasDay);
+
+  const formatTemp = (tempC: number | null) => {
+    if (tempC === null) return '--';
+    const tempF = (tempC * 9/5) + 32;
+    return `${Math.round(tempC)}°C / ${Math.round(tempF)}°F`;
+  };
+
+  const japanCard = (
+    <div key="jp" className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full">
+      <div className="flex items-start gap-4">
+        <div className={`p-3.5 rounded-xl border shadow-inner mt-1 ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+          {isJapanDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+        </div>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2.5">
+            <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? '神奈川 (JST)' : 'Kanagawa (JST)'}</h4>
+            <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+              <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(jpWeather.tempC)}
+            </span>
+          </div>
+          <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
+            {formatInTimeZone(now, 'Asia/Tokyo', 'h:mm:ss a')}
+          </p>
+          <div className="mt-0.5">
+            <span className="text-sm text-zinc-300 font-mono block">{japanFormattedDate}</span>
+            {displayJpHoliday && (
+              <div className="mt-2.5">
+                <span className="w-max px-2 py-0.5 rounded text-[9px] font-mono tracking-widest uppercase bg-amber-950/30 text-amber-500/90 border border-amber-900/30">
+                  ★ {displayJpHoliday}
+                </span>
+                {jpDesc && (
+                  <span className="block mt-1.5 text-[10px] font-mono text-stone-500 leading-snug pr-4">
+                    {jpDesc}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col items-end gap-2 shrink-0">
+        <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
+          {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+        </span>
+        <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+          <jpWeatherDetails.Icon className="w-3.5 h-3.5" /> {jpWeatherDetails.text}
+        </span>
+      </div>
+    </div>
+  );
+
+  const texasCard = (
+    <div key="tx" className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full">
+      <div className="flex items-start gap-4">
+        <div className={`p-3.5 rounded-xl border shadow-inner mt-1 ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+          {isTexasDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+        </div>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2.5">
+            <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? 'テキサス (CDT)' : 'Texas (CDT)'}</h4>
+            <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+              <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(txWeather.tempC)}
+            </span>
+          </div>
+          <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono">
+            {formatInTimeZone(now, 'America/Chicago', 'h:mm:ss a')}
+          </p>
+          <div className="mt-0.5">
+            <span className="text-sm text-zinc-300 font-mono block">{texasFormattedDate}</span>
+            {displayTxHoliday && (
+              <div className="mt-2.5">
+                <span className="w-max px-2 py-0.5 rounded text-[9px] font-mono tracking-widest uppercase bg-amber-950/30 text-amber-500/90 border border-amber-900/30">
+                  ★ {displayTxHoliday}
+                </span>
+                {txDesc && (
+                  <span className="block mt-1.5 text-[10px] font-mono text-stone-500 leading-snug pr-4">
+                    {txDesc}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col items-end gap-2 shrink-0">
+        <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
+          {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+        </span>
+        <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+          <txWeatherDetails.Icon className="w-3.5 h-3.5" /> {txWeatherDetails.text}
+        </span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      {/* Partner-First Rendering: Show Tamae's card first if Michael is looking, and vice versa */}
+      {currentUser === 'Michael' ? [japanCard, texasCard] : [texasCard, japanCard]}
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/WeeklyUnlock.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Lock, Unlock, Sparkles, Loader2, Archive, ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import ReactionThread, { ThreadComment } from './ReactionThread';
+
+interface Prompt {
+  id: string;
+  question_en: string;
+  question_ja: string;
+  michael_answer: string | null;
+  tamae_answer: string | null;
+  is_active: boolean;
+  created_at: string;
+  michael_hearted_by: string[] | null;
+  michael_comments: ThreadComment[] | null;
+  tamae_hearted_by: string[] | null;
+  tamae_comments: ThreadComment[] | null;
+}
+
+interface WeeklyUnlockProps {
+  lang: 'en' | 'ja';
+  currentUser: 'Michael' | 'Tamae';
+}
+
+function PromptContent({ prompt: initialPrompt, lang, currentUser }: { prompt: Prompt, lang: 'en' | 'ja', currentUser: 'Michael' | 'Tamae' }) {
+  const [prompt, setPrompt] = useState<Prompt>(initialPrompt);
+  const [prevInitial, setPrevInitial] = useState<Prompt>(initialPrompt);
+
+  // Official React pattern for updating state when a prop changes without a useEffect
+  if (initialPrompt !== prevInitial) {
+    setPrompt(initialPrompt);
+    setPrevInitial(initialPrompt);
+  }
+
+  const [myAnswer, setMyAnswer] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!myAnswer.trim()) return;
+    setSubmitting(true);
+    const updateField = currentUser === 'Michael' ? { michael_answer: myAnswer } : { tamae_answer: myAnswer };
+    await supabase.from('weekly_prompts').update(updateField).eq('id', prompt.id);
+    setSubmitting(false);
+  };
+
+  const handleToggleHeart = async (targetUser: 'michael' | 'tamae') => {
+    const col = `${targetUser}_hearted_by` as keyof Prompt;
+    const currentHearts = (prompt[col] as string[]) || [];
+    const newHearts = currentHearts.includes(currentUser) ? currentHearts.filter(u => u !== currentUser) : [...currentHearts, currentUser];
+    
+    setPrompt({ ...prompt, [col]: newHearts }); 
+    await supabase.from('weekly_prompts').update({ [col]: newHearts }).eq('id', prompt.id);
+  };
+
+  const handleAddComment = async (targetUser: 'michael' | 'tamae', content: string) => {
+    const col = `${targetUser}_comments` as keyof Prompt;
+    const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+    
+    const newComment = { id: Date.now().toString(), author, content, created_at: new Date().toISOString() };
+    const newComments = [...((prompt[col] as ThreadComment[]) || []), newComment];
+    
+    setPrompt({ ...prompt, [col]: newComments }); 
+    await supabase.from('weekly_prompts').update({ [col]: newComments }).eq('id', prompt.id);
+  };
+
+  const myCurrentAnswer = currentUser === 'Michael' ? prompt.michael_answer : prompt.tamae_answer;
+  const partnerAnswer = currentUser === 'Michael' ? prompt.tamae_answer : prompt.michael_answer;
+  const bothAnswered = !!(prompt.michael_answer && prompt.tamae_answer);
+
+  const partnerAnsweredTextEn = currentUser === 'Michael' ? 'She has already answered!' : 'He has already answered!';
+  const partnerAnsweredTextJa = currentUser === 'Michael' ? '彼女はすでに答えています！' : '彼はすでに答えています！';
+
+  return (
+    <div className="mt-6">
+      {!myCurrentAnswer ? (
+        <form onSubmit={handleSubmit} className="relative">
+          <textarea value={myAnswer} onChange={(e) => setMyAnswer(e.target.value)} placeholder={lang === 'ja' ? 'あなたの答え...' : 'Your answer...'} className="w-full p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 text-stone-200 focus:outline-none focus:border-amber-700/50 resize-none min-h-25" required />
+          <div className="flex justify-between items-center mt-3">
+            <span className="text-xs text-stone-500 font-mono">
+              {partnerAnswer ? (lang === 'ja' ? partnerAnsweredTextJa : partnerAnsweredTextEn) : (lang === 'ja' ? 'まだ誰も答えていません' : 'Neither has answered yet.')}
+            </span>
+            <button type="submit" disabled={submitting} className="px-6 py-2.5 rounded-lg bg-amber-700/80 hover:bg-amber-600 text-white text-sm font-medium transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer">
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              {lang === 'ja' ? 'ロック解除' : 'Submit & Unlock'}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* My Answer */}
+          <div className="p-5 rounded-xl bg-zinc-900/40 border border-zinc-800 flex flex-col h-full">
+            <div className="flex-1">
+              <span className="text-[10px] font-mono text-stone-500 tracking-widest uppercase mb-3 block">{currentUser}</span>
+              <p className="text-sm text-stone-200 leading-relaxed whitespace-pre-wrap mb-2">{myCurrentAnswer}</p>
+            </div>
+            
+            {/* Subtle Break and Reactions */}
+            <div className="mt-4 pt-4 border-t border-zinc-800/50">
+              <ReactionThread 
+                currentUser={currentUser}
+                heartedBy={currentUser === 'Michael' ? (prompt.michael_hearted_by || []) : (prompt.tamae_hearted_by || [])}
+                comments={currentUser === 'Michael' ? (prompt.michael_comments || []) : (prompt.tamae_comments || [])}
+                onToggleHeart={() => handleToggleHeart(currentUser === 'Michael' ? 'michael' : 'tamae')}
+                onAddComment={(content) => handleAddComment(currentUser === 'Michael' ? 'michael' : 'tamae', content)}
+              />
+            </div>
+          </div>
+
+          {/* Partner's Answer */}
+          <div className={`p-5 rounded-xl border relative overflow-hidden flex flex-col h-full ${bothAnswered ? 'bg-zinc-900/40 border-amber-900/30' : 'bg-zinc-950 border-zinc-800/50'}`}>
+            <span className="text-[10px] font-mono text-stone-500 tracking-widest uppercase mb-3 block">{currentUser === 'Michael' ? 'Tamae' : 'Michael'}</span>
+            
+            {bothAnswered ? (
+              <div className="animate-in fade-in duration-1000 flex-1 flex flex-col h-full">
+                <div className="flex-1">
+                  <p className="text-sm text-stone-200 leading-relaxed whitespace-pre-wrap mb-2">{partnerAnswer}</p>
+                </div>
+                
+                {/* Subtle Break and Reactions */}
+                <div className="mt-4 pt-4 border-t border-zinc-800/50">
+                  <ReactionThread 
+                    currentUser={currentUser}
+                    heartedBy={currentUser === 'Michael' ? (prompt.tamae_hearted_by || []) : (prompt.michael_hearted_by || [])}
+                    comments={currentUser === 'Michael' ? (prompt.tamae_comments || []) : (prompt.michael_comments || [])}
+                    onToggleHeart={() => handleToggleHeart(currentUser === 'Michael' ? 'tamae' : 'michael')}
+                    onAddComment={(content) => handleAddComment(currentUser === 'Michael' ? 'tamae' : 'michael', content)}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-4 opacity-50 flex-1">
+                <Lock className="w-5 h-5 text-stone-600 mb-2" />
+                <p className="text-xs text-stone-500 font-mono text-center">{lang === 'ja' ? 'パートナーの回答待ち...' : 'Waiting for their answer...'}</p>
+                <div className="mt-4 space-y-2 w-full select-none blur-sm opacity-30">
+                  <div className="h-2 bg-stone-500 rounded w-3/4"></div>
+                  <div className="h-2 bg-stone-500 rounded w-1/2"></div>
+                  <div className="h-2 bg-stone-500 rounded w-5/6"></div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function WeeklyUnlock({ lang, currentUser }: WeeklyUnlockProps) {
+  const [activePrompt, setActivePrompt] = useState<Prompt | null>(null);
+  const [archivedPrompts, setArchivedPrompts] = useState<Prompt[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const [view, setView] = useState<'active' | 'archive'>('active');
+  const [expandedArchiveId, setExpandedArchiveId] = useState<string | null>(null);
+
+  const [isAddingPrompt, setIsAddingPrompt] = useState(false);
+  const [newPromptEn, setNewPromptEn] = useState('');
+  const [newPromptJa, setNewPromptJa] = useState('');
+  const [isSavingPrompt, setIsSavingPrompt] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchPrompts() {
+      await supabase.auth.getSession();
+      const { data, error } = await supabase.from('weekly_prompts').select('*').order('created_at', { ascending: false });
+      if (isMounted) {
+        if (!error && data) {
+          setActivePrompt(data.find(p => p.is_active) || null);
+          setArchivedPrompts(data.filter(p => !p.is_active));
+        }
+        setLoading(false);
+      }
+    }
+    fetchPrompts();
+
+    const channel = supabase.channel('public:weekly_prompts').on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_prompts' }, () => { fetchPrompts(); }).subscribe();
+    return () => { isMounted = false; supabase.removeChannel(channel); };
+  }, []);
+
+  const handleAddPrompt = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPromptEn.trim() || !newPromptJa.trim()) return;
+    setIsSavingPrompt(true);
+    if (activePrompt) await supabase.from('weekly_prompts').update({ is_active: false }).eq('id', activePrompt.id);
+    await supabase.from('weekly_prompts').insert([{ question_en: newPromptEn, question_ja: newPromptJa, is_active: true }]);
+    setNewPromptEn(''); setNewPromptJa(''); setIsAddingPrompt(false); setIsSavingPrompt(false); setView('active'); 
+  };
+
+  if (loading) return <div className="w-full max-w-4xl p-6 rounded-2xl bg-zinc-950/80 border border-zinc-800 flex items-center justify-center font-mono text-xs text-stone-500"><Loader2 className="w-4 h-4 animate-spin mr-2" /> Syncing Prompt...</div>;
+  if (!activePrompt && archivedPrompts.length === 0 && currentUser !== 'Michael') return null;
+
+  return (
+    <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-amber-900/30 shadow-[0_8px_30px_rgb(0,0,0,0.5)] overflow-hidden relative transition-all">
+      <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-amber-600 via-stone-500 to-amber-900"></div>
+      
+      <div className="p-6 md:p-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-amber-950/30 border border-amber-900/50 text-amber-500 shadow-inner">
+              {view === 'archive' ? <Archive className="w-4 h-4" /> : (activePrompt && activePrompt.michael_answer && activePrompt.tamae_answer ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />)}
+            </div>
+            <div>
+              <h3 className="text-xs font-mono uppercase tracking-widest text-amber-600 font-semibold">
+                {view === 'archive' ? (lang === 'ja' ? '過去のプロンプト' : 'Prompt Archive') : (lang === 'ja' ? '今週のプロンプト' : 'Weekly Prompt')}
+              </h3>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {currentUser === 'Michael' && (
+              <button onClick={() => setIsAddingPrompt(!isAddingPrompt)} className="flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-amber-500 hover:bg-zinc-800 hover:text-amber-400 transition-colors cursor-pointer">
+                <Plus className="w-3 h-3" /> Add Prompt
+              </button>
+            )}
+
+            {archivedPrompts.length > 0 && (
+              <button onClick={() => { setView(view === 'active' ? 'archive' : 'active'); setExpandedArchiveId(null); setIsAddingPrompt(false); }} className="flex items-center gap-2 text-[10px] uppercase font-mono tracking-wider px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-stone-400 hover:text-stone-200 hover:bg-zinc-800 transition-colors cursor-pointer">
+                {view === 'active' ? (lang === 'ja' ? 'アーカイブを見る' : 'View Archive') : (lang === 'ja' ? '現在に戻る' : 'Back to Current')}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {isAddingPrompt && (
+          <form onSubmit={handleAddPrompt} className="mb-8 p-5 rounded-xl bg-zinc-900/60 border border-amber-900/40 flex flex-col gap-3 animate-in fade-in">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <span className="text-xs font-mono uppercase tracking-widest text-amber-500">Deploy New Prompt</span>
+            </div>
+            <input type="text" placeholder="English Question..." value={newPromptEn} onChange={(e) => setNewPromptEn(e.target.value)} className="w-full p-3 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-amber-700/50" required />
+            <input type="text" placeholder="日本語の質問..." value={newPromptJa} onChange={(e) => setNewPromptJa(e.target.value)} className="w-full p-3 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-amber-700/50" required />
+            <div className="flex justify-end mt-2">
+              <button type="submit" disabled={isSavingPrompt} className="px-6 py-2.5 rounded-lg bg-amber-700/80 hover:bg-amber-600 text-white text-xs font-medium transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer">
+                {isSavingPrompt ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Launch & Archive Old'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {view === 'active' && activePrompt ? (
+          <div className="animate-in fade-in duration-500">
+            <h2 className="text-xl md:text-2xl font-light text-stone-100 leading-relaxed">{lang === 'ja' ? activePrompt.question_ja : activePrompt.question_en}</h2>
+            <PromptContent prompt={activePrompt} lang={lang} currentUser={currentUser} />
+          </div>
+        ) : view === 'active' && !activePrompt && !isAddingPrompt && (
+          <div className="py-8 text-center text-sm font-mono text-stone-500">No active prompt right now.</div>
+        )}
+
+        {view === 'archive' && (
+          <div className="space-y-3 animate-in fade-in duration-500">
+            {archivedPrompts.map(prompt => {
+              const isExpanded = expandedArchiveId === prompt.id;
+              const bothAnswered = !!(prompt.michael_answer && prompt.tamae_answer);
+              const myAnswer = currentUser === 'Michael' ? prompt.michael_answer : prompt.tamae_answer;
+
+              return (
+                <div key={prompt.id} className={`rounded-xl border transition-all overflow-hidden ${isExpanded ? 'bg-zinc-900/20 border-amber-900/30' : 'bg-zinc-900/40 border-zinc-800/40 hover:border-zinc-700/60'}`}>
+                  <div onClick={() => setExpandedArchiveId(isExpanded ? null : prompt.id)} className="p-4 flex items-center justify-between cursor-pointer">
+                    <div className="flex-1 min-w-0 pr-4">
+                      <h4 className={`text-sm font-medium truncate transition-colors ${bothAnswered ? 'text-stone-200' : 'text-stone-400'}`}>{lang === 'ja' ? prompt.question_ja : prompt.question_en}</h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-mono text-stone-600">{new Date(prompt.created_at).toLocaleDateString()}</span>
+                        {!bothAnswered && !myAnswer && <span className="text-[10px] font-mono text-amber-600/80 px-1.5 py-0.5 rounded bg-amber-950/30 border border-amber-900/30">{lang === 'ja' ? '未回答' : 'Needs Answer'}</span>}
+                      </div>
+                    </div>
+                    <div className="text-stone-500 shrink-0">{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</div>
+                  </div>
+                  {isExpanded && <div className="p-4 pt-0 border-t border-zinc-800/30 mt-2"><PromptContent prompt={prompt} lang={lang} currentUser={currentUser} /></div>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/CountdownTicker.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Timer, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+interface CountdownTickerProps {
+  lang: 'en' | 'ja';
+}
+
+export default function CountdownTicker({ lang }: CountdownTickerProps) {
+  const [targetEvent, setTargetEvent] = useState<{title: string, date: Date} | null>(null);
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch the next upcoming milestone from Supabase
+  useEffect(() => {
+    let isMounted = true;
+    
+    const fetchNextMilestone = async () => {
+      const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
+      
+      const { data, error } = await supabase
+        .from('milestones')
+        .select('title, target_date')
+        .gte('target_date', today)
+        .neq('status', 'achieved')
+        .order('target_date', { ascending: true })
+        .limit(1);
+        
+      if (isMounted) {
+        if (!error && data && data.length > 0) {
+          // Append T00:00:00 to ensure it parses correctly at midnight local time
+          setTargetEvent({
+            title: data[0].title,
+            date: new Date(`${data[0].target_date}T00:00:00`)
+          });
+        } else {
+          setTargetEvent(null);
+        }
+        setLoading(false);
+      }
+    };
+
+    fetchNextMilestone();
+
+    // Listen for real-time updates so the countdown switches immediately when new milestones are added
+    const channel = supabase
+      .channel('public:milestones:countdown')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'milestones' },
+        () => {
+          fetchNextMilestone();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Handle the live ticking countdown
+  useEffect(() => {
+    if (!targetEvent) return;
+
+    function calculateTime() {
+      const difference = targetEvent!.date.getTime() - new Date().getTime();
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    }
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
+    return () => clearInterval(interval);
+  }, [targetEvent]);
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] mb-6 p-6 flex items-center justify-center font-mono text-xs text-stone-500">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Syncing Next Target...
+      </div>
+    );
+  }
+
+  // If there are no future milestones planned, hide the ticker entirely
+  if (!targetEvent) return null;
+
+  return (
+    <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] mb-6 transition-all">
+      <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-5">
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 rounded-xl bg-stone-900/50 border border-stone-800/50 text-amber-600/80 shadow-inner shrink-0">
+            <Timer className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-light tracking-wide text-stone-100">
+              {lang === 'ja' ? '次の目標期間' : 'Next Window Target'}
+            </h2>
+            <p className="text-xs text-stone-400 font-mono mt-0.5 truncate max-w-50 md:max-w-xs">
+              {targetEvent.title}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-4 md:flex items-center gap-2 md:gap-3 font-mono text-xs w-full md:w-auto">
+          <div className="text-center px-2 md:px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col justify-center">
+            <span className="text-base font-semibold text-stone-100">{timeLeft.days}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '日' : 'Days'}</span>
+          </div>
+          <div className="text-center px-2 md:px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col justify-center">
+            <span className="text-base font-semibold text-stone-100">{timeLeft.hours}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '時間' : 'Hours'}</span>
+          </div>
+          <div className="text-center px-2 md:px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col justify-center">
+            <span className="text-base font-semibold text-stone-100">{timeLeft.minutes}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '分' : 'Mins'}</span>
+          </div>
+          <div className="text-center px-2 md:px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col justify-center">
+            <span className="text-base font-semibold text-stone-100">{timeLeft.seconds}</span>
+            <span className="block text-[10px] text-stone-500 uppercase mt-0.5">{lang === 'ja' ? '秒' : 'Secs'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/MemoryVault.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Image as ImageIcon, Music, Plus, Loader2, Sparkles, ExternalLink } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { fetchAppleMusicArt } from '@/lib/musicScraper';
+import CollapsibleSection from './CollapsibleSection';
+
+interface SharedRecord {
+  id: string;
+  image_url: string;
+  caption: string;
+  location: string;
+  media_type: 'image' | 'music';
+  external_link: string | null;
+  created_at: string;
+}
+
+interface MemoryVaultProps {
+  currentUser: 'Michael' | 'Tamae';
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+}
+
+export default function MemoryVault({ currentUser, title, subtitle, icon }: MemoryVaultProps) {
+  const [records, setRecords] = useState<SharedRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const [mediaType, setMediaType] = useState<'image' | 'music'>('image');
+  const [caption, setCaption] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [externalLink, setExternalLink] = useState('');
+  
+  const [isOpen, setIsOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchRecords() {
+      const { data, error } = await supabase
+        .from('memories')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (isMounted) {
+        if (!error && data) {
+          setRecords(data);
+        }
+        setLoading(false);
+      }
+    }
+
+    fetchRecords();
+
+    const channel = supabase
+      .channel('public:memories')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'memories' },
+        (payload) => {
+          const newRecord = payload.new as SharedRecord;
+          setRecords((prev) => [newRecord, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const addRecord = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!caption) return;
+    if (mediaType === 'image' && !imageFile) return;
+    if (mediaType === 'music' && !externalLink) return;
+
+    setIsSaving(true);
+    let finalImageUrl = '';
+
+    try {
+      if (mediaType === 'image' && imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `vault/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('photos')
+          .upload(fileName, imageFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('photos')
+          .getPublicUrl(fileName);
+
+        finalImageUrl = publicUrl;
+      } else if (mediaType === 'music') {
+        const scrapedArt = await fetchAppleMusicArt(externalLink);
+        finalImageUrl = scrapedArt || 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=500&auto=format&fit=crop';
+      }
+
+      // Location mapping direct to user
+      const location = currentUser === 'Michael' ? 'Michael' : 'Tamae';
+
+      await supabase
+        .from('memories')
+        .insert([{ 
+          image_url: finalImageUrl, 
+          caption, 
+          location,
+          media_type: mediaType,
+          external_link: externalLink || null
+        }]);
+
+      setImageFile(null);
+      setCaption('');
+      setExternalLink('');
+      setIsAdding(false);
+    } catch (error) {
+      console.error('Error saving record:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddClick = () => {
+    if (!isOpen) {
+      setIsOpen(true);
+      setIsAdding(true);
+    } else {
+      setIsAdding(!isAdding);
+    }
+  };
+
+  const actionButton = (
+    <button 
+      onClick={handleAddClick}
+      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all"
+    >
+      <Plus className="w-3.5 h-3.5" />
+      <span className="hidden md:inline">Add Record</span>
+      <span className="md:hidden">Add</span>
+    </button>
+  );
+
+  return (
+    <CollapsibleSection
+      title={title}
+      subtitle={subtitle}
+      icon={icon}
+      isControlled={true}
+      isOpen={isOpen}
+      onToggle={setIsOpen}
+      actionButton={actionButton}
+    >
+      {loading ? (
+        <div className="flex items-center justify-center text-stone-500 font-mono text-xs py-4">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Records...
+        </div>
+      ) : (
+        <>
+          {isAdding && (
+            <form onSubmit={addRecord} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col gap-3">
+              <div className="flex gap-3 mb-1">
+                <button
+                  type="button"
+                  onClick={() => { setMediaType('image'); setExternalLink(''); }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all ${mediaType === 'image' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+                >
+                  <ImageIcon className="w-3.5 h-3.5" /> Photo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setMediaType('music'); setImageFile(null); }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all ${mediaType === 'music' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+                >
+                  <Music className="w-3.5 h-3.5" /> Music
+                </button>
+              </div>
+
+              <div className="flex gap-3">
+                {mediaType === 'image' ? (
+                  <input
+                    key="image-upload-input"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    className="flex-1 block w-full text-sm text-stone-400 file:mr-3 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-mono file:bg-stone-800 file:text-stone-300 hover:file:bg-stone-700 transition-all bg-zinc-950 border border-zinc-800 rounded-lg cursor-pointer focus:outline-none focus:border-stone-500"
+                  />
+                ) : (
+                  <input
+                    key="music-link-input"
+                    type="text"
+                    placeholder="Paste Apple Music Link..."
+                    value={externalLink}
+                    onChange={(e) => setExternalLink(e.target.value)}
+                    className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500 font-mono"
+                  />
+                )}
+              </div>
+              
+              <input
+                type="text"
+                placeholder={mediaType === 'music' ? 'Caption (e.g., Gesaffelstein - Pursuit)' : 'Caption (e.g., Sunset by the lake)'}
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500"
+              />
+
+              <button 
+                type="submit" 
+                disabled={isSaving}
+                className="py-2.5 mt-1 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 text-zinc-950 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 text-amber-700" />
+                )}
+                <span>{isSaving ? 'Fetching & Saving...' : 'Save to Records'}</span>
+              </button>
+            </form>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {records.length === 0 ? (
+              <p className="text-xs text-stone-600 font-mono text-center py-8 col-span-2">No records logged yet.</p>
+            ) : (
+              records.map((record) => {
+                const isMusic = record.media_type === 'music';
+                
+                // Backwards compatibility map for older database records
+                const displayLocation = record.location === 'Texas' ? 'Michael' : record.location === 'Kanagawa' ? 'Tamae' : record.location;
+                
+                return (
+                  <div key={record.id} className="rounded-xl overflow-hidden bg-zinc-900/40 border border-zinc-800/60 group relative flex flex-col">
+                    <div className={`${isMusic ? 'h-56 sm:h-64' : 'h-48 md:h-56'} overflow-hidden relative bg-zinc-950`}>
+                      {isMusic && record.external_link ? (
+                        <a href={record.external_link} target="_blank" rel="noreferrer" className="block w-full h-full cursor-pointer">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img 
+                            src={record.image_url} 
+                            alt={record.caption} 
+                            className={`w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 ${isMusic ? 'blur-[2px] scale-105 group-hover:blur-none' : ''}`} 
+                          />
+                        </a>
+                      ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img 
+                          src={record.image_url} 
+                          alt={record.caption} 
+                          className={`w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 ${isMusic ? 'blur-[2px] scale-105 group-hover:blur-none' : ''}`} 
+                        />
+                      )}
+                      
+                      <div className="absolute top-3 left-3 flex gap-2 pointer-events-none">
+                        <span className="px-2 py-1 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-stone-300 border border-zinc-800 flex items-center gap-1.5 shadow-sm">
+                          {isMusic ? <Music className="w-3 h-3 text-amber-500" /> : <ImageIcon className="w-3 h-3 text-stone-400" />}
+                          {displayLocation}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 flex-1 flex flex-col justify-between bg-zinc-900/40">
+                      <div>
+                        <p className="text-sm font-medium text-stone-200">{record.caption}</p>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-[10px] font-mono text-stone-500">
+                          {new Date(record.created_at).toLocaleDateString()}
+                        </span>
+                        {isMusic && record.external_link && (
+                          <a 
+                            href={record.external_link} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10"
+                          >
+                            Listen <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </>
+      )}
+    </CollapsibleSection>
+  );
+}
+</file>
+
+<file path="src/components/MilestoneTracker.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Calendar, CheckCircle2, Clock, Plus, Loader2, X } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import CollapsibleSection from './CollapsibleSection';
+import ReactionThread, { ThreadComment } from './ReactionThread';
+
+interface Milestone {
+  id: string;
+  title: string;
+  target_date: string;
+  status: 'planned' | 'in_progress' | 'achieved';
+  created_by?: string;
+  hearted_by: string[] | null;
+  comments: ThreadComment[] | null;
+}
+
+interface MilestoneTrackerProps {
+  currentUser: 'Michael' | 'Tamae';
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+}
+
+export default function MilestoneTracker({ currentUser, title, subtitle, icon }: MilestoneTrackerProps) {
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const [newTitle, setNewTitle] = useState('');
+  const [newDate, setNewDate] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDate, setEditDate] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadData() {
+      const { data, error } = await supabase.from('milestones').select('*').order('target_date', { ascending: true });
+      if (isMounted) {
+        if (!error && data) setMilestones(data);
+        setLoading(false);
+      }
+    }
+
+    loadData();
+
+    // Subscribe to realtime updates so comments sync instantly
+    const channel = supabase
+      .channel('public:milestones:tracker')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'milestones' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setMilestones(prev => [...prev, payload.new as Milestone].sort((a,b) => a.target_date.localeCompare(b.target_date)));
+        } else if (payload.eventType === 'UPDATE') {
+          setMilestones(prev => prev.map(m => m.id === payload.new.id ? payload.new as Milestone : m));
+        } else if (payload.eventType === 'DELETE') {
+          setMilestones(prev => prev.filter(m => m.id !== payload.old.id));
+        }
+      }).subscribe();
+
+    return () => { isMounted = false; supabase.removeChannel(channel); };
+  }, []);
+
+  const toggleStatus = async (id: string, currentStatus: Milestone['status']) => {
+    const nextStatus: Milestone['status'] = currentStatus === 'achieved' ? 'planned' : 'achieved';
+    setMilestones(milestones.map(m => m.id === id ? { ...m, status: nextStatus } : m));
+    await supabase.from('milestones').update({ status: nextStatus }).eq('id', id);
+  };
+
+  const toggleHeart = async (item: Milestone) => {
+    const currentHearts = item.hearted_by || [];
+    const newHearts = currentHearts.includes(currentUser) ? currentHearts.filter(u => u !== currentUser) : [...currentHearts, currentUser];
+    setMilestones(milestones.map(m => m.id === item.id ? { ...m, hearted_by: newHearts } : m));
+    await supabase.from('milestones').update({ hearted_by: newHearts }).eq('id', item.id);
+  };
+
+  const postReply = async (content: string, item: Milestone) => {
+    const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+    const newComment: ThreadComment = { id: Date.now().toString(), author, content, created_at: new Date().toISOString() };
+    const newComments = [...(item.comments || []), newComment];
+    setMilestones(milestones.map(m => m.id === item.id ? { ...m, comments: newComments } : m));
+    await supabase.from('milestones').update({ comments: newComments }).eq('id', item.id);
+  };
+
+  const addMilestone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle || !newDate) return;
+    const { data, error } = await supabase.from('milestones').insert([{ title: newTitle, target_date: newDate, status: 'planned', created_by: currentUser }]).select();
+    if (!error && data) {
+      setNewTitle(''); setNewDate(''); setIsAdding(false);
+    }
+  };
+
+  const saveEdit = async (e: React.FormEvent, id: string) => {
+    e.preventDefault();
+    if (!editTitle || !editDate) return;
+    setMilestones(milestones.map(m => m.id === id ? { ...m, title: editTitle, target_date: editDate } : m));
+    setEditingId(null);
+    await supabase.from('milestones').update({ title: editTitle, target_date: editDate }).eq('id', id);
+  };
+
+  const actionButton = (
+    <button onClick={() => { if(!isOpen){setIsOpen(true); setIsAdding(true);} else setIsAdding(!isAdding); }} className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all cursor-pointer">
+      <Plus className="w-3.5 h-3.5" />
+      <span className="hidden md:inline">Add Target</span>
+      <span className="md:hidden">Add</span>
+    </button>
+  );
+
+  return (
+    <CollapsibleSection title={title} subtitle={subtitle} icon={icon} isControlled={true} isOpen={isOpen} onToggle={setIsOpen} actionButton={actionButton}>
+      {loading ? (
+        <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4"><Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Milestones...</div>
+      ) : (
+        <>
+          {isAdding && (
+            <form onSubmit={addMilestone} className="mb-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col md:flex-row gap-3">
+              <input type="text" placeholder="Milestone title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500" autoFocus />
+              <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500" />
+              <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all cursor-pointer">Save</button>
+            </form>
+          )}
+
+          <div className="space-y-3">
+            {milestones.map((item) => (
+              <div 
+                key={item.id} 
+                onClick={() => { if (editingId !== item.id) { setEditingId(item.id); setEditTitle(item.title); setEditDate(item.target_date); } }}
+                className={`rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:border-zinc-700/60 transition-all group ${editingId !== item.id ? 'cursor-pointer p-0' : 'p-4'}`}
+              >
+                {editingId === item.id ? (
+                  <form onSubmit={(e) => saveEdit(e, item.id)} className="flex flex-col md:flex-row gap-3">
+                    <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="flex-1 p-2 rounded-lg bg-zinc-950 border border-amber-900/50 text-sm text-zinc-200 focus:outline-none focus:border-amber-500" autoFocus />
+                    <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="p-2 rounded-lg bg-zinc-950 border border-amber-900/50 text-sm font-mono text-zinc-200 focus:outline-none focus:border-amber-500" />
+                    <div className="flex gap-2">
+                      <button type="submit" className="px-4 py-2 rounded-lg bg-amber-600/80 hover:bg-amber-500 text-white text-xs font-medium transition-all cursor-pointer">Save</button>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setEditingId(null); }} className="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-all flex items-center justify-center cursor-pointer"><X className="w-4 h-4" /></button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="flex flex-col p-4 w-full">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div onClick={(e) => { e.stopPropagation(); toggleStatus(item.id, item.status); }} className="p-1 -ml-1 rounded-md hover:bg-zinc-800/50 cursor-pointer shrink-0" title="Toggle Status">
+                          {item.status === 'achieved' ? <CheckCircle2 className="w-4 h-4 text-emerald-500 transition-transform hover:scale-110" /> : <Clock className="w-4 h-4 text-zinc-500 transition-transform hover:scale-110" />}
+                        </div>
+                        <span className={`text-sm font-medium transition-colors group-hover:text-amber-400 truncate flex-1 ${item.status === 'achieved' ? 'text-zinc-500 line-through' : 'text-zinc-200'}`}>
+                          {item.title}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-xs text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800/60 group-hover:border-amber-900/50 group-hover:text-amber-400/80 transition-all shrink-0 ml-3">
+                        <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+                        <span>{item.target_date}</span>
+                      </div>
+                    </div>
+
+                    <div onClick={(e) => e.stopPropagation()} className="w-full pl-8">
+                      <ReactionThread 
+                        currentUser={currentUser}
+                        heartedBy={item.hearted_by || []}
+                        comments={item.comments || []}
+                        onToggleHeart={() => toggleHeart(item)}
+                        onAddComment={(content) => postReply(content, item)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </CollapsibleSection>
+  );
+}
+</file>
+
+<file path="src/components/SanctuaryNotes.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Send, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import ReactionThread, { ThreadComment } from './ReactionThread';
+
+interface Note {
+  id: string;
+  content: string;
+  author: string;
+  created_at: string;
+  hearted_by: string[] | null;
+  comments: ThreadComment[] | null;
+}
+
+interface SanctuaryNotesProps {
+  currentUser: 'Michael' | 'Tamae';
+}
+
+const AVATARS = {
+  Kanagawa: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png',
+  Texas: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png'
+};
+
+export default function SanctuaryNotes({ currentUser }: SanctuaryNotesProps) {
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [newContent, setNewContent] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchNotes() {
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(15);
+
+      if (isMounted) {
+        if (!error && data) setNotes(data);
+        setLoading(false);
+      }
+    }
+
+    fetchNotes();
+
+    const channel = supabase
+      .channel('public-notes-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notes' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setNotes((prev) => [payload.new as Note, ...prev.filter(n => n.id !== payload.new.id)]);
+          } else if (payload.eventType === 'UPDATE') {
+            setNotes((prev) => prev.map((n) => (n.id === payload.new.id ? payload.new as Note : n)));
+          } else if (payload.eventType === 'DELETE') {
+            setNotes((prev) => prev.filter((n) => n.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const postNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newContent.trim()) return;
+
+    const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+    await supabase.from('notes').insert([{ content: newContent, author }]);
+    setNewContent('');
+  };
+
+  const toggleHeart = async (note: Note) => {
+    const currentHearts = note.hearted_by || [];
+    const newHearts = currentHearts.includes(currentUser) ? currentHearts.filter(u => u !== currentUser) : [...currentHearts, currentUser];
+    setNotes(notes.map(n => n.id === note.id ? { ...n, hearted_by: newHearts } : n));
+    await supabase.from('notes').update({ hearted_by: newHearts }).eq('id', note.id);
+  };
+
+  const postReply = async (content: string, note: Note) => {
+    const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+    // eslint-disable-next-line react-hooks/purity
+    const newComment: ThreadComment = { id: Date.now().toString(), author, content, created_at: new Date().toISOString() };
+    const newComments = [...(note.comments || []), newComment];
+    setNotes(notes.map(n => n.id === note.id ? { ...n, comments: newComments } : n));
+    await supabase.from('notes').update({ comments: newComments }).eq('id', note.id);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center text-stone-500 font-mono text-xs py-4">
+        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Notes...
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <form onSubmit={postNote} className="mb-6 flex flex-col md:flex-row gap-3">
+        <input
+          type="text"
+          placeholder="Drop a note..."
+          value={newContent}
+          onChange={(e) => setNewContent(e.target.value)}
+          className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500"
+        />
+        <button type="submit" className="px-4 py-2.5 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer">
+          <Send className="w-3.5 h-3.5" />
+          <span>Send</span>
+        </button>
+      </form>
+
+      <div className="space-y-4">
+        {notes.length === 0 ? (
+          <p className="text-xs text-stone-600 font-mono text-center py-4">No notes recorded yet.</p>
+        ) : (
+          notes.map((note) => (
+            <div key={note.id} className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60 flex flex-col gap-3 transition-all hover:bg-zinc-900/60 group">
+              <div className="flex items-start gap-3.5">
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-stone-500/30 bg-zinc-900 shrink-0 mt-0.5 shadow-sm">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={AVATARS[note.author as keyof typeof AVATARS] || AVATARS.Texas} alt={note.author} className="w-full h-full object-cover" />
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-mono text-stone-400 tracking-widest uppercase">
+                      {note.author === 'Kanagawa' ? 'Tamae' : 'Michael'}
+                    </span>
+                    <span className="text-[10px] font-mono text-stone-600">
+                      {new Date(note.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-stone-200 leading-relaxed whitespace-pre-wrap">{note.content}</p>
+                  
+                  <ReactionThread 
+                    currentUser={currentUser}
+                    heartedBy={note.hearted_by || []}
+                    comments={note.comments || []}
+                    onToggleHeart={() => toggleHeart(note)}
+                    onAddComment={(content) => postReply(content, note)}
+                  />
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/page.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
+import Dashboard from '@/components/Dashboard';
+import { Sparkles } from 'lucide-react';
+
+export default function Home() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [passcode, setPasscode] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    let targetEmail = 'sync@en-musubi.local'; 
+    if (passcode === 'enmusubi') {
+      targetEmail = 'michael@en-musubi.local'; 
+    }
+    
+    const { error } = await supabase.auth.signInWithPassword({
+      email: targetEmail,
+      password: passcode,
+    });
+
+    if (error) setError('Incorrect passcode.');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-stone-400 font-mono text-sm tracking-widest uppercase">
+        Establishing Connection...
+      </div>
+    );
+  }
+
+  // The Bouncer: If no session, show the login gate
+  if (!session) {
+    return (
+      <main className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-8 selection:bg-stone-800 relative overflow-hidden">
+        <div className="absolute w-125 h-125 bg-amber-900/10 rounded-full blur-3xl pointer-events-none -top-48 -left-48"></div>
+        <div className="absolute w-125 h-125 bg-stone-800/20 rounded-full blur-3xl pointer-events-none -bottom-48 -right-48"></div>
+
+        <div className="w-full max-w-sm p-8 rounded-2xl bg-zinc-900/60 border border-zinc-800 backdrop-blur-xl shadow-2xl text-center relative z-10">
+          <div className="inline-flex p-3 rounded-xl bg-zinc-950 border border-zinc-800 mb-6 text-stone-300 shadow-inner">
+            <Sparkles className="w-6 h-6 text-amber-600/80" />
+          </div>
+          
+          <h1 className="text-4xl font-bold tracking-widest text-stone-100 mb-2">縁結び</h1>
+          <p className="text-stone-400 tracking-wider text-sm mb-8 uppercase font-mono font-medium">Kanagawa — Texas</p>
+          
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input
+              type="password"
+              value={passcode}
+              onChange={(e) => setPasscode(e.target.value)}
+              placeholder="Passcode"
+              className="w-full p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-stone-100 text-center text-base font-mono tracking-widest focus:outline-none focus:border-stone-500 transition-all placeholder:text-zinc-600 shadow-inner"
+            />
+            <button 
+              type="submit" 
+              className="w-full py-4 rounded-xl bg-stone-200 text-zinc-900 font-medium text-base hover:bg-white hover:shadow-lg hover:shadow-stone-100/10 transition-all cursor-pointer"
+            >
+              Connect
+            </button>
+            {error && <p className="text-red-400/80 text-sm font-mono mt-3">{error}</p>}
+          </form>
+        </div>
+      </main>
+    );
+  }
+
+  // Determine the active user based on the session token
+  const currentUser = session.user?.email === 'michael@en-musubi.local' ? 'Michael' : 'Tamae';
+
+  return (
+    <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-stone-800 relative overflow-hidden text-stone-100">
+      <div className="absolute w-200 h-200 bg-stone-800/10 rounded-full blur-3xl pointer-events-none -top-96 left-1/2 -translate-x-1/2"></div>
+      
+      {/* The Dashboard handles all UI and realtime tracking internally */}
+      <Dashboard currentUser={currentUser} />
+    </main>
+  );
+}
+</file>
+
+</files>
