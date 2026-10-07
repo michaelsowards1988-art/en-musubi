@@ -18,12 +18,13 @@ interface Milestone {
 
 interface MilestoneTrackerProps {
   currentUser: 'Michael' | 'Tamae';
+  lang: 'en' | 'ja';
   title: string;
   subtitle: string;
   icon: React.ReactNode;
 }
 
-export default function MilestoneTracker({ currentUser, title, subtitle, icon }: MilestoneTrackerProps) {
+export default function MilestoneTracker({ currentUser, lang, title, subtitle, icon }: MilestoneTrackerProps) {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -49,7 +50,6 @@ export default function MilestoneTracker({ currentUser, title, subtitle, icon }:
 
     loadData();
 
-    // Subscribe to realtime updates so comments sync instantly
     const channel = supabase
       .channel('public:milestones:tracker')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'milestones' }, (payload) => {
@@ -106,8 +106,8 @@ export default function MilestoneTracker({ currentUser, title, subtitle, icon }:
   const actionButton = (
     <button onClick={() => { if(!isOpen){setIsOpen(true); setIsAdding(true);} else setIsAdding(!isAdding); }} className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all cursor-pointer">
       <Plus className="w-3.5 h-3.5" />
-      <span className="hidden md:inline">Add Target</span>
-      <span className="md:hidden">Add</span>
+      <span className="hidden md:inline">{lang === 'ja' ? '目標追加' : 'Add Target'}</span>
+      <span className="md:hidden">{lang === 'ja' ? '追加' : 'Add'}</span>
     </button>
   );
 

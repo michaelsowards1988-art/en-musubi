@@ -55,7 +55,7 @@ export default function Home() {
   // The Bouncer: If no session, show the login gate
   if (!session) {
     return (
-      <main className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-8 selection:bg-stone-800 relative overflow-hidden">
+      <main className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-8 selection:bg-stone-800 relative overflow-x-hidden">
         <div className="absolute w-125 h-125 bg-amber-900/10 rounded-full blur-3xl pointer-events-none -top-48 -left-48"></div>
         <div className="absolute w-125 h-125 bg-stone-800/20 rounded-full blur-3xl pointer-events-none -bottom-48 -right-48"></div>
 
@@ -92,7 +92,7 @@ export default function Home() {
   const currentUser = session.user?.email === 'michael@en-musubi.local' ? 'Michael' : 'Tamae';
 
   return (
-    <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-stone-800 relative overflow-hidden text-stone-100">
+    <main className="min-h-screen bg-zinc-950 flex flex-col selection:bg-stone-800 relative overflow-x-hidden text-stone-100">
       <div className="absolute w-200 h-200 bg-stone-800/10 rounded-full blur-3xl pointer-events-none -top-96 left-1/2 -translate-x-1/2"></div>
       
       {/* The Dashboard handles all UI and realtime tracking internally */}

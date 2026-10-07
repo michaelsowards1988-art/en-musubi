@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Heart, MessageCircle, Send } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Heart, MessageCircle, Send, Sparkles } from 'lucide-react';
 
 export interface ThreadComment {
   id: string;
@@ -24,9 +24,29 @@ const AVATARS = {
 export default function ReactionThread({ currentUser, heartedBy, comments, onToggleHeart, onAddComment }: ReactionThreadProps) {
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState('');
+  const formRef = useRef<HTMLFormElement>(null);
 
   const hasHearted = heartedBy.includes(currentUser);
-  const heartCount = heartedBy.length;
+  const bothHearted = heartedBy.length >= 2;
+
+  // Auto-close the reply input when clicking outside of it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (formRef.current && !formRef.current.contains(event.target as Node)) {
+        setIsReplying(false);
+      }
+    };
+
+    if (isReplying) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isReplying]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,11 +62,20 @@ export default function ReactionThread({ currentUser, heartedBy, comments, onTog
       <div className="flex items-center gap-4 mt-3">
         <button 
           onClick={onToggleHeart}
-          className={`flex items-center gap-1.5 text-xs transition-all cursor-pointer ${hasHearted ? 'text-rose-500' : 'text-stone-500 hover:text-stone-300'}`}
+          className="flex items-center justify-center transition-all cursor-pointer relative"
         >
-          <Heart className={`w-3.5 h-3.5 transition-transform ${hasHearted ? 'fill-current scale-110' : ''}`} />
-          {heartCount > 0 && <span className="font-mono text-[10px]">{heartCount}</span>}
+          {bothHearted ? (
+            <div className="relative">
+              <Heart className="w-4 h-4 text-rose-500 fill-rose-500 animate-pulse" />
+              <Sparkles className="w-2.5 h-2.5 text-amber-400 absolute -top-1 -right-1" />
+            </div>
+          ) : hasHearted ? (
+            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
+          ) : (
+            <Heart className="w-3.5 h-3.5 text-stone-500 hover:text-stone-300" />
+          )}
         </button>
+        
         <button 
           onClick={() => setIsReplying(!isReplying)}
           className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-300 transition-colors cursor-pointer"
@@ -81,7 +110,7 @@ export default function ReactionThread({ currentUser, heartedBy, comments, onTog
           ))}
 
           {isReplying && (
-            <form onSubmit={handleSubmit} className="flex items-center gap-2 mt-1 animate-in fade-in duration-300">
+            <form ref={formRef} onSubmit={handleSubmit} className="flex items-center gap-2 mt-1 animate-in fade-in duration-300">
               <input
                 type="text"
                 autoFocus

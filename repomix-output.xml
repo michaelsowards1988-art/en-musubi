@@ -146,9 +146,10 @@ body {
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Loader2, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Info, Plus } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday } from 'date-fns';
 import { supabase } from '@/lib/supabase';
+import CollapsibleSection from './CollapsibleSection';
 
 interface Availability {
   id: string;
@@ -160,12 +161,16 @@ interface Availability {
 interface AvailabilityCalendarProps {
   currentUser: 'Michael' | 'Tamae';
   lang: 'en' | 'ja';
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
 }
 
-export default function AvailabilityCalendar({ currentUser, lang }: AvailabilityCalendarProps) {
+export default function AvailabilityCalendar({ currentUser, lang, title, subtitle, icon }: AvailabilityCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -216,14 +221,12 @@ export default function AvailabilityCalendar({ currentUser, lang }: Availability
     if (existing?.status === 'busy') nextStatus = null;
 
     if (nextStatus === null && existing) {
-      // Optimistic UI update
       setAvailabilities(prev => prev.filter(a => a.id !== existing.id));
       await supabase.from('availability').delete().eq('id', existing.id);
     } else if (nextStatus !== null) {
       // eslint-disable-next-line react-hooks/purity
       const tempId = existing?.id || Date.now().toString();
       
-      // Optimistic UI update
       setAvailabilities(prev => {
         const filtered = prev.filter(a => !(a.date === dateStr && a.user_id === currentUser));
         return [...filtered, { id: tempId, date: dateStr, user_id: currentUser, status: nextStatus as 'free' | 'busy' }];
@@ -235,13 +238,16 @@ export default function AvailabilityCalendar({ currentUser, lang }: Availability
     }
   };
 
-  if (loading) {
-    return (
-      <div className="w-full p-8 rounded-2xl bg-zinc-950 flex items-center justify-center font-mono text-xs text-zinc-500">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Syncing Calendar...
-      </div>
-    );
-  }
+  const actionButton = (
+    <button 
+      onClick={() => setIsOpen(!isOpen)}
+      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all cursor-pointer"
+    >
+      <Plus className="w-3.5 h-3.5" />
+      <span className="hidden md:inline">{lang === 'ja' ? '日付編集' : 'Edit Dates'}</span>
+      <span className="md:hidden">{lang === 'ja' ? '編集' : 'Edit'}</span>
+    </button>
+  );
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
@@ -255,87 +261,103 @@ export default function AvailabilityCalendar({ currentUser, lang }: Availability
   };
 
   return (
-    <div className="w-full">
-      {/* Header Controls */}
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-light text-stone-100 flex items-center gap-2">
-          {format(currentMonth, 'MMMM yyyy')}
-        </h3>
-        <div className="flex gap-2">
-          <button 
-            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-            className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-stone-400 hover:text-stone-200 transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-            className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-stone-400 hover:text-stone-200 transition-colors"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+    <CollapsibleSection
+      title={title}
+      subtitle={subtitle}
+      icon={icon}
+      isControlled={true}
+      isOpen={isOpen}
+      onToggle={setIsOpen}
+      actionButton={actionButton}
+    >
+      {loading ? (
+        <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" /> Syncing Calendar...
         </div>
-      </div>
-
-      {/* Legend */}
-      <div className="flex items-center gap-4 mb-4 text-[10px] font-mono text-stone-500 uppercase tracking-wider bg-zinc-900/40 p-3 rounded-xl border border-zinc-800/40">
-        <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500/80"></div> {lang === 'ja' ? '空き' : 'Free'}</span>
-        <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500/80"></div> {lang === 'ja' ? '予定あり' : 'Busy'}</span>
-        <div className="ml-auto flex items-center gap-2 text-stone-600">
-          <Info className="w-3 h-3" />
-          <span className="hidden md:inline">{lang === 'ja' ? '左: Tamae / 右: Michael' : 'Left: Tamae / Right: Michael'}</span>
-          <span className="md:hidden">L:T / R:M</span>
-        </div>
-      </div>
-
-      {/* Days of Week */}
-      <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2 text-center text-[10px] font-mono text-stone-500 uppercase">
-        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-          <div key={day} className="py-1">{day}</div>
-        ))}
-      </div>
-
-      {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1 md:gap-2">
-        {days.map(day => {
-          const dateStr = format(day, 'yyyy-MM-dd');
-          const isCurrentMonth = isSameMonth(day, currentMonth);
-          const isTodayDate = isToday(day);
-          
-          const tamaeStatus = getDayStatus(dateStr, 'Tamae');
-          const michaelStatus = getDayStatus(dateStr, 'Michael');
-
-          return (
-            <div 
-              key={dateStr}
-              onClick={() => handleDayClick(dateStr)}
-              className={`
-                relative h-14 md:h-20 rounded-xl border transition-all cursor-pointer overflow-hidden flex flex-col items-center justify-center group
-                ${isCurrentMonth ? 'bg-zinc-900/40 border-zinc-800/60 hover:bg-zinc-800/60' : 'bg-zinc-950/50 border-zinc-900/50 opacity-50'}
-                ${isTodayDate ? 'ring-1 ring-amber-500/50' : ''}
-              `}
-            >
-              <span className={`text-xs md:text-sm font-mono mb-2 ${isTodayDate ? 'text-amber-400 font-bold' : 'text-stone-300'}`}>
-                {format(day, 'd')}
-              </span>
-
-              {/* Status Indicators (Left: Tamae, Right: Michael) */}
-              <div className="absolute bottom-1.5 left-0 right-0 px-1.5 flex gap-1 h-1.5 md:h-2">
-                <div className={`w-1/2 rounded-full transition-colors ${tamaeStatus === 'free' ? 'bg-emerald-500/80' : tamaeStatus === 'busy' ? 'bg-red-500/80' : 'bg-zinc-800/30 group-hover:bg-zinc-700/50'}`}></div>
-                <div className={`w-1/2 rounded-full transition-colors ${michaelStatus === 'free' ? 'bg-emerald-500/80' : michaelStatus === 'busy' ? 'bg-red-500/80' : 'bg-zinc-800/30 group-hover:bg-zinc-700/50'}`}></div>
-              </div>
+      ) : (
+        <div className="w-full">
+          {/* Header Controls */}
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-light text-stone-100 flex items-center gap-2">
+              {format(currentMonth, 'MMMM yyyy')}
+            </h3>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-stone-400 hover:text-stone-200 transition-colors cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-stone-400 hover:text-stone-200 transition-colors cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
-          );
-        })}
-      </div>
-    </div>
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center gap-4 mb-4 text-[10px] font-mono text-stone-500 uppercase tracking-wider bg-zinc-900/40 p-3 rounded-xl border border-zinc-800/40">
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500/80"></div> {lang === 'ja' ? '空き' : 'Free'}</span>
+            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500/80"></div> {lang === 'ja' ? '予定あり' : 'Busy'}</span>
+            <div className="ml-auto flex items-center gap-2 text-stone-600">
+              <Info className="w-3 h-3" />
+              <span className="hidden md:inline">{lang === 'ja' ? '左: Tamae / 右: Michael' : 'Left: Tamae / Right: Michael'}</span>
+              <span className="md:hidden">L:T / R:M</span>
+            </div>
+          </div>
+
+          {/* Days of Week */}
+          <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2 text-center text-[10px] font-mono text-stone-500 uppercase">
+            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+              <div key={day} className="py-1">{day}</div>
+            ))}
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7 gap-1 md:gap-2">
+            {days.map(day => {
+              const dateStr = format(day, 'yyyy-MM-dd');
+              const isCurrentMonth = isSameMonth(day, currentMonth);
+              const isTodayDate = isToday(day);
+              
+              const tamaeStatus = getDayStatus(dateStr, 'Tamae');
+              const michaelStatus = getDayStatus(dateStr, 'Michael');
+
+              return (
+                <div 
+                  key={dateStr}
+                  onClick={() => handleDayClick(dateStr)}
+                  className={`
+                    relative h-14 md:h-20 rounded-xl border transition-all cursor-pointer overflow-hidden flex flex-col items-center justify-center group
+                    ${isCurrentMonth ? 'bg-zinc-900/40 border-zinc-800/60 hover:bg-zinc-800/60' : 'bg-zinc-950/50 border-zinc-900/50 opacity-50'}
+                    ${isTodayDate ? 'ring-1 ring-amber-500/50' : ''}
+                  `}
+                >
+                  <span className={`text-xs md:text-sm font-mono mb-2 ${isTodayDate ? 'text-amber-400 font-bold' : 'text-stone-300'}`}>
+                    {format(day, 'd')}
+                  </span>
+
+                  {/* Status Indicators (Left: Tamae, Right: Michael) */}
+                  <div className="absolute bottom-1.5 left-0 right-0 px-1.5 flex gap-1 h-1.5 md:h-2">
+                    <div className={`w-1/2 rounded-full transition-colors ${tamaeStatus === 'free' ? 'bg-emerald-500/80' : tamaeStatus === 'busy' ? 'bg-red-500/80' : 'bg-zinc-800/30 group-hover:bg-zinc-700/50'}`}></div>
+                    <div className={`w-1/2 rounded-full transition-colors ${michaelStatus === 'free' ? 'bg-emerald-500/80' : michaelStatus === 'busy' ? 'bg-red-500/80' : 'bg-zinc-800/30 group-hover:bg-zinc-700/50'}`}></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </CollapsibleSection>
   );
 }
 </file>
 
 <file path="src/components/ReactionThread.tsx">
-import { useState } from 'react';
-import { Heart, MessageCircle, Send } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Heart, MessageCircle, Send, Sparkles } from 'lucide-react';
 
 export interface ThreadComment {
   id: string;
@@ -360,9 +382,29 @@ const AVATARS = {
 export default function ReactionThread({ currentUser, heartedBy, comments, onToggleHeart, onAddComment }: ReactionThreadProps) {
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState('');
+  const formRef = useRef<HTMLFormElement>(null);
 
   const hasHearted = heartedBy.includes(currentUser);
-  const heartCount = heartedBy.length;
+  const bothHearted = heartedBy.length >= 2;
+
+  // Auto-close the reply input when clicking outside of it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (formRef.current && !formRef.current.contains(event.target as Node)) {
+        setIsReplying(false);
+      }
+    };
+
+    if (isReplying) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isReplying]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -378,11 +420,20 @@ export default function ReactionThread({ currentUser, heartedBy, comments, onTog
       <div className="flex items-center gap-4 mt-3">
         <button 
           onClick={onToggleHeart}
-          className={`flex items-center gap-1.5 text-xs transition-all cursor-pointer ${hasHearted ? 'text-rose-500' : 'text-stone-500 hover:text-stone-300'}`}
+          className="flex items-center justify-center transition-all cursor-pointer relative"
         >
-          <Heart className={`w-3.5 h-3.5 transition-transform ${hasHearted ? 'fill-current scale-110' : ''}`} />
-          {heartCount > 0 && <span className="font-mono text-[10px]">{heartCount}</span>}
+          {bothHearted ? (
+            <div className="relative">
+              <Heart className="w-4 h-4 text-rose-500 fill-rose-500 animate-pulse" />
+              <Sparkles className="w-2.5 h-2.5 text-amber-400 absolute -top-1 -right-1" />
+            </div>
+          ) : hasHearted ? (
+            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
+          ) : (
+            <Heart className="w-3.5 h-3.5 text-stone-500 hover:text-stone-300" />
+          )}
         </button>
+        
         <button 
           onClick={() => setIsReplying(!isReplying)}
           className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-300 transition-colors cursor-pointer"
@@ -417,7 +468,7 @@ export default function ReactionThread({ currentUser, heartedBy, comments, onTog
           ))}
 
           {isReplying && (
-            <form onSubmit={handleSubmit} className="flex items-center gap-2 mt-1 animate-in fade-in duration-300">
+            <form ref={formRef} onSubmit={handleSubmit} className="flex items-center gap-2 mt-1 animate-in fade-in duration-300">
               <input
                 type="text"
                 autoFocus
@@ -645,42 +696,6 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 }
 </file>
 
-<file path="src/app/layout.tsx">
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-
-// Add these two lines to bust the Next.js and Safari caches
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "Create Next App",
-  description: "Generated by create next app",
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
-    </html>
-  );
-}
-</file>
-
 <file path="package.json">
 {
   "name": "en-musubi",
@@ -713,6 +728,42 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     "tailwindcss": "^4",
     "typescript": "^5"
   }
+}
+</file>
+
+<file path="src/app/layout.tsx">
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+
+// Add these two lines to bust the Next.js and Safari caches
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "縁結び",
+  description: "縁結び",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col">{children}</body>
+    </html>
+  );
 }
 </file>
 
@@ -894,7 +945,7 @@ export default function CollapsibleSection({
 <file path="src/components/Dashboard.tsx">
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import SanctuaryStatus from '@/components/SanctuaryStatus';
 import WeeklyUnlock from '@/components/WeeklyUnlock';
@@ -916,9 +967,12 @@ interface DashboardProps {
 export default function Dashboard({ currentUser }: DashboardProps) {
   const [lang, setLang] = useState<'en' | 'ja'>('ja'); 
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
-  const [presenceChannel, setPresenceChannel] = useState<RealtimeChannel | null>(null);
   const [activeFlare, setActiveFlare] = useState<'Michael' | 'Tamae' | null>(null);
   const [screenPulse, setScreenPulse] = useState(false);
+  
+  // Using refs for background processes avoids triggering cascading re-renders
+  const presenceChannelRef = useRef<RealtimeChannel | null>(null);
+  const prevBothOnline = useRef(false);
 
   // Background Visibility Manager (Prevents Stale Data)
   useEffect(() => {
@@ -928,8 +982,6 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       if (document.visibilityState === 'hidden') {
         hiddenTimestamp = Date.now();
       } else if (document.visibilityState === 'visible') {
-        // If the app was asleep in the background for more than 60 seconds, 
-        // silently reload to ensure websockets and weather are perfectly synced.
         if (hiddenTimestamp && Date.now() - hiddenTimestamp > 60000) {
           window.location.reload();
         }
@@ -937,30 +989,25 @@ export default function Dashboard({ currentUser }: DashboardProps) {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
+  // Language Sync
   useEffect(() => {
     const savedLang = localStorage.getItem('preferredLang');
-    /* eslint-disable react-hooks/set-state-in-effect */
-    if (savedLang === 'en' || savedLang === 'ja') {
-      setLang(savedLang);
-    } else {
-      setLang(currentUser === 'Michael' ? 'en' : 'ja');
-    }
-    /* eslint-enable react-hooks/set-state-in-effect */
+    const finalLang = (savedLang === 'en' || savedLang === 'ja') ? savedLang : (currentUser === 'Michael' ? 'en' : 'ja');
+    
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLang(finalLang);
   }, [currentUser]);
 
+  // Realtime Connection & Pokes
   useEffect(() => {
     const channel = supabase.channel('online-presence', {
       config: { presence: { key: currentUser } },
     });
     
-    /* eslint-disable react-hooks/set-state-in-effect */
-    setPresenceChannel(channel);
-    /* eslint-enable react-hooks/set-state-in-effect */
+    presenceChannelRef.current = channel;
 
     channel
       .on('presence', { event: 'sync' }, () => {
@@ -970,19 +1017,13 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       .on('broadcast', { event: 'force-refresh' }, () => {
         window.location.reload();
       })
-      // The "Thinking of You" Ripple Listener
       .on('broadcast', { event: 'poke' }, ({ payload }) => {
         const { from, to } = payload;
-        
-        // Flare the sender's avatar on the UI
         setActiveFlare(from);
         
-        // If the ripple is meant for the person holding this device, flash the screen!
         if (to === currentUser) {
           setScreenPulse(true);
-          if (typeof navigator !== 'undefined' && navigator.vibrate) {
-            navigator.vibrate([30, 50, 30]); // Gentle heartbeat vibration
-          }
+          if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([30, 50, 30]);
         }
         
         setTimeout(() => {
@@ -991,15 +1032,26 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         }, 1500);
       })
       .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({ online: true });
-        }
+        if (status === 'SUBSCRIBED') await channel.track({ online: true });
       });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [currentUser]);
+
+  // Arrival Flash Logic: Triggers when the other person joins while you are already viewing
+  const bothOnline = onlineUsers.includes('Tamae') && onlineUsers.includes('Michael');
+  
+  useEffect(() => {
+    if (bothOnline && !prevBothOnline.current && onlineUsers.length > 0) {
+      setTimeout(() => {
+        setScreenPulse(true);
+        if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([30, 50, 30]);
+      }, 0);
+      
+      setTimeout(() => setScreenPulse(false), 1500);
+    }
+    prevBothOnline.current = bothOnline;
+  }, [bothOnline, onlineUsers.length]);
 
   const handleSetDefaultLang = () => {
     localStorage.setItem('preferredLang', lang);
@@ -1007,34 +1059,18 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   };
 
   const handleAdminSync = async () => {
-    if (presenceChannel) {
-      await presenceChannel.send({
-        type: 'broadcast',
-        event: 'force-refresh',
-        payload: { action: 'refresh' },
-      });
+    if (presenceChannelRef.current) {
+      await presenceChannelRef.current.send({ type: 'broadcast', event: 'force-refresh', payload: { action: 'refresh' } });
       window.location.reload();
     }
   };
 
   const handlePoke = async (target: 'Michael' | 'Tamae') => {
-    const bothOnline = onlineUsers.includes('Tamae') && onlineUsers.includes('Michael');
-    if (!bothOnline || !presenceChannel || target === currentUser) return;
-
-    // Optimistic UI: Flare your own avatar so you know it sent
+    if (!bothOnline || !presenceChannelRef.current || target === currentUser) return;
     setActiveFlare(currentUser);
     setTimeout(() => setActiveFlare(null), 1500);
-
-    // Tiny tactile feedback for the sender
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate(15); 
-    }
-
-    await presenceChannel.send({
-      type: 'broadcast',
-      event: 'poke',
-      payload: { from: currentUser, to: target },
-    });
+    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15); 
+    await presenceChannelRef.current.send({ type: 'broadcast', event: 'poke', payload: { from: currentUser, to: target } });
   };
 
   const t = {
@@ -1075,7 +1111,6 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   const currentLang = t[lang];
   const tamaeOnline = onlineUsers.includes('Tamae');
   const michaelOnline = onlineUsers.includes('Michael');
-  const bothOnline = tamaeOnline && michaelOnline;
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -1086,80 +1121,73 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         }`}
       ></div>
 
-      <div className="w-full max-w-4xl mb-6 flex justify-between items-end border-b border-zinc-900 pb-6 relative z-10">
-        <div>
-          <h1 className="text-4xl font-bold tracking-widest text-stone-100 flex items-center gap-4">
-            縁結び 
-            
-            {/* The Connected Avatars */}
-            <div className="flex items-center">
+      {/* Sticky Header - Properly stretches edge-to-edge ignoring parent padding */}
+      <div className="self-stretch sticky top-0 z-40 -mx-6 md:-mx-16 px-6 md:px-16 -mt-6 md:-mt-16 pt-6 md:pt-16 pb-4 mb-8 bg-zinc-950/85 backdrop-blur-xl border-b border-zinc-800/60 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+        <div className="w-full max-w-4xl mx-auto flex justify-between items-end">
+          <div>
+            <h1 className="text-4xl font-bold tracking-widest text-stone-100 flex items-center gap-4">
+              縁結び 
               
-              {/* Tamae's Avatar */}
-              <div className="relative flex items-center justify-center">
-                {activeFlare === 'Tamae' && (
-                  <div className="absolute w-11 h-11 rounded-full bg-amber-500 animate-ping opacity-75"></div>
-                )}
-                <span 
-                  onClick={() => handlePoke('Tamae')}
-                  className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 
-                    ${tamaeOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}
-                    ${bothOnline && currentUser === 'Michael' ? 'cursor-pointer hover:border-amber-400 hover:scale-110' : ''}
-                  `}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png" alt="Tamae" className="w-full h-full object-cover" />
-                </span>
+              <div className="flex items-center">
+                <div className="relative flex items-center justify-center">
+                  {activeFlare === 'Tamae' && <div className="absolute w-11 h-11 rounded-full bg-amber-500 animate-ping opacity-75"></div>}
+                  <span 
+                    onClick={() => handlePoke('Tamae')}
+                    className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 
+                      ${tamaeOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}
+                      ${bothOnline && currentUser === 'Michael' ? 'cursor-pointer hover:border-amber-400 hover:scale-110' : ''}
+                    `}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png" alt="Tamae" className="w-full h-full object-cover" />
+                  </span>
+                </div>
+                
+                <div className={`transition-all duration-1000 h-0.5 ${bothOnline ? 'w-6 bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]' : 'w-3 bg-transparent'}`}></div>
+                
+                <div className="relative flex items-center justify-center">
+                  {activeFlare === 'Michael' && <div className="absolute w-11 h-11 rounded-full bg-amber-500 animate-ping opacity-75"></div>}
+                  <span 
+                    onClick={() => handlePoke('Michael')}
+                    className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 
+                      ${michaelOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}
+                      ${bothOnline && currentUser === 'Tamae' ? 'cursor-pointer hover:border-amber-400 hover:scale-110' : ''}
+                    `}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png" alt="Michael" className="w-full h-full object-cover" />
+                  </span>
+                </div>
               </div>
-              
-              {/* The Pulse Line */}
-              <div className={`transition-all duration-1000 h-0.5 ${bothOnline ? 'w-6 bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]' : 'w-3 bg-transparent'}`}></div>
-              
-              {/* Michael's Avatar */}
-              <div className="relative flex items-center justify-center">
-                {activeFlare === 'Michael' && (
-                  <div className="absolute w-11 h-11 rounded-full bg-amber-500 animate-ping opacity-75"></div>
-                )}
-                <span 
-                  onClick={() => handlePoke('Michael')}
-                  className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 
-                    ${michaelOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}
-                    ${bothOnline && currentUser === 'Tamae' ? 'cursor-pointer hover:border-amber-400 hover:scale-110' : ''}
-                  `}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png" alt="Michael" className="w-full h-full object-cover" />
-                </span>
-              </div>
-            </div>
+            </h1>
+            <p className="text-stone-400 text-sm font-mono mt-2 tracking-wider font-medium">{currentLang.title}</p>
+          </div>
 
-          </h1>
-          <p className="text-stone-400 text-sm font-mono mt-2 tracking-wider font-medium">{currentLang.title}</p>
-        </div>
-
-        <div className="flex flex-col items-end gap-1 mb-1">
-          <button 
-            onClick={() => setLang(prev => prev === 'en' ? 'ja' : 'en')} 
-            className="flex items-center gap-2 text-sm text-stone-300 hover:text-white bg-zinc-900/90 border border-zinc-800 px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
-          >
-            <Globe2 className="w-4 h-4 text-stone-400" />
-            <span className="font-medium">{currentLang.langToggle}</span>
-          </button>
-          
-          <div className="flex items-center gap-3 mt-1">
-            {currentUser === 'Michael' && (
-              <button 
-                onClick={handleAdminSync}
-                className="text-[10px] text-red-500/70 hover:text-red-400 transition-colors uppercase font-mono tracking-wider cursor-pointer"
-              >
-                Force Remote Sync
-              </button>
-            )}
+          <div className="flex flex-col items-end gap-1 mb-1">
             <button 
-              onClick={handleSetDefaultLang}
-              className="text-[10px] text-stone-500 hover:text-stone-300 transition-colors uppercase font-mono tracking-wider cursor-pointer"
+              onClick={() => setLang(prev => prev === 'en' ? 'ja' : 'en')} 
+              className="flex items-center gap-2 text-sm text-stone-300 hover:text-white bg-zinc-900/90 border border-zinc-800 px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
             >
-              {lang === 'ja' ? 'デフォルトにする' : 'Make Default'}
+              <Globe2 className="w-4 h-4 text-stone-400" />
+              <span className="font-medium">{currentLang.langToggle}</span>
             </button>
+            
+            <div className="flex items-center gap-3 mt-1">
+              {currentUser === 'Michael' && (
+                <button 
+                  onClick={handleAdminSync}
+                  className="text-[10px] text-red-500/70 hover:text-red-400 transition-colors uppercase font-mono tracking-wider cursor-pointer"
+                >
+                  Force Remote Sync
+                </button>
+              )}
+              <button 
+                onClick={handleSetDefaultLang}
+                className="text-[10px] text-stone-500 hover:text-stone-300 transition-colors uppercase font-mono tracking-wider cursor-pointer"
+              >
+                {lang === 'ja' ? 'デフォルトにする' : 'Make Default'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1173,6 +1201,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
 
         <MilestoneTracker 
           currentUser={currentUser} 
+          lang={lang}
           title={currentLang.milestones} 
           subtitle={currentLang.milestones_sub} 
           icon={<Target className="w-5 h-5" />} 
@@ -1180,21 +1209,31 @@ export default function Dashboard({ currentUser }: DashboardProps) {
 
         <MemoryVault 
           currentUser={currentUser} 
+          lang={lang}
           title={currentLang.vault} 
           subtitle={currentLang.vault_sub} 
           icon={<ImageIcon className="w-5 h-5" />} 
         />
 
-        <CollapsibleSection title={currentLang.notes} subtitle={currentLang.notes_sub} icon={<MessageSquare className="w-5 h-5" />} defaultOpen={false}>
-          <SanctuaryNotes currentUser={currentUser} />
-        </CollapsibleSection>
+        <SanctuaryNotes 
+          currentUser={currentUser} 
+          lang={lang}
+          title={currentLang.notes} 
+          subtitle={currentLang.notes_sub} 
+          icon={<MessageSquare className="w-5 h-5" />} 
+        />
 
-        <CollapsibleSection title={currentLang.sync} subtitle={currentLang.sync_sub} icon={<CalendarDays className="w-5 h-5" />} defaultOpen={false}>
-          <AvailabilityCalendar currentUser={currentUser} lang={lang} />
-        </CollapsibleSection>
+        <AvailabilityCalendar 
+          currentUser={currentUser} 
+          lang={lang} 
+          title={currentLang.sync} 
+          subtitle={currentLang.sync_sub} 
+          icon={<CalendarDays className="w-5 h-5" />} 
+        />
 
         <ItineraryTracker 
           currentUser={currentUser} 
+          lang={lang}
           title={currentLang.travel} 
           subtitle={currentLang.travel_sub} 
           icon={<Plane className="w-5 h-5" />} 
@@ -1202,6 +1241,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
 
         <KeySuccessFactors 
           currentUser={currentUser}
+          lang={lang}
           title={currentLang.ksf} 
           subtitle={currentLang.ksf_sub} 
           icon={<Lightbulb className="w-5 h-5" />} 
@@ -1231,12 +1271,13 @@ interface Itinerary {
 
 interface ItineraryTrackerProps {
   currentUser: 'Michael' | 'Tamae';
+  lang: 'en' | 'ja';
   title: string;
   subtitle: string;
   icon: React.ReactNode;
 }
 
-export default function ItineraryTracker({ currentUser, title, subtitle, icon }: ItineraryTrackerProps) {
+export default function ItineraryTracker({ currentUser, lang, title, subtitle, icon }: ItineraryTrackerProps) {
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -1310,11 +1351,11 @@ export default function ItineraryTracker({ currentUser, title, subtitle, icon }:
   const actionButton = (
     <button 
       onClick={handleAddClick}
-      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
+      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all cursor-pointer"
     >
       <Plus className="w-3.5 h-3.5" />
-      <span className="hidden md:inline">Add Flight</span>
-      <span className="md:hidden">Add</span>
+      <span className="hidden md:inline">{lang === 'ja' ? 'フライト追加' : 'Add Flight'}</span>
+      <span className="md:hidden">{lang === 'ja' ? '追加' : 'Add'}</span>
     </button>
   );
 
@@ -1356,7 +1397,7 @@ export default function ItineraryTracker({ currentUser, title, subtitle, icon }:
                 onChange={(e) => setTravelDate(e.target.value)}
                 className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500"
               />
-              <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
+              <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all cursor-pointer">
                 Save
               </button>
             </form>
@@ -1412,12 +1453,13 @@ interface Factor {
 
 interface KeySuccessFactorsProps {
   currentUser: 'Michael' | 'Tamae';
+  lang: 'en' | 'ja';
   title: string;
   subtitle: string;
   icon: React.ReactNode;
 }
 
-export default function KeySuccessFactors({ currentUser, title, subtitle, icon }: KeySuccessFactorsProps) {
+export default function KeySuccessFactors({ currentUser, lang, title, subtitle, icon }: KeySuccessFactorsProps) {
   const [factors, setFactors] = useState<Factor[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
@@ -1491,6 +1533,7 @@ export default function KeySuccessFactors({ currentUser, title, subtitle, icon }
 
   const postReply = async (content: string, factor: Factor) => {
     const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+    // eslint-disable-next-line react-hooks/purity
     const newComment: ThreadComment = { id: Date.now().toString(), author, content, created_at: new Date().toISOString() };
     const newComments = [...(factor.comments || []), newComment];
     setFactors(factors.map(f => f.id === factor.id ? { ...f, comments: newComments } : f));
@@ -1504,8 +1547,8 @@ export default function KeySuccessFactors({ currentUser, title, subtitle, icon }
   const actionButton = (
     <button onClick={handleAddClick} className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all cursor-pointer">
       <Plus className="w-3.5 h-3.5" />
-      <span className="hidden md:inline">Add Focus</span>
-      <span className="md:hidden">Add</span>
+      <span className="hidden md:inline">{lang === 'ja' ? 'フォーカス追加' : 'Add Focus'}</span>
+      <span className="md:hidden">{lang === 'ja' ? '追加' : 'Add'}</span>
     </button>
   );
 
@@ -1833,7 +1876,6 @@ function PromptContent({ prompt: initialPrompt, lang, currentUser }: { prompt: P
   const [prompt, setPrompt] = useState<Prompt>(initialPrompt);
   const [prevInitial, setPrevInitial] = useState<Prompt>(initialPrompt);
 
-  // Official React pattern for updating state when a prop changes without a useEffect
   if (initialPrompt !== prevInitial) {
     setPrompt(initialPrompt);
     setPrevInitial(initialPrompt);
@@ -1864,6 +1906,7 @@ function PromptContent({ prompt: initialPrompt, lang, currentUser }: { prompt: P
     const col = `${targetUser}_comments` as keyof Prompt;
     const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
     
+    // eslint-disable-next-line react-hooks/purity
     const newComment = { id: Date.now().toString(), author, content, created_at: new Date().toISOString() };
     const newComments = [...((prompt[col] as ThreadComment[]) || []), newComment];
     
@@ -1895,14 +1938,11 @@ function PromptContent({ prompt: initialPrompt, lang, currentUser }: { prompt: P
         </form>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* My Answer */}
           <div className="p-5 rounded-xl bg-zinc-900/40 border border-zinc-800 flex flex-col h-full">
             <div className="flex-1">
               <span className="text-[10px] font-mono text-stone-500 tracking-widest uppercase mb-3 block">{currentUser}</span>
               <p className="text-sm text-stone-200 leading-relaxed whitespace-pre-wrap mb-2">{myCurrentAnswer}</p>
             </div>
-            
-            {/* Subtle Break and Reactions */}
             <div className="mt-4 pt-4 border-t border-zinc-800/50">
               <ReactionThread 
                 currentUser={currentUser}
@@ -1914,7 +1954,6 @@ function PromptContent({ prompt: initialPrompt, lang, currentUser }: { prompt: P
             </div>
           </div>
 
-          {/* Partner's Answer */}
           <div className={`p-5 rounded-xl border relative overflow-hidden flex flex-col h-full ${bothAnswered ? 'bg-zinc-900/40 border-amber-900/30' : 'bg-zinc-950 border-zinc-800/50'}`}>
             <span className="text-[10px] font-mono text-stone-500 tracking-widest uppercase mb-3 block">{currentUser === 'Michael' ? 'Tamae' : 'Michael'}</span>
             
@@ -1923,8 +1962,6 @@ function PromptContent({ prompt: initialPrompt, lang, currentUser }: { prompt: P
                 <div className="flex-1">
                   <p className="text-sm text-stone-200 leading-relaxed whitespace-pre-wrap mb-2">{partnerAnswer}</p>
                 </div>
-                
-                {/* Subtle Break and Reactions */}
                 <div className="mt-4 pt-4 border-t border-zinc-800/50">
                   <ReactionThread 
                     currentUser={currentUser}
@@ -2017,7 +2054,9 @@ export default function WeeklyUnlock({ lang, currentUser }: WeeklyUnlockProps) {
           <div className="flex items-center gap-2">
             {currentUser === 'Michael' && (
               <button onClick={() => setIsAddingPrompt(!isAddingPrompt)} className="flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-amber-500 hover:bg-zinc-800 hover:text-amber-400 transition-colors cursor-pointer">
-                <Plus className="w-3 h-3" /> Add Prompt
+                <Plus className="w-3 h-3" /> 
+                <span className="hidden md:inline">{lang === 'ja' ? 'プロンプト追加' : 'Add Prompt'}</span>
+                <span className="md:hidden">{lang === 'ja' ? '追加' : 'Add'}</span>
               </button>
             )}
 
@@ -2253,12 +2292,13 @@ interface SharedRecord {
 
 interface MemoryVaultProps {
   currentUser: 'Michael' | 'Tamae';
+  lang: 'en' | 'ja';
   title: string;
   subtitle: string;
   icon: React.ReactNode;
 }
 
-export default function MemoryVault({ currentUser, title, subtitle, icon }: MemoryVaultProps) {
+export default function MemoryVault({ currentUser, lang, title, subtitle, icon }: MemoryVaultProps) {
   const [records, setRecords] = useState<SharedRecord[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -2338,7 +2378,6 @@ export default function MemoryVault({ currentUser, title, subtitle, icon }: Memo
         finalImageUrl = scrapedArt || 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=500&auto=format&fit=crop';
       }
 
-      // Location mapping direct to user
       const location = currentUser === 'Michael' ? 'Michael' : 'Tamae';
 
       await supabase
@@ -2374,11 +2413,11 @@ export default function MemoryVault({ currentUser, title, subtitle, icon }: Memo
   const actionButton = (
     <button 
       onClick={handleAddClick}
-      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all"
+      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all cursor-pointer"
     >
       <Plus className="w-3.5 h-3.5" />
-      <span className="hidden md:inline">Add Record</span>
-      <span className="md:hidden">Add</span>
+      <span className="hidden md:inline">{lang === 'ja' ? '記録追加' : 'Add Record'}</span>
+      <span className="md:hidden">{lang === 'ja' ? '追加' : 'Add'}</span>
     </button>
   );
 
@@ -2404,14 +2443,14 @@ export default function MemoryVault({ currentUser, title, subtitle, icon }: Memo
                 <button
                   type="button"
                   onClick={() => { setMediaType('image'); setExternalLink(''); }}
-                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all ${mediaType === 'image' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer ${mediaType === 'image' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
                 >
                   <ImageIcon className="w-3.5 h-3.5" /> Photo
                 </button>
                 <button
                   type="button"
                   onClick={() => { setMediaType('music'); setImageFile(null); }}
-                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all ${mediaType === 'music' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer ${mediaType === 'music' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
                 >
                   <Music className="w-3.5 h-3.5" /> Music
                 </button>
@@ -2449,7 +2488,7 @@ export default function MemoryVault({ currentUser, title, subtitle, icon }: Memo
               <button 
                 type="submit" 
                 disabled={isSaving}
-                className="py-2.5 mt-1 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="py-2.5 mt-1 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 {isSaving ? (
                   <Loader2 className="w-4 h-4 text-zinc-950 animate-spin" />
@@ -2467,8 +2506,6 @@ export default function MemoryVault({ currentUser, title, subtitle, icon }: Memo
             ) : (
               records.map((record) => {
                 const isMusic = record.media_type === 'music';
-                
-                // Backwards compatibility map for older database records
                 const displayLocation = record.location === 'Texas' ? 'Michael' : record.location === 'Kanagawa' ? 'Tamae' : record.location;
                 
                 return (
@@ -2514,7 +2551,7 @@ export default function MemoryVault({ currentUser, title, subtitle, icon }: Memo
                             href={record.external_link} 
                             target="_blank" 
                             rel="noreferrer"
-                            className="flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10"
+                            className="flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10 cursor-pointer"
                           >
                             Listen <ExternalLink className="w-3 h-3" />
                           </a>
@@ -2554,12 +2591,13 @@ interface Milestone {
 
 interface MilestoneTrackerProps {
   currentUser: 'Michael' | 'Tamae';
+  lang: 'en' | 'ja';
   title: string;
   subtitle: string;
   icon: React.ReactNode;
 }
 
-export default function MilestoneTracker({ currentUser, title, subtitle, icon }: MilestoneTrackerProps) {
+export default function MilestoneTracker({ currentUser, lang, title, subtitle, icon }: MilestoneTrackerProps) {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -2585,7 +2623,6 @@ export default function MilestoneTracker({ currentUser, title, subtitle, icon }:
 
     loadData();
 
-    // Subscribe to realtime updates so comments sync instantly
     const channel = supabase
       .channel('public:milestones:tracker')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'milestones' }, (payload) => {
@@ -2616,6 +2653,7 @@ export default function MilestoneTracker({ currentUser, title, subtitle, icon }:
 
   const postReply = async (content: string, item: Milestone) => {
     const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+    // eslint-disable-next-line react-hooks/purity
     const newComment: ThreadComment = { id: Date.now().toString(), author, content, created_at: new Date().toISOString() };
     const newComments = [...(item.comments || []), newComment];
     setMilestones(milestones.map(m => m.id === item.id ? { ...m, comments: newComments } : m));
@@ -2642,8 +2680,8 @@ export default function MilestoneTracker({ currentUser, title, subtitle, icon }:
   const actionButton = (
     <button onClick={() => { if(!isOpen){setIsOpen(true); setIsAdding(true);} else setIsAdding(!isAdding); }} className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all cursor-pointer">
       <Plus className="w-3.5 h-3.5" />
-      <span className="hidden md:inline">Add Target</span>
-      <span className="md:hidden">Add</span>
+      <span className="hidden md:inline">{lang === 'ja' ? '目標追加' : 'Add Target'}</span>
+      <span className="md:hidden">{lang === 'ja' ? '追加' : 'Add'}</span>
     </button>
   );
 
@@ -2719,10 +2757,11 @@ export default function MilestoneTracker({ currentUser, title, subtitle, icon }:
 <file path="src/components/SanctuaryNotes.tsx">
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Send, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Send, Loader2, Plus } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import ReactionThread, { ThreadComment } from './ReactionThread';
+import CollapsibleSection from './CollapsibleSection';
 
 interface Note {
   id: string;
@@ -2735,6 +2774,10 @@ interface Note {
 
 interface SanctuaryNotesProps {
   currentUser: 'Michael' | 'Tamae';
+  lang: 'en' | 'ja';
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
 }
 
 const AVATARS = {
@@ -2742,10 +2785,13 @@ const AVATARS = {
   Texas: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png'
 };
 
-export default function SanctuaryNotes({ currentUser }: SanctuaryNotesProps) {
+export default function SanctuaryNotes({ currentUser, lang, title, subtitle, icon }: SanctuaryNotesProps) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [newContent, setNewContent] = useState('');
   const [loading, setLoading] = useState(true);
+  
+  const [isOpen, setIsOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -2813,67 +2859,96 @@ export default function SanctuaryNotes({ currentUser }: SanctuaryNotesProps) {
     await supabase.from('notes').update({ comments: newComments }).eq('id', note.id);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center text-stone-500 font-mono text-xs py-4">
-        <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Notes...
-      </div>
-    );
-  }
+  const handleAddClick = () => {
+    if (!isOpen) {
+      setIsOpen(true);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      inputRef.current?.focus();
+    }
+  };
+
+  const actionButton = (
+    <button 
+      onClick={handleAddClick}
+      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all cursor-pointer"
+    >
+      <Plus className="w-3.5 h-3.5" />
+      <span className="hidden md:inline">{lang === 'ja' ? 'ノート追加' : 'Add Note'}</span>
+      <span className="md:hidden">{lang === 'ja' ? '追加' : 'Add'}</span>
+    </button>
+  );
 
   return (
-    <div>
-      <form onSubmit={postNote} className="mb-6 flex flex-col md:flex-row gap-3">
-        <input
-          type="text"
-          placeholder="Drop a note..."
-          value={newContent}
-          onChange={(e) => setNewContent(e.target.value)}
-          className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500"
-        />
-        <button type="submit" className="px-4 py-2.5 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer">
-          <Send className="w-3.5 h-3.5" />
-          <span>Send</span>
-        </button>
-      </form>
+    <CollapsibleSection
+      title={title}
+      subtitle={subtitle}
+      icon={icon}
+      isControlled={true}
+      isOpen={isOpen}
+      onToggle={setIsOpen}
+      actionButton={actionButton}
+    >
+      {loading ? (
+        <div className="flex items-center justify-center text-stone-500 font-mono text-xs py-4">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Notes...
+        </div>
+      ) : (
+        <>
+          <form onSubmit={postNote} className="mb-6 flex flex-col md:flex-row gap-3">
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Drop a note..."
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+              className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500"
+            />
+            <button type="submit" className="px-4 py-2.5 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer">
+              <Send className="w-3.5 h-3.5" />
+              <span>Send</span>
+            </button>
+          </form>
 
-      <div className="space-y-4">
-        {notes.length === 0 ? (
-          <p className="text-xs text-stone-600 font-mono text-center py-4">No notes recorded yet.</p>
-        ) : (
-          notes.map((note) => (
-            <div key={note.id} className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60 flex flex-col gap-3 transition-all hover:bg-zinc-900/60 group">
-              <div className="flex items-start gap-3.5">
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-stone-500/30 bg-zinc-900 shrink-0 mt-0.5 shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={AVATARS[note.author as keyof typeof AVATARS] || AVATARS.Texas} alt={note.author} className="w-full h-full object-cover" />
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] font-mono text-stone-400 tracking-widest uppercase">
-                      {note.author === 'Kanagawa' ? 'Tamae' : 'Michael'}
-                    </span>
-                    <span className="text-[10px] font-mono text-stone-600">
-                      {new Date(note.created_at).toLocaleDateString()}
-                    </span>
+          <div className="space-y-4">
+            {notes.length === 0 ? (
+              <p className="text-xs text-stone-600 font-mono text-center py-4">No notes recorded yet.</p>
+            ) : (
+              notes.map((note) => (
+                <div key={note.id} className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60 flex flex-col gap-3 transition-all hover:bg-zinc-900/60 group">
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-8 h-8 rounded-full overflow-hidden border border-stone-500/30 bg-zinc-900 shrink-0 mt-0.5 shadow-sm">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={AVATARS[note.author as keyof typeof AVATARS] || AVATARS.Texas} alt={note.author} className="w-full h-full object-cover" />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-mono text-stone-400 tracking-widest uppercase">
+                          {note.author === 'Kanagawa' ? 'Tamae' : 'Michael'}
+                        </span>
+                        <span className="text-[10px] font-mono text-stone-600">
+                          {new Date(note.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-stone-200 leading-relaxed whitespace-pre-wrap">{note.content}</p>
+                      
+                      <ReactionThread 
+                        currentUser={currentUser}
+                        heartedBy={note.hearted_by || []}
+                        comments={note.comments || []}
+                        onToggleHeart={() => toggleHeart(note)}
+                        onAddComment={(content) => postReply(content, note)}
+                      />
+                    </div>
                   </div>
-                  <p className="text-sm text-stone-200 leading-relaxed whitespace-pre-wrap">{note.content}</p>
-                  
-                  <ReactionThread 
-                    currentUser={currentUser}
-                    heartedBy={note.hearted_by || []}
-                    comments={note.comments || []}
-                    onToggleHeart={() => toggleHeart(note)}
-                    onAddComment={(content) => postReply(content, note)}
-                  />
                 </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
+    </CollapsibleSection>
   );
 }
 </file>
@@ -2936,7 +3011,7 @@ export default function Home() {
   // The Bouncer: If no session, show the login gate
   if (!session) {
     return (
-      <main className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-8 selection:bg-stone-800 relative overflow-hidden">
+      <main className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-8 selection:bg-stone-800 relative overflow-x-hidden">
         <div className="absolute w-125 h-125 bg-amber-900/10 rounded-full blur-3xl pointer-events-none -top-48 -left-48"></div>
         <div className="absolute w-125 h-125 bg-stone-800/20 rounded-full blur-3xl pointer-events-none -bottom-48 -right-48"></div>
 
@@ -2973,7 +3048,7 @@ export default function Home() {
   const currentUser = session.user?.email === 'michael@en-musubi.local' ? 'Michael' : 'Tamae';
 
   return (
-    <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-stone-800 relative overflow-hidden text-stone-100">
+    <main className="min-h-screen bg-zinc-950 flex flex-col items-center p-6 md:p-16 selection:bg-stone-800 relative overflow-x-hidden text-stone-100">
       <div className="absolute w-200 h-200 bg-stone-800/10 rounded-full blur-3xl pointer-events-none -top-96 left-1/2 -translate-x-1/2"></div>
       
       {/* The Dashboard handles all UI and realtime tracking internally */}

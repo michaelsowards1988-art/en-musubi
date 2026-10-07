@@ -16,12 +16,13 @@ interface Factor {
 
 interface KeySuccessFactorsProps {
   currentUser: 'Michael' | 'Tamae';
+  lang: 'en' | 'ja';
   title: string;
   subtitle: string;
   icon: React.ReactNode;
 }
 
-export default function KeySuccessFactors({ currentUser, title, subtitle, icon }: KeySuccessFactorsProps) {
+export default function KeySuccessFactors({ currentUser, lang, title, subtitle, icon }: KeySuccessFactorsProps) {
   const [factors, setFactors] = useState<Factor[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
@@ -108,8 +109,8 @@ export default function KeySuccessFactors({ currentUser, title, subtitle, icon }
   const actionButton = (
     <button onClick={handleAddClick} className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all cursor-pointer">
       <Plus className="w-3.5 h-3.5" />
-      <span className="hidden md:inline">Add Focus</span>
-      <span className="md:hidden">Add</span>
+      <span className="hidden md:inline">{lang === 'ja' ? 'フォーカス追加' : 'Add Focus'}</span>
+      <span className="md:hidden">{lang === 'ja' ? '追加' : 'Add'}</span>
     </button>
   );
 

@@ -16,12 +16,13 @@ interface Itinerary {
 
 interface ItineraryTrackerProps {
   currentUser: 'Michael' | 'Tamae';
+  lang: 'en' | 'ja';
   title: string;
   subtitle: string;
   icon: React.ReactNode;
 }
 
-export default function ItineraryTracker({ currentUser, title, subtitle, icon }: ItineraryTrackerProps) {
+export default function ItineraryTracker({ currentUser, lang, title, subtitle, icon }: ItineraryTrackerProps) {
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -95,11 +96,11 @@ export default function ItineraryTracker({ currentUser, title, subtitle, icon }:
   const actionButton = (
     <button 
       onClick={handleAddClick}
-      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all"
+      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-all cursor-pointer"
     >
       <Plus className="w-3.5 h-3.5" />
-      <span className="hidden md:inline">Add Flight</span>
-      <span className="md:hidden">Add</span>
+      <span className="hidden md:inline">{lang === 'ja' ? 'フライト追加' : 'Add Flight'}</span>
+      <span className="md:hidden">{lang === 'ja' ? '追加' : 'Add'}</span>
     </button>
   );
 
@@ -141,7 +142,7 @@ export default function ItineraryTracker({ currentUser, title, subtitle, icon }:
                 onChange={(e) => setTravelDate(e.target.value)}
                 className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm font-mono text-zinc-200 focus:outline-none focus:border-stone-500"
               />
-              <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all">
+              <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all cursor-pointer">
                 Save
               </button>
             </form>

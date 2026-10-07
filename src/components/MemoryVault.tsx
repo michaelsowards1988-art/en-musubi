@@ -18,12 +18,13 @@ interface SharedRecord {
 
 interface MemoryVaultProps {
   currentUser: 'Michael' | 'Tamae';
+  lang: 'en' | 'ja';
   title: string;
   subtitle: string;
   icon: React.ReactNode;
 }
 
-export default function MemoryVault({ currentUser, title, subtitle, icon }: MemoryVaultProps) {
+export default function MemoryVault({ currentUser, lang, title, subtitle, icon }: MemoryVaultProps) {
   const [records, setRecords] = useState<SharedRecord[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -103,7 +104,6 @@ export default function MemoryVault({ currentUser, title, subtitle, icon }: Memo
         finalImageUrl = scrapedArt || 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=500&auto=format&fit=crop';
       }
 
-      // Location mapping direct to user
       const location = currentUser === 'Michael' ? 'Michael' : 'Tamae';
 
       await supabase
@@ -139,11 +139,11 @@ export default function MemoryVault({ currentUser, title, subtitle, icon }: Memo
   const actionButton = (
     <button 
       onClick={handleAddClick}
-      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all"
+      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all cursor-pointer"
     >
       <Plus className="w-3.5 h-3.5" />
-      <span className="hidden md:inline">Add Record</span>
-      <span className="md:hidden">Add</span>
+      <span className="hidden md:inline">{lang === 'ja' ? '記録追加' : 'Add Record'}</span>
+      <span className="md:hidden">{lang === 'ja' ? '追加' : 'Add'}</span>
     </button>
   );
 
@@ -169,14 +169,14 @@ export default function MemoryVault({ currentUser, title, subtitle, icon }: Memo
                 <button
                   type="button"
                   onClick={() => { setMediaType('image'); setExternalLink(''); }}
-                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all ${mediaType === 'image' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer ${mediaType === 'image' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
                 >
                   <ImageIcon className="w-3.5 h-3.5" /> Photo
                 </button>
                 <button
                   type="button"
                   onClick={() => { setMediaType('music'); setImageFile(null); }}
-                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all ${mediaType === 'music' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer ${mediaType === 'music' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
                 >
                   <Music className="w-3.5 h-3.5" /> Music
                 </button>
@@ -214,7 +214,7 @@ export default function MemoryVault({ currentUser, title, subtitle, icon }: Memo
               <button 
                 type="submit" 
                 disabled={isSaving}
-                className="py-2.5 mt-1 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                className="py-2.5 mt-1 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 {isSaving ? (
                   <Loader2 className="w-4 h-4 text-zinc-950 animate-spin" />
@@ -232,8 +232,6 @@ export default function MemoryVault({ currentUser, title, subtitle, icon }: Memo
             ) : (
               records.map((record) => {
                 const isMusic = record.media_type === 'music';
-                
-                // Backwards compatibility map for older database records
                 const displayLocation = record.location === 'Texas' ? 'Michael' : record.location === 'Kanagawa' ? 'Tamae' : record.location;
                 
                 return (
@@ -279,7 +277,7 @@ export default function MemoryVault({ currentUser, title, subtitle, icon }: Memo
                             href={record.external_link} 
                             target="_blank" 
                             rel="noreferrer"
-                            className="flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10"
+                            className="flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10 cursor-pointer"
                           >
                             Listen <ExternalLink className="w-3 h-3" />
                           </a>

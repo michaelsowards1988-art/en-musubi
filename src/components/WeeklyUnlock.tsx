@@ -28,7 +28,6 @@ function PromptContent({ prompt: initialPrompt, lang, currentUser }: { prompt: P
   const [prompt, setPrompt] = useState<Prompt>(initialPrompt);
   const [prevInitial, setPrevInitial] = useState<Prompt>(initialPrompt);
 
-  // Official React pattern for updating state when a prop changes without a useEffect
   if (initialPrompt !== prevInitial) {
     setPrompt(initialPrompt);
     setPrevInitial(initialPrompt);
@@ -90,14 +89,11 @@ function PromptContent({ prompt: initialPrompt, lang, currentUser }: { prompt: P
         </form>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* My Answer */}
           <div className="p-5 rounded-xl bg-zinc-900/40 border border-zinc-800 flex flex-col h-full">
             <div className="flex-1">
               <span className="text-[10px] font-mono text-stone-500 tracking-widest uppercase mb-3 block">{currentUser}</span>
               <p className="text-sm text-stone-200 leading-relaxed whitespace-pre-wrap mb-2">{myCurrentAnswer}</p>
             </div>
-            
-            {/* Subtle Break and Reactions */}
             <div className="mt-4 pt-4 border-t border-zinc-800/50">
               <ReactionThread 
                 currentUser={currentUser}
@@ -109,7 +105,6 @@ function PromptContent({ prompt: initialPrompt, lang, currentUser }: { prompt: P
             </div>
           </div>
 
-          {/* Partner's Answer */}
           <div className={`p-5 rounded-xl border relative overflow-hidden flex flex-col h-full ${bothAnswered ? 'bg-zinc-900/40 border-amber-900/30' : 'bg-zinc-950 border-zinc-800/50'}`}>
             <span className="text-[10px] font-mono text-stone-500 tracking-widest uppercase mb-3 block">{currentUser === 'Michael' ? 'Tamae' : 'Michael'}</span>
             
@@ -118,8 +113,6 @@ function PromptContent({ prompt: initialPrompt, lang, currentUser }: { prompt: P
                 <div className="flex-1">
                   <p className="text-sm text-stone-200 leading-relaxed whitespace-pre-wrap mb-2">{partnerAnswer}</p>
                 </div>
-                
-                {/* Subtle Break and Reactions */}
                 <div className="mt-4 pt-4 border-t border-zinc-800/50">
                   <ReactionThread 
                     currentUser={currentUser}
@@ -212,7 +205,9 @@ export default function WeeklyUnlock({ lang, currentUser }: WeeklyUnlockProps) {
           <div className="flex items-center gap-2">
             {currentUser === 'Michael' && (
               <button onClick={() => setIsAddingPrompt(!isAddingPrompt)} className="flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-amber-500 hover:bg-zinc-800 hover:text-amber-400 transition-colors cursor-pointer">
-                <Plus className="w-3 h-3" /> Add Prompt
+                <Plus className="w-3 h-3" /> 
+                <span className="hidden md:inline">{lang === 'ja' ? 'プロンプト追加' : 'Add Prompt'}</span>
+                <span className="md:hidden">{lang === 'ja' ? '追加' : 'Add'}</span>
               </button>
             )}
 
