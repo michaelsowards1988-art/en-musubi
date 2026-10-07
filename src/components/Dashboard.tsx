@@ -246,8 +246,8 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         </div>
       </div>
       
-      {/* Main Content Area - Padding re-added here so modules are centered */}
-      <div className="w-full px-6 md:px-16 pb-16 flex flex-col items-center">
+      {/* Main Content Area - Added pt-8 here so modules have space under the header */}
+      <div className="w-full px-6 md:px-16 pt-8 pb-16 flex flex-col items-center">
         <div className="w-full max-w-4xl space-y-6 relative z-10">
           <SanctuaryStatus lang={lang} currentUser={currentUser} />
           
