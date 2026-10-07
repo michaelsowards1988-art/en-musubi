@@ -9,7 +9,7 @@ export interface ThreadComment {
 }
 
 interface ReactionThreadProps {
-  currentUser: 'Michael' | 'Tamae';
+  currentUser: 'Michael' | 'Tamae'; // Kept in interface so parent components don't throw TypeScript errors
   heartedBy: string[];
   comments: ThreadComment[];
   onToggleHeart: () => void;
@@ -21,13 +21,13 @@ const AVATARS = {
   Texas: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png'
 };
 
-export default function ReactionThread({ currentUser, heartedBy, comments, onToggleHeart, onAddComment }: ReactionThreadProps) {
+export default function ReactionThread({ heartedBy, comments, onToggleHeart, onAddComment }: ReactionThreadProps) {
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
 
-  const hasHearted = heartedBy.includes(currentUser);
   const bothHearted = heartedBy.length >= 2;
+  const anyoneHearted = heartedBy.length > 0;
 
   // Auto-close the reply input when clicking outside of it
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function ReactionThread({ currentUser, heartedBy, comments, onTog
               <Heart className="w-4 h-4 text-rose-500 fill-rose-500 animate-pulse" />
               <Sparkles className="w-2.5 h-2.5 text-amber-400 absolute -top-1 -right-1" />
             </div>
-          ) : hasHearted ? (
+          ) : anyoneHearted ? (
             <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
           ) : (
             <Heart className="w-3.5 h-3.5 text-stone-500 hover:text-stone-300" />
