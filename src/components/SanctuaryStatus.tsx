@@ -82,6 +82,7 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   // Otsukaresama Drops State
   const [drops, setDrops] = useState<Drop[]>([]);
   const [showDropMenu, setShowDropMenu] = useState(false);
+  const [burstingId, setBurstingId] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -132,6 +133,7 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
         if (payload.eventType === 'INSERT') {
           setDrops(prev => [...prev, payload.new as Drop]);
         } else if (payload.eventType === 'DELETE') {
+          // Only sync external deletes to avoid interfering with local burst animations
           setDrops(prev => prev.filter(d => d.id !== payload.old.id));
         }
       }).subscribe();
@@ -149,25 +151,57 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   };
 
   const handleConsumeDrop = async (id: string) => {
+    if (burstingId) return; // Prevent double taps during animation
     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([20, 30, 20]);
-    // Optimistic UI update
-    setDrops(prev => prev.filter(d => d.id !== id));
-    await supabase.from('drops').delete().eq('id', id);
+    
+    // Trigger the burst animation
+    setBurstingId(id);
+    
+    // Extended timeout to match the new 7.5s slow-burn CSS animation
+    setTimeout(async () => {
+      setDrops(prev => prev.filter(d => d.id !== id));
+      setBurstingId(null);
+      await supabase.from('drops').delete().eq('id', id);
+    }, 7500);
   };
 
   const renderDropAction = (isMe: boolean) => {
     if (isMe) {
       const myDrops = drops.filter(d => d.target_user === currentUser);
       return (
-        <div className="flex items-center gap-1.5 mr-1">
+        <div className="flex items-center gap-2 mr-1">
           {myDrops.map(drop => (
-            <button 
-              key={drop.id} 
-              onClick={() => handleConsumeDrop(drop.id)} 
-              className="text-lg md:text-xl animate-[bounce_2s_infinite] hover:scale-125 transition-transform cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
-            >
-              {drop.emoji}
-            </button>
+            <div key={drop.id} className="relative w-8 h-8 flex items-center justify-center">
+              <button 
+                onClick={() => handleConsumeDrop(drop.id)} 
+                className={`text-xl transition-all cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] ${burstingId === drop.id ? 'scale-50 opacity-0 duration-1000' : 'animate-[bounce_2s_infinite] hover:scale-125 duration-300'}`}
+              >
+                {drop.emoji}
+              </button>
+              
+              {burstingId === drop.id && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+                  {[...Array(12)].map((_, i) => {
+                    const angle = (i * 30) * (Math.PI / 180);
+                    // Increased distance for a wider, softer cloud
+                    const distance = 75 + Math.random() * 25;
+                    const x = Math.cos(angle) * distance;
+                    const y = Math.sin(angle) * distance;
+                    return (
+                      <div
+                        key={i}
+                        className="absolute w-1.5 h-1.5 bg-amber-300 rounded-full shadow-[0_0_8px_rgba(252,211,77,1)]"
+                        style={{
+                          animation: `dropBurst 7.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards`,
+                          '--tx': `${x}px`,
+                          '--ty': `${y}px`,
+                        } as React.CSSProperties}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       );
@@ -341,7 +375,15 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   );
 
   return (
-    <div className="w-full max-w-4xl flex flex-col gap-4 mb-6">
+    <div className="w-full max-w-4xl flex flex-col gap-4 mb-6 relative">
+      {/* Slower, softer CSS Animation for the Sparkle Burst */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes dropBurst {
+          0% { transform: translate(0, 0) scale(1.2); opacity: 1; }
+          100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+      `}} />
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Partner-First Rendering */}
         {currentUser === 'Michael' ? [japanCard, texasCard] : [texasCard, japanCard]}
