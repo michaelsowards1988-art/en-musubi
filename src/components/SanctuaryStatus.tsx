@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sun, Moon, Cloud, Thermometer, CloudRain, CloudLightning, CloudSnow, CloudFog } from 'lucide-react';
+import { Sun, Moon, Cloud, Thermometer, CloudRain, CloudLightning, CloudSnow, CloudFog, Plus } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { enUS, ja } from 'date-fns/locale';
+import { supabase } from '@/lib/supabase';
 
 interface SanctuaryStatusProps {
   lang: 'en' | 'ja';
@@ -14,6 +15,12 @@ interface Holiday {
   date: string;
   name: string;
   localName: string;
+}
+
+interface Drop {
+  id: string;
+  target_user: string;
+  emoji: string;
 }
 
 // Cultural Dictionary for Context
@@ -72,12 +79,17 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   const [jpHolidays, setJpHolidays] = useState<Holiday[]>([]);
   const [txHolidays, setTxHolidays] = useState<Holiday[]>([]);
 
+  // Otsukaresama Drops State
+  const [drops, setDrops] = useState<Drop[]>([]);
+  const [showDropMenu, setShowDropMenu] = useState(false);
+
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
     const currentYear = new Date().getFullYear();
 
     const fetchHolidays = async (countryCode: string) => {
@@ -89,24 +101,102 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
       }
     };
 
+    const fetchDrops = async () => {
+      const { data, error } = await supabase.from('drops').select('*');
+      if (isMounted && !error && data) setDrops(data);
+    };
+
     Promise.all([
       fetch('https://api.open-meteo.com/v1/forecast?latitude=35.4478&longitude=139.6425&current=temperature_2m,weather_code,is_day').then(r => r.json()),
       fetch('https://api.open-meteo.com/v1/forecast?latitude=32.5896&longitude=-95.1972&current=temperature_2m,weather_code,is_day').then(r => r.json()),
       fetchHolidays('JP'),
-      fetchHolidays('US')
+      fetchHolidays('US'),
+      fetchDrops()
     ])
     .then(([jpData, txData, jpD, txD]) => {
-      if (jpData?.current) {
+      if (jpData?.current && isMounted) {
         setJpWeather({ tempC: jpData.current.temperature_2m, code: jpData.current.weather_code, isDay: jpData.current.is_day === 1 });
       }
-      if (txData?.current) {
+      if (txData?.current && isMounted) {
         setTxWeather({ tempC: txData.current.temperature_2m, code: txData.current.weather_code, isDay: txData.current.is_day === 1 });
       }
-      setJpHolidays(jpD);
-      setTxHolidays(txD);
+      if (isMounted) {
+        setJpHolidays(jpD);
+        setTxHolidays(txD);
+      }
     })
     .catch(console.error);
+
+    const channel = supabase.channel('public:drops')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'drops' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setDrops(prev => [...prev, payload.new as Drop]);
+        } else if (payload.eventType === 'DELETE') {
+          setDrops(prev => prev.filter(d => d.id !== payload.old.id));
+        }
+      }).subscribe();
+
+    return () => { 
+      isMounted = false; 
+      supabase.removeChannel(channel); 
+    };
   }, []);
+
+  const handleSendDrop = async (emoji: string) => {
+    const targetUser = currentUser === 'Michael' ? 'Tamae' : 'Michael';
+    await supabase.from('drops').insert([{ target_user: targetUser, emoji }]);
+    setShowDropMenu(false);
+  };
+
+  const handleConsumeDrop = async (id: string) => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([20, 30, 20]);
+    // Optimistic UI update
+    setDrops(prev => prev.filter(d => d.id !== id));
+    await supabase.from('drops').delete().eq('id', id);
+  };
+
+  const renderDropAction = (isMe: boolean) => {
+    if (isMe) {
+      const myDrops = drops.filter(d => d.target_user === currentUser);
+      return (
+        <div className="flex items-center gap-1.5 mr-1">
+          {myDrops.map(drop => (
+            <button 
+              key={drop.id} 
+              onClick={() => handleConsumeDrop(drop.id)} 
+              className="text-lg md:text-xl animate-[bounce_2s_infinite] hover:scale-125 transition-transform cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
+            >
+              {drop.emoji}
+            </button>
+          ))}
+        </div>
+      );
+    } else {
+      return (
+        <div className="relative mr-1">
+          <button 
+            onClick={() => setShowDropMenu(!showDropMenu)}
+            className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all cursor-pointer ${showDropMenu ? 'bg-amber-900/50 border-amber-700/50 text-amber-500' : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}`}
+          >
+            <Plus className={`w-3.5 h-3.5 transition-transform ${showDropMenu ? 'rotate-45' : ''}`} />
+          </button>
+          {showDropMenu && (
+            <div className="absolute top-8 right-0 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-xl p-1.5 flex gap-1 shadow-xl z-20 animate-in fade-in zoom-in-95">
+              {['🍵', '☕', '♨️'].map(emoji => (
+                <button 
+                  key={emoji}
+                  onClick={() => handleSendDrop(emoji)}
+                  className="w-8 h-8 flex items-center justify-center text-xl hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+  };
 
   const texasHour = parseInt(formatInTimeZone(now, 'America/Chicago', 'H'), 10);
   const japanHour = parseInt(formatInTimeZone(now, 'Asia/Tokyo', 'H'), 10);
@@ -190,10 +280,13 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
         </div>
       </div>
       <div className="flex flex-col items-end gap-2 shrink-0">
-        <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
-          {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
-        </span>
-        <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
+          {renderDropAction(currentUser === 'Tamae')}
+          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
+            {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+          </span>
+        </div>
+        <span className="text-xs text-zinc-400 flex items-center gap-1.5 mt-1.5">
           <jpWeatherDetails.Icon className="w-3.5 h-3.5" /> {jpWeatherDetails.text}
         </span>
       </div>
@@ -234,10 +327,13 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
         </div>
       </div>
       <div className="flex flex-col items-end gap-2 shrink-0">
-        <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
-          {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
-        </span>
-        <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
+          {renderDropAction(currentUser === 'Michael')}
+          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200">
+            {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+          </span>
+        </div>
+        <span className="text-xs text-zinc-400 flex items-center gap-1.5 mt-1.5">
           <txWeatherDetails.Icon className="w-3.5 h-3.5" /> {txWeatherDetails.text}
         </span>
       </div>

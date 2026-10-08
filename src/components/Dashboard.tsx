@@ -193,8 +193,10 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                   <span 
                     onClick={() => handlePoke('Tamae')}
                     className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 
-                      ${tamaeOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}
-                      ${bothOnline && currentUser === 'Michael' ? 'cursor-pointer hover:border-amber-400 hover:scale-110' : ''}
+                      ${tamaeOnline && !bothOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : ''}
+                      ${bothOnline ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] scale-110' : ''}
+                      ${!tamaeOnline && !bothOnline ? 'border-stone-500/40 bg-zinc-900 shadow-md scale-100' : ''}
+                      ${bothOnline && currentUser === 'Michael' ? 'cursor-pointer hover:border-red-400 hover:scale-110' : ''}
                     `}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -202,15 +204,18 @@ export default function Dashboard({ currentUser }: DashboardProps) {
                   </span>
                 </div>
                 
-                <div className={`transition-all duration-1000 h-0.5 ${bothOnline ? 'w-6 bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]' : 'w-3 bg-transparent'}`}></div>
+                {/* The Red Thread of Fate */}
+                <div className={`transition-all duration-1000 h-0.5 ${bothOnline ? 'w-8 bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.9)]' : 'w-3 bg-transparent'}`}></div>
                 
                 <div className="relative flex items-center justify-center">
                   {activeFlare === 'Michael' && <div className="absolute w-11 h-11 rounded-full bg-amber-500 animate-ping opacity-75"></div>}
                   <span 
                     onClick={() => handlePoke('Michael')}
                     className={`relative z-10 w-11 h-11 rounded-full overflow-hidden border-2 inline-block shrink-0 transition-all duration-700 
-                      ${michaelOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : 'border-stone-500/40 bg-zinc-900 shadow-md scale-100'}
-                      ${bothOnline && currentUser === 'Tamae' ? 'cursor-pointer hover:border-amber-400 hover:scale-110' : ''}
+                      ${michaelOnline && !bothOnline ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)] scale-110' : ''}
+                      ${bothOnline ? 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)] scale-110' : ''}
+                      ${!michaelOnline && !bothOnline ? 'border-stone-500/40 bg-zinc-900 shadow-md scale-100' : ''}
+                      ${bothOnline && currentUser === 'Tamae' ? 'cursor-pointer hover:border-red-400 hover:scale-110' : ''}
                     `}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
