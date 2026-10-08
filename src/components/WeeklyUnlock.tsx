@@ -255,7 +255,7 @@ export default function WeeklyUnlock({ lang, currentUser }: WeeklyUnlockProps) {
                 <div key={prompt.id} className={`rounded-xl border transition-all overflow-hidden ${isExpanded ? 'bg-zinc-900/20 border-amber-900/30' : 'bg-zinc-900/40 border-zinc-800/40 hover:border-zinc-700/60'}`}>
                   <div onClick={() => setExpandedArchiveId(isExpanded ? null : prompt.id)} className="p-4 flex items-center justify-between cursor-pointer">
                     <div className="flex-1 min-w-0 pr-4">
-                      <h4 className={`text-sm font-medium truncate transition-colors ${bothAnswered ? 'text-stone-200' : 'text-stone-400'}`}>{lang === 'ja' ? prompt.question_ja : prompt.question_en}</h4>
+                      <h4 className={`text-sm font-medium leading-relaxed transition-colors ${bothAnswered ? 'text-stone-200' : 'text-stone-400'}`}>{lang === 'ja' ? prompt.question_ja : prompt.question_en}</h4>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] font-mono text-stone-600">{new Date(prompt.created_at).toLocaleDateString()}</span>
                         {!bothAnswered && !myAnswer && <span className="text-[10px] font-mono text-amber-600/80 px-1.5 py-0.5 rounded bg-amber-950/30 border border-amber-900/30">{lang === 'ja' ? '未回答' : 'Needs Answer'}</span>}

@@ -18,7 +18,6 @@ interface Holiday {
 
 // Cultural Dictionary for Context
 const HOLIDAY_INFO: Record<string, { en: string, ja: string }> = {
-  // Japanese Holidays
   "New Year's Day": { en: "Celebrating the start of the new year.", ja: "年の初めを祝う日。" },
   "Coming of Age Day": { en: "Celebrating youth who have reached adulthood.", ja: "新成人を祝い励ます日。" },
   "National Foundation Day": { en: "Reflecting on the nation's founding.", ja: "建国をしのび、国を愛する心を養う日。" },
@@ -35,8 +34,6 @@ const HOLIDAY_INFO: Record<string, { en: string, ja: string }> = {
   "Sports Day": { en: "Promoting sports and a healthy mind and body.", ja: "スポーツを楽しみ、健康な心身を培う日。" },
   "Culture Day": { en: "Celebrating peace, freedom, and culture.", ja: "自由と平和を愛し、文化をすすめる日。" },
   "Labor Thanksgiving Day": { en: "Commending labor and celebrating production.", ja: "勤労をたつとび、生産を祝い、国民たがいに感謝しあう日。" },
-
-  // US Holidays
   "Independence Day": { en: "Commemorates the Declaration of Independence in 1776.", ja: "1776年の独立宣言を記念する日。" },
   "Thanksgiving Day": { en: "A national day of giving thanks for the harvest.", ja: "秋の収穫と恩恵に感謝する日。" },
   "Memorial Day": { en: "Honoring military personnel who died in service.", ja: "兵役中に亡くなった人々を追悼する日。" },
@@ -47,6 +44,24 @@ const HOLIDAY_INFO: Record<string, { en: string, ja: string }> = {
   "Juneteenth": { en: "Commemorates the emancipation of enslaved African Americans.", ja: "アフリカ系アメリカ人の奴隷解放を記念する日。" },
   "Columbus Day": { en: "Commemorates the landing of Christopher Columbus in 1492.", ja: "1492年のコロンブスのアメリカ大陸到達を記念する日。" },
   "Christmas Day": { en: "Celebrating the birth of Jesus Christ.", ja: "イエス・キリストの降誕を祝う日。" }
+};
+
+// Astronomical calculation of the current moon phase
+const getMoonPhase = (date: Date) => {
+  const LUNAR_MONTH = 29.53058867;
+  const knownNewMoon = new Date('2024-01-11T11:57:00Z').getTime();
+  const days = (date.getTime() - knownNewMoon) / 86400000;
+  const phase = (days % LUNAR_MONTH) / LUNAR_MONTH;
+  const normalizedPhase = phase < 0 ? phase + 1 : phase;
+
+  if (normalizedPhase < 0.03 || normalizedPhase > 0.97) return { emoji: '🌑', en: 'New Moon', ja: '新月' };
+  if (normalizedPhase < 0.22) return { emoji: '🌒', en: 'Waxing Crescent', ja: '三日月' };
+  if (normalizedPhase < 0.28) return { emoji: '🌓', en: 'First Quarter', ja: '上弦の月' };
+  if (normalizedPhase < 0.47) return { emoji: '🌔', en: 'Waxing Gibbous', ja: '十三夜' };
+  if (normalizedPhase < 0.53) return { emoji: '🌕', en: 'Full Moon', ja: '満月' };
+  if (normalizedPhase < 0.72) return { emoji: '🌖', en: 'Waning Gibbous', ja: '十六夜' };
+  if (normalizedPhase < 0.78) return { emoji: '🌗', en: 'Last Quarter', ja: '下弦の月' };
+  return { emoji: '🌘', en: 'Waning Crescent', ja: '二十六夜' };
 };
 
 export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusProps) {
@@ -118,6 +133,8 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   // Retrieve descriptions from dictionary, falling back gracefully if not found
   const jpDesc = todayJpHoliday ? HOLIDAY_INFO[todayJpHoliday.name]?.[lang] : null;
   const txDesc = todayTxHoliday ? HOLIDAY_INFO[todayTxHoliday.name]?.[lang] : null;
+
+  const moonPhase = getMoonPhase(now);
 
   const getWeatherInfo = (code: number | null, isDay: boolean) => {
     if (code === null) return { Icon: Cloud, text: lang === 'ja' ? '取得中...' : 'Loading...' };
@@ -228,9 +245,23 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   );
 
   return (
-    <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      {/* Partner-First Rendering: Show Tamae's card first if Michael is looking, and vice versa */}
-      {currentUser === 'Michael' ? [japanCard, texasCard] : [texasCard, japanCard]}
+    <div className="w-full max-w-4xl flex flex-col gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Partner-First Rendering */}
+        {currentUser === 'Michael' ? [japanCard, texasCard] : [texasCard, japanCard]}
+      </div>
+      
+      {/* Under the Same Moon Banner */}
+      <div className="p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all group">
+        <span className="text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] transition-transform group-hover:scale-110">
+          {moonPhase.emoji}
+        </span>
+        <p className="text-xs font-mono tracking-widest uppercase text-stone-400">
+          {lang === 'ja' ? '同じ月を見上げて' : 'Under the Same Moon'}
+          <span className="mx-3 opacity-30">|</span>
+          <span className="text-amber-500/80">{lang === 'ja' ? moonPhase.ja : moonPhase.en}</span>
+        </p>
+      </div>
     </div>
   );
 }
