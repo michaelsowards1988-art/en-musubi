@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sun, Moon, Cloud, Thermometer, CloudRain, CloudLightning, CloudSnow, CloudFog, Plus } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { enUS, ja } from 'date-fns/locale';
@@ -83,11 +83,28 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   const [drops, setDrops] = useState<Drop[]>([]);
   const [showDropMenu, setShowDropMenu] = useState(false);
   const [burstingIds, setBurstingIds] = useState<string[]>([]);
+  
+  // Cinematic Finale State
+  const [otsukaresamaBurst, setOtsukaresamaBurst] = useState<number | null>(null);
+  const wasBurstingRef = useRef(false);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Monitor the burst queue to trigger the final animation
+  useEffect(() => {
+    if (burstingIds.length > 0) {
+      wasBurstingRef.current = true;
+    } else if (burstingIds.length === 0 && wasBurstingRef.current) {
+      wasBurstingRef.current = false;
+      // All sparkles have finished. Trigger the 3-second finale.
+      setOtsukaresamaBurst(Date.now());
+      // Clean up the overlay after it finishes
+      setTimeout(() => setOtsukaresamaBurst(null), 4000);
+    }
+  }, [burstingIds.length]);
 
   useEffect(() => {
     let isMounted = true;
@@ -133,7 +150,6 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
         if (payload.eventType === 'INSERT') {
           setDrops(prev => [...prev, payload.new as Drop]);
         } else if (payload.eventType === 'DELETE') {
-          // Only sync external deletes to avoid interfering with local burst animations
           setDrops(prev => prev.filter(d => d.id !== payload.old.id));
         }
       }).subscribe();
@@ -154,15 +170,35 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
     if (burstingIds.includes(id)) return;
     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([20, 30, 20]);
     
-    // Trigger the burst animation and layout collapse
     setBurstingIds(prev => [...prev, id]);
     
-    // Snappy layout collapse (500ms CSS) but allow a 2.5s window for the sparkles to drift and fade
+    // Smooth 1500ms handoff to cut out the awkward pause
     setTimeout(async () => {
       setDrops(prev => prev.filter(d => d.id !== id));
       setBurstingIds(prev => prev.filter(bId => bId !== id));
       await supabase.from('drops').delete().eq('id', id);
-    }, 2500);
+    }, 1500);
+  };
+
+  const renderFinalBurstOverlay = (targetUser: 'Michael' | 'Tamae') => {
+    if (!otsukaresamaBurst || currentUser !== targetUser) return null;
+    return (
+      <div 
+        key={otsukaresamaBurst}
+        className="absolute inset-0 z-40 rounded-2xl flex items-center justify-center pointer-events-none"
+        style={{ animation: 'otsukaresamaCardDim 3.5s ease-in-out forwards' }}
+      >
+        <span 
+          className="text-2xl md:text-3xl text-amber-400 tracking-[0.3em] ml-3"
+          style={{ 
+            animation: 'otsukaresamaTextGlow 3.5s ease-in-out forwards',
+            fontFamily: '"Shippori Mincho", "Noto Serif JP", serif'
+          }}
+        >
+          お疲れ様
+        </span>
+      </div>
+    );
   };
 
   const renderDropMenu = () => (
@@ -190,10 +226,12 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   );
 
   const renderMyDrop = (drop: Drop) => (
-    <div key={drop.id} className={`relative flex items-center justify-center transition-[width] duration-500 ease-in-out overflow-visible ${burstingIds.includes(drop.id) ? 'w-0 pointer-events-none' : 'w-8 h-8'}`}>
+    // Width collapses gracefully over 700ms to pull the layout together
+    <div key={drop.id} className={`relative flex items-center justify-center transition-[width] duration-700 ease-in-out overflow-visible ${burstingIds.includes(drop.id) ? 'w-0 pointer-events-none' : 'w-8 h-8'}`}>
       <button 
         onClick={() => handleConsumeDrop(drop.id)} 
-        className={`text-xl transition-all cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] ${burstingIds.includes(drop.id) ? 'scale-0 opacity-0 duration-500' : 'animate-[bounce_2s_infinite] hover:scale-125 duration-300'}`}
+        // Emoji scales down slowly over 1000ms
+        className={`text-xl transition-all cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] ${burstingIds.includes(drop.id) ? 'scale-0 opacity-0 duration-1000' : 'animate-[bounce_2s_infinite] hover:scale-125 duration-300'}`}
       >
         {drop.emoji}
       </button>
@@ -210,7 +248,8 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
                 key={i}
                 className="absolute w-1.5 h-1.5 bg-amber-300 rounded-full shadow-[0_0_8px_rgba(252,211,77,1)]"
                 style={{
-                  animation: `dropBurst 2.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards`,
+                  // Sparkles drift smoothly outward over 1.5s
+                  animation: `dropBurst 1.5s ease-out forwards`,
                   '--tx': `${x}px`,
                   '--ty': `${y}px`,
                 } as React.CSSProperties}
@@ -271,8 +310,9 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   };
 
   const japanCard = (
-    <div key="jp" className="p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full">
-      <div className="flex items-start gap-3 md:gap-4">
+    <div key="jp" className="relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full">
+      {renderFinalBurstOverlay('Tamae')}
+      <div className="flex items-start gap-3 md:gap-4 relative z-10 pointer-events-none">
         <div className={`p-3 rounded-xl border shadow-inner mt-1 shrink-0 ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
           {isJapanDay ? <Sun className="w-5 h-5 md:w-6 md:h-6" /> : <Moon className="w-5 h-5 md:w-6 md:h-6" />}
         </div>
@@ -289,7 +329,7 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
           <div className="mt-0.5">
             <span className="text-xs md:text-sm text-zinc-300 font-mono block whitespace-nowrap">{japanFormattedDate}</span>
             {displayJpHoliday && (
-              <div className="mt-2.5">
+              <div className="mt-2.5 pointer-events-auto">
                 <span className="w-max px-2 py-0.5 rounded text-[9px] font-mono tracking-widest uppercase bg-amber-950/30 text-amber-500/90 border border-amber-900/30">
                   ★ {displayJpHoliday}
                 </span>
@@ -303,7 +343,7 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
           </div>
         </div>
       </div>
-      <div className="flex flex-col items-end gap-1.5 shrink-0 ml-2">
+      <div className="flex flex-col items-end gap-1.5 shrink-0 ml-2 relative z-10">
         <div className="flex items-center gap-2">
           {currentUser !== 'Tamae' && renderDropMenu()}
           <span className="text-[10px] md:text-xs font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
@@ -323,8 +363,9 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   );
 
   const texasCard = (
-    <div key="tx" className="p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full">
-      <div className="flex items-start gap-3 md:gap-4">
+    <div key="tx" className="relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full">
+      {renderFinalBurstOverlay('Michael')}
+      <div className="flex items-start gap-3 md:gap-4 relative z-10 pointer-events-none">
         <div className={`p-3 rounded-xl border shadow-inner mt-1 shrink-0 ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
           {isTexasDay ? <Sun className="w-5 h-5 md:w-6 md:h-6" /> : <Moon className="w-5 h-5 md:w-6 md:h-6" />}
         </div>
@@ -341,7 +382,7 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
           <div className="mt-0.5">
             <span className="text-xs md:text-sm text-zinc-300 font-mono block whitespace-nowrap">{texasFormattedDate}</span>
             {displayTxHoliday && (
-              <div className="mt-2.5">
+              <div className="mt-2.5 pointer-events-auto">
                 <span className="w-max px-2 py-0.5 rounded text-[9px] font-mono tracking-widest uppercase bg-amber-950/30 text-amber-500/90 border border-amber-900/30">
                   ★ {displayTxHoliday}
                 </span>
@@ -355,7 +396,7 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
           </div>
         </div>
       </div>
-      <div className="flex flex-col items-end gap-1.5 shrink-0 ml-2">
+      <div className="flex flex-col items-end gap-1.5 shrink-0 ml-2 relative z-10">
         <div className="flex items-center gap-2">
           {currentUser !== 'Michael' && renderDropMenu()}
           <span className="text-[10px] md:text-xs font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
@@ -376,11 +417,22 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
 
   return (
     <div className="w-full max-w-4xl flex flex-col gap-4 mb-6 relative">
-      {/* 2.5s Smooth Sparkle Burst */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes dropBurst {
           0% { transform: translate(0, 0) scale(1.2); opacity: 1; }
           100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+        @keyframes otsukaresamaCardDim {
+          0% { background-color: rgba(9, 9, 11, 0); backdrop-filter: blur(0px); opacity: 0; }
+          15% { background-color: rgba(9, 9, 11, 0.85); backdrop-filter: blur(4px); opacity: 1; }
+          85% { background-color: rgba(9, 9, 11, 0.85); backdrop-filter: blur(4px); opacity: 1; }
+          100% { background-color: rgba(9, 9, 11, 0); backdrop-filter: blur(0px); opacity: 0; }
+        }
+        @keyframes otsukaresamaTextGlow {
+          0% { opacity: 0; transform: scale(0.9) translateY(10px); text-shadow: 0 0 0 rgba(245,158,11,0); }
+          15% { opacity: 1; transform: scale(1) translateY(0); text-shadow: 0 0 20px rgba(245,158,11,0.6); }
+          85% { opacity: 1; transform: scale(1.05) translateY(-5px); text-shadow: 0 0 20px rgba(245,158,11,0.6); }
+          100% { opacity: 0; transform: scale(1.1) translateY(-15px); text-shadow: 0 0 0 rgba(245,158,11,0); }
         }
       `}} />
 
