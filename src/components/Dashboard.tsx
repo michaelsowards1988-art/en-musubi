@@ -11,8 +11,9 @@ import KeySuccessFactors from '@/components/KeySuccessFactors';
 import ItineraryTracker from '@/components/ItineraryTracker';
 import MemoryVault from '@/components/MemoryVault';
 import SanctuaryNotes from '@/components/SanctuaryNotes';
+import DualZoneCalendar from '@/components/DualZoneCalendar';
 import { supabase } from '@/lib/supabase';
-import { Globe2, Target, Lightbulb, Plane, Image as ImageIcon, MessageSquare, CalendarDays } from 'lucide-react';
+import { Globe2, Target, Lightbulb, Plane, Image as ImageIcon, MessageSquare, CalendarDays, Clock } from 'lucide-react';
 
 interface DashboardProps {
   currentUser: 'Michael' | 'Tamae';
@@ -142,6 +143,8 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       notes_sub: "Shared thoughts and messages",
       sync: "Availability",
       sync_sub: "Blackout dates and target visits",
+      timezone: "Timezone Sync",
+      timezone_sub: "Bridging the hours across the Pacific",
       langToggle: "日本語"
     },
     ja: {
@@ -158,6 +161,8 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       notes_sub: "共有する考えとメッセージ",
       sync: "スケジュール調整",
       sync_sub: "訪問可能日と予定",
+      timezone: "タイムゾーン同期",
+      timezone_sub: "太平洋を越えて繋がる時間",
       langToggle: "English"
     }
   };
@@ -301,6 +306,14 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             title={currentLang.ksf} 
             subtitle={currentLang.ksf_sub} 
             icon={<Lightbulb className="w-5 h-5" />} 
+          />
+
+          <DualZoneCalendar
+            currentUser={currentUser}
+            lang={lang}
+            title={currentLang.timezone}
+            subtitle={currentLang.timezone_sub}
+            icon={<Clock className="w-5 h-5" />}
           />
         </div>
       </div>

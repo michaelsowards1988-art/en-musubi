@@ -252,15 +252,15 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
       </div>
       
       {/* Under the Same Moon Banner */}
-      <div className="p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all group">
-        <span className="text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] transition-transform group-hover:scale-110">
+      <div className="p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-center gap-2 md:gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all group overflow-hidden">
+        <span className="text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] transition-transform group-hover:scale-110 shrink-0">
           {moonPhase.emoji}
         </span>
-        <p className="text-xs font-mono tracking-widest uppercase text-stone-400">
-          {lang === 'ja' ? '同じ月を見上げて' : 'Under the Same Moon'}
-          <span className="mx-3 opacity-30">|</span>
-          <span className="text-amber-500/80">{lang === 'ja' ? moonPhase.ja : moonPhase.en}</span>
-        </p>
+        <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs font-mono tracking-widest uppercase text-stone-400 min-w-0">
+          <span className="truncate">{lang === 'ja' ? '同じ月を見上げて' : 'Under the Same Moon'}</span>
+          <span className="opacity-30 shrink-0">|</span>
+          <span className="text-amber-500/80 whitespace-nowrap shrink-0">{lang === 'ja' ? moonPhase.ja : moonPhase.en}</span>
+        </div>
       </div>
     </div>
   );
