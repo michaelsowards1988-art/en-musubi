@@ -151,7 +151,7 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   };
 
   const handleConsumeDrop = async (id: string) => {
-    if (burstingIds.includes(id)) return; // Prevent double taps on the same item, but allow multiple items
+    if (burstingIds.includes(id)) return;
     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([20, 30, 20]);
     
     // Trigger the burst animation and layout collapse
@@ -165,73 +165,62 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
     }, 2500);
   };
 
-  const renderDropAction = (isMe: boolean) => {
-    if (isMe) {
-      const myDrops = drops.filter(d => d.target_user === currentUser);
-      return (
-        <div className="flex flex-wrap items-center justify-end gap-1.5 mr-1 max-w-[110px]">
-          {myDrops.map(drop => (
-            // Transitioning width to 0 lets the layout collapse immediately while the absolute sparkles stay visible
-            <div key={drop.id} className={`relative flex items-center justify-center transition-[width] duration-500 ease-in-out overflow-visible ${burstingIds.includes(drop.id) ? 'w-0 pointer-events-none' : 'w-8 h-8'}`}>
-              <button 
-                onClick={() => handleConsumeDrop(drop.id)} 
-                className={`text-xl transition-all cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] ${burstingIds.includes(drop.id) ? 'scale-0 opacity-0 duration-500' : 'animate-[bounce_2s_infinite] hover:scale-125 duration-300'}`}
-              >
-                {drop.emoji}
-              </button>
-              
-              {burstingIds.includes(drop.id) && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
-                  {[...Array(12)].map((_, i) => {
-                    const angle = (i * 30) * (Math.PI / 180);
-                    // Slightly tighter spread so it doesn't get clipped by far-away hidden overflows
-                    const distance = 40 + Math.random() * 20;
-                    const x = Math.cos(angle) * distance;
-                    const y = Math.sin(angle) * distance;
-                    return (
-                      <div
-                        key={i}
-                        className="absolute w-1.5 h-1.5 bg-amber-300 rounded-full shadow-[0_0_8px_rgba(252,211,77,1)]"
-                        style={{
-                          animation: `dropBurst 2.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards`,
-                          '--tx': `${x}px`,
-                          '--ty': `${y}px`,
-                        } as React.CSSProperties}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+  const renderDropMenu = () => (
+    <div className="relative mr-1">
+      <button 
+        onClick={() => setShowDropMenu(!showDropMenu)}
+        className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all cursor-pointer ${showDropMenu ? 'bg-amber-900/50 border-amber-700/50 text-amber-500' : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}`}
+      >
+        <Plus className={`w-3.5 h-3.5 transition-transform ${showDropMenu ? 'rotate-45' : ''}`} />
+      </button>
+      {showDropMenu && (
+        <div className="absolute top-8 right-0 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-xl p-1.5 flex gap-1 shadow-xl z-20 animate-in fade-in zoom-in-95">
+          {['🍵', '☕', '♨️'].map(emoji => (
+            <button 
+              key={emoji}
+              onClick={() => handleSendDrop(emoji)}
+              className="w-8 h-8 flex items-center justify-center text-xl hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+            >
+              {emoji}
+            </button>
           ))}
         </div>
-      );
-    } else {
-      return (
-        <div className="relative mr-1">
-          <button 
-            onClick={() => setShowDropMenu(!showDropMenu)}
-            className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all cursor-pointer ${showDropMenu ? 'bg-amber-900/50 border-amber-700/50 text-amber-500' : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}`}
-          >
-            <Plus className={`w-3.5 h-3.5 transition-transform ${showDropMenu ? 'rotate-45' : ''}`} />
-          </button>
-          {showDropMenu && (
-            <div className="absolute top-8 right-0 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-xl p-1.5 flex gap-1 shadow-xl z-20 animate-in fade-in zoom-in-95">
-              {['🍵', '☕', '♨️'].map(emoji => (
-                <button 
-                  key={emoji}
-                  onClick={() => handleSendDrop(emoji)}
-                  className="w-8 h-8 flex items-center justify-center text-xl hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          )}
+      )}
+    </div>
+  );
+
+  const renderMyDrop = (drop: Drop) => (
+    <div key={drop.id} className={`relative flex items-center justify-center transition-[width] duration-500 ease-in-out overflow-visible ${burstingIds.includes(drop.id) ? 'w-0 pointer-events-none' : 'w-8 h-8'}`}>
+      <button 
+        onClick={() => handleConsumeDrop(drop.id)} 
+        className={`text-xl transition-all cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] ${burstingIds.includes(drop.id) ? 'scale-0 opacity-0 duration-500' : 'animate-[bounce_2s_infinite] hover:scale-125 duration-300'}`}
+      >
+        {drop.emoji}
+      </button>
+      
+      {burstingIds.includes(drop.id) && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+          {[...Array(12)].map((_, i) => {
+            const angle = (i * 30) * (Math.PI / 180);
+            const distance = 40 + Math.random() * 20;
+            const x = Math.cos(angle) * distance;
+            const y = Math.sin(angle) * distance;
+            return (
+              <div
+                key={i}
+                className="absolute w-1.5 h-1.5 bg-amber-300 rounded-full shadow-[0_0_8px_rgba(252,211,77,1)]"
+                style={{
+                  animation: `dropBurst 2.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards`,
+                  '--tx': `${x}px`,
+                  '--ty': `${y}px`,
+                } as React.CSSProperties}
+              />
+            );
+          })}
         </div>
-      );
-    }
-  };
+      )}
+    </div>
+  );
 
   const texasHour = parseInt(formatInTimeZone(now, 'America/Chicago', 'H'), 10);
   const japanHour = parseInt(formatInTimeZone(now, 'Asia/Tokyo', 'H'), 10);
@@ -282,23 +271,23 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   };
 
   const japanCard = (
-    <div key="jp" className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full">
-      <div className="flex items-start gap-4">
-        <div className={`p-3.5 rounded-xl border shadow-inner mt-1 ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
-          {isJapanDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+    <div key="jp" className="p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full">
+      <div className="flex items-start gap-3 md:gap-4">
+        <div className={`p-3 rounded-xl border shadow-inner mt-1 shrink-0 ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+          {isJapanDay ? <Sun className="w-5 h-5 md:w-6 md:h-6" /> : <Moon className="w-5 h-5 md:w-6 md:h-6" />}
         </div>
         <div className="flex flex-col min-w-0">
-          <div className="flex items-center gap-2.5">
-            <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? '神奈川 (JST)' : 'Kanagawa (JST)'}</h4>
-            <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <h4 className="text-[10px] md:text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold whitespace-nowrap">{lang === 'ja' ? '神奈川 (JST)' : 'Kanagawa (JST)'}</h4>
+            <span className="text-[10px] md:text-xs font-mono text-zinc-400 flex items-center gap-1 whitespace-nowrap">
               <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(jpWeather.tempC)}
             </span>
           </div>
-          <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono whitespace-nowrap">
+          <p className="text-base md:text-lg font-semibold text-zinc-100 mt-1 font-mono whitespace-nowrap">
             {formatInTimeZone(now, 'Asia/Tokyo', 'h:mm:ss a')}
           </p>
           <div className="mt-0.5">
-            <span className="text-sm text-zinc-300 font-mono block whitespace-nowrap">{japanFormattedDate}</span>
+            <span className="text-xs md:text-sm text-zinc-300 font-mono block whitespace-nowrap">{japanFormattedDate}</span>
             {displayJpHoliday && (
               <div className="mt-2.5">
                 <span className="w-max px-2 py-0.5 rounded text-[9px] font-mono tracking-widest uppercase bg-amber-950/30 text-amber-500/90 border border-amber-900/30">
@@ -314,38 +303,43 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
           </div>
         </div>
       </div>
-      <div className="flex flex-col items-end gap-2 shrink-0">
+      <div className="flex flex-col items-end gap-1.5 shrink-0 ml-2">
         <div className="flex items-center gap-2">
-          {renderDropAction(currentUser === 'Tamae')}
-          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
+          {currentUser !== 'Tamae' && renderDropMenu()}
+          <span className="text-[10px] md:text-xs font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
             {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
           </span>
         </div>
-        <span className="text-xs text-zinc-400 flex items-center gap-1.5 mt-1.5">
+        <span className="text-[10px] md:text-xs text-zinc-400 flex items-center gap-1.5 mt-0.5">
           <jpWeatherDetails.Icon className="w-3.5 h-3.5" /> {jpWeatherDetails.text}
         </span>
+        {currentUser === 'Tamae' && drops.filter(d => d.target_user === 'Tamae').length > 0 && (
+          <div className="flex flex-wrap justify-end gap-1.5 mt-2 w-full max-w-30">
+            {drops.filter(d => d.target_user === 'Tamae').map(renderMyDrop)}
+          </div>
+        )}
       </div>
     </div>
   );
 
   const texasCard = (
-    <div key="tx" className="p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full">
-      <div className="flex items-start gap-4">
-        <div className={`p-3.5 rounded-xl border shadow-inner mt-1 ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
-          {isTexasDay ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+    <div key="tx" className="p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full">
+      <div className="flex items-start gap-3 md:gap-4">
+        <div className={`p-3 rounded-xl border shadow-inner mt-1 shrink-0 ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+          {isTexasDay ? <Sun className="w-5 h-5 md:w-6 md:h-6" /> : <Moon className="w-5 h-5 md:w-6 md:h-6" />}
         </div>
         <div className="flex flex-col min-w-0">
-          <div className="flex items-center gap-2.5">
-            <h4 className="text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? 'テキサス (CDT)' : 'Texas (CDT)'}</h4>
-            <span className="text-xs font-mono text-zinc-400 flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <h4 className="text-[10px] md:text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold whitespace-nowrap">{lang === 'ja' ? 'テキサス (CDT)' : 'Texas (CDT)'}</h4>
+            <span className="text-[10px] md:text-xs font-mono text-zinc-400 flex items-center gap-1 whitespace-nowrap">
               <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(txWeather.tempC)}
             </span>
           </div>
-          <p className="text-lg font-semibold text-zinc-100 mt-1 font-mono whitespace-nowrap">
+          <p className="text-base md:text-lg font-semibold text-zinc-100 mt-1 font-mono whitespace-nowrap">
             {formatInTimeZone(now, 'America/Chicago', 'h:mm:ss a')}
           </p>
           <div className="mt-0.5">
-            <span className="text-sm text-zinc-300 font-mono block whitespace-nowrap">{texasFormattedDate}</span>
+            <span className="text-xs md:text-sm text-zinc-300 font-mono block whitespace-nowrap">{texasFormattedDate}</span>
             {displayTxHoliday && (
               <div className="mt-2.5">
                 <span className="w-max px-2 py-0.5 rounded text-[9px] font-mono tracking-widest uppercase bg-amber-950/30 text-amber-500/90 border border-amber-900/30">
@@ -361,16 +355,21 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
           </div>
         </div>
       </div>
-      <div className="flex flex-col items-end gap-2 shrink-0">
+      <div className="flex flex-col items-end gap-1.5 shrink-0 ml-2">
         <div className="flex items-center gap-2">
-          {renderDropAction(currentUser === 'Michael')}
-          <span className="text-xs font-mono px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
+          {currentUser !== 'Michael' && renderDropMenu()}
+          <span className="text-[10px] md:text-xs font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
             {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
           </span>
         </div>
-        <span className="text-xs text-zinc-400 flex items-center gap-1.5 mt-1.5">
+        <span className="text-[10px] md:text-xs text-zinc-400 flex items-center gap-1.5 mt-0.5">
           <txWeatherDetails.Icon className="w-3.5 h-3.5" /> {txWeatherDetails.text}
         </span>
+        {currentUser === 'Michael' && drops.filter(d => d.target_user === 'Michael').length > 0 && (
+          <div className="flex flex-wrap justify-end gap-1.5 mt-2 w-full max-w-30">
+            {drops.filter(d => d.target_user === 'Michael').map(renderMyDrop)}
+          </div>
+        )}
       </div>
     </div>
   );
