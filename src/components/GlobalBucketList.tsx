@@ -190,10 +190,7 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
   };
 
   const toggleExpand = (item: Destination) => {
-    const isShared = item.interested_users.length > 1;
-    if (isShared) {
-      setExpandedId(expandedId === item.id ? null : item.id);
-    }
+    setExpandedId(expandedId === item.id ? null : item.id);
   };
 
   const toggleIdeaExpand = (ideaId: string) => {
@@ -262,8 +259,8 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                   <div 
                     key={item.id} 
                     onClick={() => toggleExpand(item)}
-                    className={`relative rounded-xl border transition-all duration-700 overflow-hidden flex flex-col ${isShared ? 'cursor-pointer' : ''}
-                      ${isExpanded ? 'bg-amber-950/10 border-amber-900/30' :
+                    className={`relative rounded-xl border transition-all duration-700 overflow-hidden flex flex-col cursor-pointer
+                      ${isExpanded ? (isShared ? 'bg-amber-950/10 border-amber-900/30' : 'bg-zinc-900/40 border-zinc-700/60') :
                         isExperienced ? 'bg-zinc-950/80 border-zinc-900 opacity-60' : 
                         isShared ? 'bg-amber-950/20 border-amber-900/50 hover:border-amber-700/50 shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 
                         'bg-zinc-900/60 border-zinc-800 hover:border-zinc-700'}
@@ -312,11 +309,9 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                           </span>
                         )}
 
-                        {isShared && (
-                          <div className="text-zinc-500 ml-1">
-                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                          </div>
-                        )}
+                        <div className="text-zinc-500 ml-1">
+                          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </div>
 
                         {/* Mutual Spark Animation Overlay */}
                         {burstingIds.includes(item.id) && (
@@ -345,9 +340,9 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                     </div>
 
                     {/* Expandable Itinerary/Ideas Body */}
-                    {isExpanded && isShared && (
+                    {isExpanded && (
                       <div className="p-4 pt-0 border-t border-zinc-800/50 mt-2 bg-zinc-950/30" onClick={(e) => e.stopPropagation()}>
-                        <h5 className="text-[10px] font-mono text-amber-500 mb-3 mt-4 uppercase tracking-widest flex items-center gap-2">
+                        <h5 className={`text-[10px] font-mono mb-3 mt-4 uppercase tracking-widest flex items-center gap-2 ${isShared ? 'text-amber-500' : 'text-zinc-500'}`}>
                           <MapPin className="w-3.5 h-3.5" /> 
                           {lang === 'ja' ? 'アイデアと旅程' : 'Itinerary & Ideas'}
                         </h5>
@@ -417,7 +412,7 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                             placeholder={lang === 'ja' ? 'アイデアを追加...' : 'Add an idea...'} 
                             className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-amber-700/50" 
                           />
-                          <button type="submit" disabled={!newIdea.trim()} className="px-4 rounded-lg bg-amber-600/80 text-white hover:bg-amber-500 transition-all disabled:opacity-50 cursor-pointer">
+                          <button type="submit" disabled={!newIdea.trim()} className={`px-4 rounded-lg text-white transition-all disabled:opacity-50 cursor-pointer ${isShared ? 'bg-amber-600/80 hover:bg-amber-500' : 'bg-zinc-700 hover:bg-zinc-600'}`}>
                             <Plus className="w-4 h-4" />
                           </button>
                         </form>
