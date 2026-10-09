@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Send, Sparkles } from 'lucide-react';
+'use client';
+
+import { useState, useRef } from 'react';
+import { Heart, MessageCircle, Send, Sparkles, X } from 'lucide-react';
 
 export interface ThreadComment {
   id: string;
@@ -9,7 +11,7 @@ export interface ThreadComment {
 }
 
 interface ReactionThreadProps {
-  currentUser: 'Michael' | 'Tamae'; // Kept in interface so parent components don't throw TypeScript errors
+  currentUser: 'Michael' | 'Tamae';
   heartedBy: string[];
   comments: ThreadComment[];
   onToggleHeart: () => void;
@@ -22,38 +24,24 @@ const AVATARS = {
 };
 
 export default function ReactionThread({ heartedBy, comments, onToggleHeart, onAddComment }: ReactionThreadProps) {
-  const [isReplying, setIsReplying] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
 
   const bothHearted = heartedBy.length >= 2;
   const anyoneHearted = heartedBy.length > 0;
-
-  // Auto-close the reply input when clicking outside of it
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (formRef.current && !formRef.current.contains(event.target as Node)) {
-        setIsReplying(false);
-      }
-    };
-
-    if (isReplying) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [isReplying]);
+  const hasComments = comments.length > 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyContent.trim()) return;
     onAddComment(replyContent);
     setReplyContent('');
-    setIsReplying(false);
+  };
+
+  const handleClose = () => {
+    setIsExpanded(false);
+    setReplyContent('');
   };
 
   return (
@@ -77,17 +65,21 @@ export default function ReactionThread({ heartedBy, comments, onToggleHeart, onA
         </button>
         
         <button 
-          onClick={() => setIsReplying(!isReplying)}
-          className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-300 transition-colors cursor-pointer"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer ${
+            hasComments && !isExpanded 
+              ? 'text-amber-500 hover:text-amber-400' 
+              : 'text-stone-500 hover:text-stone-300'
+          }`}
         >
           <MessageCircle className="w-3.5 h-3.5" />
-          {comments.length > 0 && <span className="font-mono text-[10px]">{comments.length}</span>}
+          {hasComments && <span className="font-mono text-[10px]">{comments.length}</span>}
         </button>
       </div>
 
-      {/* Comments Thread */}
-      {(comments.length > 0 || isReplying) && (
-        <div className="ml-1 pl-4 border-l-2 border-zinc-800/50 flex flex-col gap-3 mt-4">
+      {/* Comments Thread (Hidden by default, expands on click) */}
+      {isExpanded && (
+        <div className="ml-1 pl-4 border-l-2 border-zinc-800/50 flex flex-col gap-3 mt-4 animate-in fade-in duration-300">
           {comments.map((comment) => (
             <div key={comment.id} className="flex items-start gap-2.5">
               <div className="w-5 h-5 rounded-full overflow-hidden border border-stone-500/20 bg-zinc-950 shrink-0 mt-0.5">
@@ -109,21 +101,29 @@ export default function ReactionThread({ heartedBy, comments, onToggleHeart, onA
             </div>
           ))}
 
-          {isReplying && (
-            <form ref={formRef} onSubmit={handleSubmit} className="flex items-center gap-2 mt-1 animate-in fade-in duration-300">
+          <form ref={formRef} onSubmit={handleSubmit} className="flex items-center gap-2 mt-1">
+            <div className="relative flex-1">
               <input
                 type="text"
                 autoFocus
-                placeholder="Add a thought..."
+                placeholder={hasComments ? "Add a reply..." : "Add a thought..."}
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
-                className="flex-1 p-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-stone-200 focus:outline-none focus:border-stone-500"
+                className="w-full p-2 pr-8 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-stone-200 focus:outline-none focus:border-amber-700/50"
               />
-              <button type="submit" disabled={!replyContent.trim()} className="p-2 rounded-lg bg-stone-200 text-zinc-950 hover:bg-white transition-all disabled:opacity-50 disabled:hover:bg-stone-200 cursor-pointer">
-                <Send className="w-3.5 h-3.5" />
+              <button 
+                type="button" 
+                onClick={handleClose}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-500 hover:text-red-500 transition-colors cursor-pointer"
+                aria-label="Close thread"
+              >
+                <X className="w-3.5 h-3.5" />
               </button>
-            </form>
-          )}
+            </div>
+            <button type="submit" disabled={!replyContent.trim()} className="p-2 rounded-lg bg-stone-200 text-zinc-950 hover:bg-white transition-all disabled:opacity-50 disabled:hover:bg-stone-200 cursor-pointer">
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </form>
         </div>
       )}
     </div>
