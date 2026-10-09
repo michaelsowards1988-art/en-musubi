@@ -37,7 +37,7 @@ export default function WorldMap({ destinations, lang }: WorldMapProps) {
 
   if (plottableDestinations.length === 0) {
     return (
-      <div className="w-full aspect-video md:aspect-[2/1] rounded-xl bg-zinc-950/50 border border-zinc-800 flex items-center justify-center text-xs font-mono text-zinc-600 mt-6">
+      <div className="w-full aspect-video md:aspect-2/1 rounded-xl bg-zinc-950/50 border border-zinc-800 flex items-center justify-center text-xs font-mono text-zinc-600 mt-6">
         {lang === 'ja' ? 'マップデータがありません...' : 'Awaiting map data...'}
       </div>
     );
@@ -61,13 +61,13 @@ export default function WorldMap({ destinations, lang }: WorldMapProps) {
     <div className="mt-6 flex flex-col gap-3">
       
       {/* 100% Clean Map Container */}
-      <div className="w-full aspect-video md:aspect-[2/1] rounded-xl bg-zinc-950 border border-zinc-800 relative overflow-hidden shadow-inner group">
+      <div className="w-full aspect-video md:aspect-2/1 rounded-xl bg-zinc-950 border border-zinc-800 relative overflow-hidden shadow-inner group">
         
         {/* Static High-Tech Radar/Coordinate Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#27272a_1px,transparent_1px),linear-gradient(to_bottom,#27272a_1px,transparent_1px)] bg-size-[5%_10%] opacity-30 pointer-events-none z-0"></div>
         
         {/* Map Wrapper with Fade-In */}
-        <div className={`absolute inset-0 z-10 transition-opacity duration-1000 ease-in-out [&>div]:!bg-zinc-950 [&_.pigeon-attribution]:hidden ${mapReady ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`absolute inset-0 z-10 transition-opacity duration-1000 ease-in-out [&>div]:bg-zinc-950! [&_.pigeon-attribution]:hidden ${mapReady ? 'opacity-100' : 'opacity-0'}`}>
           {mapReady && (
             <Map 
               provider={cartoDarkProvider} 
