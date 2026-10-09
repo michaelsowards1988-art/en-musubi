@@ -60,10 +60,9 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
   const [burstingIds, setBurstingIds] = useState<string[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
-  // Track which specific ideas have their comment threads expanded (default is collapsed)
   const [expandedIdeaIds, setExpandedIdeaIds] = useState<string[]>([]);
-  const [replyingToIdeaId, setReplyingToIdeaId] = useState<string | null>(null);
-  const [ideaReplyContent, setIdeaReplyContent] = useState('');
+  // Use a record to track reply input for each specific idea independently
+  const [replyContents, setReplyContents] = useState<Record<string, string>>({});
   const [newIdea, setNewIdea] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -438,17 +437,16 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                                           <button 
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                              setReplyingToIdeaId(replyingToIdeaId === idea.id ? null : idea.id);
-                                              if (!isIdeaExpanded) toggleIdeaExpand(idea.id);
+                                              toggleIdeaExpand(idea.id);
                                             }}
-                                            className={`flex items-center gap-1 transition-colors cursor-pointer ${hasComments ? 'text-amber-500 hover:text-amber-400' : 'text-stone-500 hover:text-stone-300'}`}
+                                            className={`flex items-center gap-1 transition-colors cursor-pointer ${hasComments && !isIdeaExpanded ? 'text-amber-500 hover:text-amber-400' : 'text-stone-500 hover:text-stone-300'}`}
                                           >
                                             <MessageCircle className="w-3.5 h-3.5" />
                                             {hasComments && <span className="text-[9px] font-mono">{idea.comments!.length}</span>}
                                           </button>
                                           
                                           {hasComments && (
-                                            <div className={`ml-1 ${hasComments ? 'text-amber-500' : 'text-stone-500'}`}>
+                                            <div className={`ml-1 ${hasComments && !isIdeaExpanded ? 'text-amber-500' : 'text-stone-500'}`}>
                                               {isIdeaExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                             </div>
                                           )}
@@ -458,7 +456,7 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                                     </div>
                                   </div>
 
-                                  {(isIdeaExpanded || replyingToIdeaId === idea.id) && (
+                                  {isIdeaExpanded && (
                                     <div className="px-3 pb-3 bg-zinc-900/20 cursor-default" onClick={(e) => e.stopPropagation()}>
                                       <div className="ml-7 pl-3 border-l-2 border-zinc-800/50 flex flex-col gap-2.5 pt-2">
                                         {idea.comments?.map(comment => (
@@ -476,31 +474,28 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                                           </div>
                                         ))}
 
-                                        {replyingToIdeaId === idea.id && (
-                                          <form 
-                                            onSubmit={(e) => { 
-                                              e.preventDefault(); 
-                                              if (ideaReplyContent.trim()) {
-                                                postIdeaReply(ideaReplyContent, item.id, idea.id); 
-                                                setIdeaReplyContent(''); 
-                                                setReplyingToIdeaId(null);
-                                              }
-                                            }} 
-                                            className="flex items-center gap-2 mt-1 animate-in fade-in"
-                                          >
-                                            <input
-                                              type="text"
-                                              autoFocus
-                                              placeholder="Add a reply..."
-                                              value={ideaReplyContent}
-                                              onChange={(e) => setIdeaReplyContent(e.target.value)}
-                                              className="flex-1 p-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-stone-200 focus:outline-none focus:border-red-700/50"
-                                            />
-                                            <button type="submit" disabled={!ideaReplyContent.trim()} className="p-2 rounded-lg bg-red-600/80 text-white hover:bg-red-500 transition-all disabled:opacity-50 cursor-pointer">
-                                              <Plus className="w-3.5 h-3.5" />
-                                            </button>
-                                          </form>
-                                        )}
+                                        <form 
+                                          onSubmit={(e) => { 
+                                            e.preventDefault(); 
+                                            const content = replyContents[idea.id];
+                                            if (content?.trim()) {
+                                              postIdeaReply(content, item.id, idea.id); 
+                                              setReplyContents(prev => ({ ...prev, [idea.id]: '' }));
+                                            }
+                                          }} 
+                                          className="flex items-center gap-2 mt-1 animate-in fade-in"
+                                        >
+                                          <input
+                                            type="text"
+                                            placeholder={hasComments ? "Add a reply..." : "Add a thought..."}
+                                            value={replyContents[idea.id] || ''}
+                                            onChange={(e) => setReplyContents(prev => ({ ...prev, [idea.id]: e.target.value }))}
+                                            className="flex-1 p-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-stone-200 focus:outline-none focus:border-red-700/50"
+                                          />
+                                          <button type="submit" disabled={!replyContents[idea.id]?.trim()} className="p-2 rounded-lg bg-red-600/80 text-white hover:bg-red-500 transition-all disabled:opacity-50 cursor-pointer">
+                                            <Plus className="w-3.5 h-3.5" />
+                                          </button>
+                                        </form>
                                       </div>
                                     </div>
                                   )}
