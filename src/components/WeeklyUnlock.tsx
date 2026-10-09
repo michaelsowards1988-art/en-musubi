@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Lock, Unlock, Sparkles, Loader2, Archive, ChevronDown, ChevronUp, Plus, Clock } from 'lucide-react';
+import { Lock, Unlock, Sparkles, Loader2, Archive, ChevronDown, ChevronUp, Plus, } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import ReactionThread, { ThreadComment } from './ReactionThread';
 
@@ -13,7 +13,7 @@ interface Prompt {
   tamae_answer: string | null;
   is_active: boolean;
   created_at: string;
-  completed_at: string | null; // NEW: Tracks when the second person answered
+  completed_at: string | null;
   michael_hearted_by: string[] | null;
   michael_comments: ThreadComment[] | null;
   tamae_hearted_by: string[] | null;
@@ -39,11 +39,11 @@ function PromptContent({ prompt: initialPrompt, lang, currentUser }: { prompt: P
 
   // Time capsule logic
   const bothAnswered = !!(prompt.michael_answer && prompt.tamae_answer);
-  const isOlderThan24Hours = bothAnswered && prompt.completed_at 
-    ? (new Date().getTime() - new Date(prompt.completed_at).getTime() > 24 * 60 * 60 * 1000) 
+  const isOlderThan86Hours = bothAnswered && prompt.completed_at 
+    ? (new Date().getTime() - new Date(prompt.completed_at).getTime() > 86 * 60 * 60 * 1000) 
     : false;
   
-  const [isRevealed, setIsRevealed] = useState(!isOlderThan24Hours);
+  const [isRevealed, setIsRevealed] = useState(!isOlderThan86Hours);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,9 +93,9 @@ function PromptContent({ prompt: initialPrompt, lang, currentUser }: { prompt: P
   const partnerAnsweredTextJa = currentUser === 'Michael' ? '彼女はすでに答えています！' : '彼はすでに答えています！';
 
   return (
-    <div className="mt-6">
+    <div className="mt-4">
       {!myCurrentAnswer ? (
-        <form onSubmit={handleSubmit} className="relative">
+        <form onSubmit={handleSubmit} className="relative mt-2">
           <textarea value={myAnswer} onChange={(e) => setMyAnswer(e.target.value)} placeholder={lang === 'ja' ? 'あなたの答え...' : 'Your answer...'} className="w-full p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 text-stone-200 focus:outline-none focus:border-amber-700/50 resize-none min-h-25" required />
           <div className="flex justify-between items-center mt-3">
             <span className="text-xs text-stone-500 font-mono">
@@ -110,17 +110,15 @@ function PromptContent({ prompt: initialPrompt, lang, currentUser }: { prompt: P
       ) : bothAnswered && !isRevealed ? (
         <button 
           onClick={() => setIsRevealed(true)}
-          className="w-full p-8 mt-2 rounded-xl border border-amber-900/30 bg-zinc-900/40 hover:bg-zinc-900/60 hover:border-amber-700/50 transition-all flex flex-col items-center justify-center gap-3 group cursor-pointer animate-in fade-in"
+          className="w-full py-3.5 mt-4 rounded-xl border border-amber-900/30 bg-amber-950/20 hover:bg-amber-950/40 hover:border-amber-700/50 transition-all flex items-center justify-center gap-2.5 group cursor-pointer animate-in fade-in"
         >
-          <div className="p-3 rounded-full bg-amber-950/30 text-amber-600/70 group-hover:text-amber-500 group-hover:scale-110 transition-all">
-            <Clock className="w-6 h-6" />
-          </div>
-          <span className="text-sm font-mono text-stone-400 group-hover:text-stone-300 transition-colors">
+          <Lock className="w-4 h-4 text-amber-600/70 group-hover:text-amber-500 transition-colors" />
+          <span className="text-xs font-mono text-stone-400 group-hover:text-stone-300 transition-colors">
             {lang === 'ja' ? '回答が確定しました。タップして開く' : 'Time capsule sealed. Tap to reveal.'}
           </span>
         </button>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in zoom-in-95 duration-300">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 animate-in fade-in zoom-in-95 duration-300">
           <div className="p-5 rounded-xl bg-zinc-900/40 border border-zinc-800 flex flex-col h-full">
             <div className="flex-1">
               <span className="text-[10px] font-mono text-stone-500 tracking-widest uppercase mb-3 block">{currentUser}</span>
@@ -222,7 +220,7 @@ export default function WeeklyUnlock({ lang, currentUser }: WeeklyUnlockProps) {
       <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-amber-600 via-stone-500 to-amber-900"></div>
       
       <div className="p-6 md:p-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-amber-950/30 border border-amber-900/50 text-amber-500 shadow-inner">
               {view === 'archive' ? <Archive className="w-4 h-4" /> : (activePrompt && activePrompt.michael_answer && activePrompt.tamae_answer ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />)}
@@ -252,7 +250,7 @@ export default function WeeklyUnlock({ lang, currentUser }: WeeklyUnlockProps) {
         </div>
 
         {isAddingPrompt && (
-          <form onSubmit={handleAddPrompt} className="mb-8 p-5 rounded-xl bg-zinc-900/60 border border-amber-900/40 flex flex-col gap-3 animate-in fade-in">
+          <form onSubmit={handleAddPrompt} className="mb-6 p-5 rounded-xl bg-zinc-900/60 border border-amber-900/40 flex flex-col gap-3 animate-in fade-in">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-4 h-4 text-amber-500" />
               <span className="text-xs font-mono uppercase tracking-widest text-amber-500">Deploy New Prompt</span>
