@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Map, Overlay } from 'pigeon-maps';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, RotateCcw } from 'lucide-react';
 
 interface Destination {
   id: string;
@@ -18,11 +18,14 @@ interface WorldMapProps {
   lang: 'en' | 'ja';
 }
 
+// The perfect balance point to show both Texas and Japan on a narrow mobile screen
+const DEFAULT_CENTER: [number, number] = [35, 15];
+const DEFAULT_ZOOM = 0.8;
+
 export default function WorldMap({ destinations, lang }: WorldMapProps) {
   const [mapReady, setMapReady] = useState(false);
-  // Dropped initial zoom to 1 so the globe fits better on narrow mobile screens
-  const [zoom, setZoom] = useState(1);
-  const [center, setCenter] = useState<[number, number]>([35, 0]);
+  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
+  const [center, setCenter] = useState<[number, number]>(DEFAULT_CENTER);
 
   // Wait for the CollapsibleSection animation to finish before rendering the map
   useEffect(() => {
@@ -34,7 +37,7 @@ export default function WorldMap({ destinations, lang }: WorldMapProps) {
 
   if (plottableDestinations.length === 0) {
     return (
-      <div className="w-full aspect-video md:aspect-2/1 rounded-xl bg-zinc-950/50 border border-zinc-800 flex items-center justify-center text-xs font-mono text-zinc-600 mt-6">
+      <div className="w-full aspect-video md:aspect-[2/1] rounded-xl bg-zinc-950/50 border border-zinc-800 flex items-center justify-center text-xs font-mono text-zinc-600 mt-6">
         {lang === 'ja' ? 'マップデータがありません...' : 'Awaiting map data...'}
       </div>
     );
@@ -47,20 +50,24 @@ export default function WorldMap({ destinations, lang }: WorldMapProps) {
   };
 
   const handleZoomIn = () => setZoom(Math.min(zoom + 1, 12));
-  const handleZoomOut = () => setZoom(Math.max(zoom - 1, 1));
+  const handleZoomOut = () => setZoom(Math.max(zoom - 1, 0.5));
+  
+  const handleReset = () => {
+    setCenter(DEFAULT_CENTER);
+    setZoom(DEFAULT_ZOOM);
+  };
 
   return (
     <div className="mt-6 flex flex-col gap-3">
       
       {/* 100% Clean Map Container */}
-      {/* Taller on mobile (aspect-video) and wider on desktop (aspect-2/1) */}
-      <div className="w-full aspect-video md:aspect-2/1 rounded-xl bg-zinc-950 border border-zinc-800 relative overflow-hidden shadow-inner group">
+      <div className="w-full aspect-video md:aspect-[2/1] rounded-xl bg-zinc-950 border border-zinc-800 relative overflow-hidden shadow-inner group">
         
         {/* Static High-Tech Radar/Coordinate Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#27272a_1px,transparent_1px),linear-gradient(to_bottom,#27272a_1px,transparent_1px)] bg-size-[5%_10%] opacity-30 pointer-events-none z-0"></div>
         
         {/* Map Wrapper with Fade-In */}
-        <div className={`absolute inset-0 z-10 transition-opacity duration-1000 ease-in-out [&>div]:bg-zinc-950! [&_.pigeon-attribution]:hidden ${mapReady ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`absolute inset-0 z-10 transition-opacity duration-1000 ease-in-out [&>div]:!bg-zinc-950 [&_.pigeon-attribution]:hidden ${mapReady ? 'opacity-100' : 'opacity-0'}`}>
           {mapReady && (
             <Map 
               provider={cartoDarkProvider} 
@@ -70,7 +77,7 @@ export default function WorldMap({ destinations, lang }: WorldMapProps) {
                 setCenter(center);
                 setZoom(zoom);
               }}
-              minZoom={1}
+              minZoom={0.5} // Lowered minimum zoom to allow wide views on mobile
               maxZoom={12}
               mouseEvents={true}
               touchEvents={true}
@@ -116,11 +123,11 @@ export default function WorldMap({ destinations, lang }: WorldMapProps) {
         </div>
       </div>
 
-      {/* External Control Bar (Legend + Zoom) - Moved entirely off the map */}
-      <div className={`flex items-center justify-between px-1 transition-opacity duration-1000 ${mapReady ? 'opacity-100' : 'opacity-0'}`}>
+      {/* External Control Bar (Legend + Zoom) */}
+      <div className={`flex items-start md:items-center justify-between px-1 transition-opacity duration-1000 gap-2 ${mapReady ? 'opacity-100' : 'opacity-0'}`}>
         
         {/* Horizontal Legend */}
-        <div className="flex items-center gap-3 md:gap-4 flex-wrap">
+        <div className="flex items-center gap-3 md:gap-4 flex-wrap mt-1 md:mt-0">
           <div className="flex items-center gap-1.5 text-[9px] font-mono text-stone-400 uppercase tracking-wider">
             <div className="w-1.5 h-1.5 rounded-full bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.8)]"></div>
             Tamae
@@ -135,23 +142,33 @@ export default function WorldMap({ destinations, lang }: WorldMapProps) {
           </div>
         </div>
 
-        {/* Small Horizontal Zoom Controls */}
-        <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg shadow-sm shrink-0 overflow-hidden">
+        {/* Zoom Controls & Reset Button */}
+        <div className="flex items-center gap-2 shrink-0">
           <button 
-            onClick={handleZoomOut}
-            className="px-2.5 py-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors active:bg-zinc-700"
-            aria-label="Zoom out"
+            onClick={handleReset}
+            className="flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-mono text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-lg transition-colors active:bg-zinc-700 uppercase tracking-widest border border-transparent hover:border-zinc-800"
           >
-            <Minus className="w-3.5 h-3.5" />
+            <RotateCcw className="w-3 h-3" />
+            <span className="hidden sm:inline">Reset</span>
           </button>
-          <div className="w-px h-3.5 bg-zinc-800"></div>
-          <button 
-            onClick={handleZoomIn}
-            className="px-2.5 py-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors active:bg-zinc-700"
-            aria-label="Zoom in"
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
+
+          <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg shadow-sm overflow-hidden">
+            <button 
+              onClick={handleZoomOut}
+              className="px-2.5 py-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors active:bg-zinc-700"
+              aria-label="Zoom out"
+            >
+              <Minus className="w-3.5 h-3.5" />
+            </button>
+            <div className="w-px h-3.5 bg-zinc-800"></div>
+            <button 
+              onClick={handleZoomIn}
+              className="px-2.5 py-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors active:bg-zinc-700"
+              aria-label="Zoom in"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
         
       </div>
