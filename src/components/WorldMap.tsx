@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Map, Overlay } from 'pigeon-maps';
+import { Plus, Minus } from 'lucide-react';
 
 interface Destination {
   id: string;
@@ -19,6 +20,8 @@ interface WorldMapProps {
 
 export default function WorldMap({ destinations, lang }: WorldMapProps) {
   const [mapReady, setMapReady] = useState(false);
+  const [zoom, setZoom] = useState(1.5);
+  const [center, setCenter] = useState<[number, number]>([35, 0]);
 
   // Wait for the CollapsibleSection animation to finish before rendering the map
   // This ensures Pigeon Maps measures the fully expanded container for perfect centering.
@@ -44,6 +47,18 @@ export default function WorldMap({ destinations, lang }: WorldMapProps) {
     return `https://basemaps.cartocdn.com/rastertiles/dark_nolabels/${z}/${x}/${y}${dpr && dpr >= 2 ? '@2x' : ''}.png?key=${API_KEY}`;
   };
 
+  const handleZoomIn = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setZoom(Math.min(zoom + 1, 12));
+  };
+
+  const handleZoomOut = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setZoom(Math.max(zoom - 1, 1));
+  };
+
   return (
     <div className="w-full aspect-2/1 rounded-xl bg-zinc-950 border border-zinc-800 relative overflow-hidden mt-6 shadow-inner group">
       
@@ -55,8 +70,12 @@ export default function WorldMap({ destinations, lang }: WorldMapProps) {
         {mapReady && (
           <Map 
             provider={cartoDarkProvider} 
-            defaultCenter={[35, 0]} // Dead center of the standard world map (Prime Meridian)
-            defaultZoom={1.5} 
+            center={center}
+            zoom={zoom}
+            onBoundsChanged={({ center, zoom }) => {
+              setCenter(center);
+              setZoom(zoom);
+            }}
             minZoom={1}
             maxZoom={12}
             mouseEvents={true}
@@ -73,8 +92,8 @@ export default function WorldMap({ destinations, lang }: WorldMapProps) {
               let glowColor = 'shadow-zinc-500/50';
               
               if (isShared) {
-                pinColor = 'bg-amber-400';
-                glowColor = 'shadow-[0_0_12px_rgba(251,191,36,0.8)]';
+                pinColor = 'bg-red-500';
+                glowColor = 'shadow-[0_0_12px_rgba(239,68,68,0.8)]';
               } else if (isMichaelOnly) {
                 pinColor = 'bg-blue-400';
                 glowColor = 'shadow-[0_0_12px_rgba(96,165,250,0.8)]';
@@ -116,10 +135,30 @@ export default function WorldMap({ destinations, lang }: WorldMapProps) {
           Michael
         </div>
         <div className="flex items-center gap-2 text-[9px] font-mono text-stone-400 uppercase tracking-wider">
-          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></div>
+          <div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></div>
           {lang === 'ja' ? '共有の夢' : 'Shared Dream'}
         </div>
       </div>
+
+      {/* Touch-Friendly Zoom Controls */}
+      <div className={`absolute bottom-3 right-3 flex flex-col bg-zinc-950/80 backdrop-blur-md rounded-lg border border-zinc-800/80 p-1 z-20 transition-opacity duration-1000 shadow-xl ${mapReady ? 'opacity-100' : 'opacity-0'}`}>
+        <button 
+          onClick={handleZoomIn}
+          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded transition-colors active:bg-zinc-700"
+          aria-label="Zoom in"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+        <div className="w-full h-px bg-zinc-800 my-0.5"></div>
+        <button 
+          onClick={handleZoomOut}
+          className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded transition-colors active:bg-zinc-700"
+          aria-label="Zoom out"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+      </div>
+
     </div>
   );
 }

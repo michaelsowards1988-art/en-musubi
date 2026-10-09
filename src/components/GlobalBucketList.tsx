@@ -48,7 +48,6 @@ const AVATARS = {
   Texas: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png'
 };
 
-// Helper functions defined OUTSIDE the component to safely bypass the react-hooks/purity linter
 const generateId = () => Date.now().toString();
 const getNowIso = () => new Date().toISOString();
 
@@ -66,13 +65,11 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
   const [ideaReplyContent, setIdeaReplyContent] = useState('');
   const [newIdea, setNewIdea] = useState('');
 
-  // Autocomplete State
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<{lat: number, lng: number, name: string} | null>(null);
 
-  // Live Database Sync
   useEffect(() => {
     let isMounted = true;
     async function loadData() {
@@ -94,7 +91,6 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
     return () => { isMounted = false; supabase.removeChannel(channel); };
   }, []);
 
-  // API Autocomplete Hook
   useEffect(() => {
     if (searchQuery.length < 2 || selectedPlace?.name === searchQuery) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -238,7 +234,6 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
         </div>
       ) : (
         <div className="relative">
-          {/* Subtle Map Underlay for flavor */}
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/globe.svg" alt="Globe" className="w-[150%] h-auto max-w-none animate-[spin_240s_linear_infinite]" />
@@ -267,7 +262,6 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                   autoFocus 
                 />
                 
-                {/* Dropdown Results */}
                 {searchResults.length > 0 && !selectedPlace && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-950 border border-zinc-800 rounded-lg shadow-xl overflow-hidden z-50">
                     {searchResults.map((res, i) => {
@@ -312,43 +306,40 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                   <div 
                     key={item.id} 
                     className={`relative rounded-xl border transition-all duration-700 overflow-hidden flex flex-col cursor-pointer
-                      ${isExpanded ? (isShared ? 'bg-amber-950/10 border-amber-900/30' : 'bg-zinc-900/40 border-zinc-700/60') :
+                      ${isExpanded ? (isShared ? 'bg-red-950/10 border-red-900/30' : 'bg-zinc-900/40 border-zinc-700/60') :
                         isExperienced ? 'bg-zinc-950/80 border-zinc-900 opacity-60' : 
-                        isShared ? 'bg-amber-950/20 border-amber-900/50 hover:border-amber-700/50 shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 
+                        isShared ? 'bg-red-950/20 border-red-900/50 hover:border-red-700/50 shadow-[0_0_15px_rgba(239,68,68,0.1)]' : 
                         'bg-zinc-900/60 border-zinc-800 hover:border-zinc-700'}
                     `}
                   >
-                    {/* Header Row - Forced Single Line */}
                     <div onClick={() => toggleExpand(item)} className="p-4 flex items-center justify-between gap-3 w-full">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div onClick={(e) => toggleStatus(e, item.id, item.status)} className="cursor-pointer shrink-0">
                           {isExperienced ? (
                             <CheckCircle2 className="w-5 h-5 text-emerald-500 transition-transform hover:scale-110" />
                           ) : (
-                            <MapPin className={`w-5 h-5 transition-transform hover:scale-110 ${isShared ? 'text-amber-500' : 'text-zinc-500'}`} />
+                            <MapPin className={`w-5 h-5 transition-transform hover:scale-110 ${isShared ? 'text-red-500' : 'text-zinc-500'}`} />
                           )}
                         </div>
-                        <span className={`text-base font-medium transition-colors truncate ${isExperienced ? 'text-zinc-500 line-through' : isShared ? 'text-amber-100' : 'text-zinc-200'}`}>
+                        <span className={`text-base font-medium transition-colors truncate ${isExperienced ? 'text-zinc-500 line-through' : isShared ? 'text-red-100' : 'text-zinc-200'}`}>
                           {item.title}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0 relative">
-                        {/* Avatar Display */}
                         <div className="flex -space-x-2">
                           {item.interested_users.map(user => (
-                            <div key={user} className={`w-7 h-7 rounded-full border-2 overflow-hidden ${isShared ? 'border-amber-600' : 'border-zinc-700'}`}>
+                            <div key={user} className={`w-7 h-7 rounded-full border-2 overflow-hidden ${isShared ? 'border-red-600' : 'border-zinc-700'}`}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={AVATARS[user as keyof typeof AVATARS]} alt={user} className="w-full h-full object-cover" />
                             </div>
                           ))}
                         </div>
 
-                        {/* Action Button for Unshared Items */}
                         {!isShared && isPartnerOnly && !isExperienced && (
                           <button 
                             onClick={(e) => joinWish(e, item)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-amber-900/50 hover:text-amber-400 text-xs font-mono text-zinc-300 transition-all cursor-pointer border border-transparent hover:border-amber-700/50"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-red-900/50 hover:text-red-400 text-xs font-mono text-zinc-300 transition-all cursor-pointer border border-transparent hover:border-red-700/50"
                           >
                             <Heart className="w-3.5 h-3.5" />
                             <span className="hidden sm:inline">{lang === 'ja' ? '私も！' : 'Me too!'}</span>
@@ -365,10 +356,9 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </div>
 
-                        {/* Mutual Spark Animation Overlay */}
                         {burstingIds.includes(item.id) && (
                           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-50">
-                            <Sparkles className="w-6 h-6 text-amber-400 animate-ping absolute" />
+                            <Sparkles className="w-6 h-6 text-red-500 animate-ping absolute" />
                             {[...Array(12)].map((_, i) => {
                               const angle = (i * 30) * (Math.PI / 180);
                               const distance = 30 + Math.random() * 20;
@@ -377,7 +367,7 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                               return (
                                 <div
                                   key={i}
-                                  className="absolute w-1.5 h-1.5 bg-amber-400 rounded-full shadow-[0_0_8px_rgba(252,211,77,1)]"
+                                  className="absolute w-1.5 h-1.5 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,1)]"
                                   style={{
                                     animation: `bucketBurst 1s ease-out forwards`,
                                     '--tx': `${x}px`,
@@ -391,10 +381,9 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                       </div>
                     </div>
 
-                    {/* Expandable Itinerary/Ideas Body */}
                     {isExpanded && (
                       <div className="p-4 pt-0 border-t border-zinc-800/50 mt-2 bg-zinc-950/30 cursor-default" onClick={(e) => e.stopPropagation()}>
-                        <h5 className={`text-[10px] font-mono mb-3 mt-4 uppercase tracking-widest flex items-center gap-2 ${isShared ? 'text-amber-500' : 'text-zinc-500'}`}>
+                        <h5 className={`text-[10px] font-mono mb-3 mt-4 uppercase tracking-widest flex items-center gap-2 ${isShared ? 'text-red-500' : 'text-zinc-500'}`}>
                           <MapPin className="w-3.5 h-3.5" /> 
                           {lang === 'ja' ? 'アイデアと旅程' : 'Itinerary & Ideas'}
                         </h5>
@@ -413,7 +402,6 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
 
                               return (
                                 <div key={idea.id} className="bg-zinc-900/50 rounded-lg border border-zinc-800/40 overflow-hidden transition-all">
-                                  {/* Whole header row is clickable to expand/collapse */}
                                   <div 
                                     className="flex items-start gap-2.5 p-3 cursor-pointer hover:bg-zinc-800/30 transition-colors"
                                     onClick={() => toggleIdeaCollapse(idea.id)}
@@ -429,7 +417,6 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                                           <span className="text-[9px] font-mono text-stone-600 hidden sm:inline">{new Date(idea.created_at).toLocaleDateString()}</span>
                                         </div>
                                         
-                                        {/* Action Bar integrated into Header */}
                                         <div className="flex items-center gap-3 shrink-0">
                                           <button 
                                             onClick={(e) => { e.stopPropagation(); toggleIdeaHeart(item.id, idea.id); }} 
@@ -470,7 +457,6 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                                     </div>
                                   </div>
 
-                                  {/* Comments Thread (Expanded by default) */}
                                   {(!isIdeaCollapsed && (hasComments || replyingToIdeaId === idea.id)) && (
                                     <div className="px-3 pb-3 bg-zinc-900/20 cursor-default" onClick={(e) => e.stopPropagation()}>
                                       <div className="ml-7 pl-3 border-l-2 border-zinc-800/50 flex flex-col gap-2.5 pt-2">
@@ -507,9 +493,9 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                                               placeholder="Add a reply..."
                                               value={ideaReplyContent}
                                               onChange={(e) => setIdeaReplyContent(e.target.value)}
-                                              className="flex-1 p-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-stone-200 focus:outline-none focus:border-amber-700/50"
+                                              className="flex-1 p-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-stone-200 focus:outline-none focus:border-red-700/50"
                                             />
-                                            <button type="submit" disabled={!ideaReplyContent.trim()} className="p-2 rounded-lg bg-amber-600/80 text-white hover:bg-amber-500 transition-all disabled:opacity-50 cursor-pointer">
+                                            <button type="submit" disabled={!ideaReplyContent.trim()} className="p-2 rounded-lg bg-red-600/80 text-white hover:bg-red-500 transition-all disabled:opacity-50 cursor-pointer">
                                               <Plus className="w-3.5 h-3.5" />
                                             </button>
                                           </form>
@@ -529,9 +515,9 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                             value={newIdea} 
                             onChange={e => setNewIdea(e.target.value)} 
                             placeholder={lang === 'ja' ? 'アイデアを追加...' : 'Add an idea...'} 
-                            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-amber-700/50" 
+                            className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-red-700/50" 
                           />
-                          <button type="submit" disabled={!newIdea.trim()} className={`px-4 rounded-lg text-white transition-all disabled:opacity-50 cursor-pointer ${isShared ? 'bg-amber-600/80 hover:bg-amber-500' : 'bg-zinc-700 hover:bg-zinc-600'}`}>
+                          <button type="submit" disabled={!newIdea.trim()} className={`px-4 rounded-lg text-white transition-all disabled:opacity-50 cursor-pointer ${isShared ? 'bg-red-600/80 hover:bg-red-500' : 'bg-zinc-700 hover:bg-zinc-600'}`}>
                             <Plus className="w-4 h-4" />
                           </button>
                         </form>
@@ -543,7 +529,6 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
             )}
           </div>
           
-          {/* Visual Global Map Plotting */}
           <WorldMap destinations={destinations} lang={lang} />
           
         </div>
