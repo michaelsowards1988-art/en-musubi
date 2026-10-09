@@ -53,7 +53,6 @@ const HOLIDAY_INFO: Record<string, { en: string, ja: string }> = {
   "Christmas Day": { en: "Celebrating the birth of Jesus Christ.", ja: "イエス・キリストの降誕を祝う日。" }
 };
 
-// Astronomical calculation of the current moon phase
 const getMoonPhase = (date: Date) => {
   const LUNAR_MONTH = 29.53058867;
   const knownNewMoon = new Date('2024-01-11T11:57:00Z').getTime();
@@ -79,12 +78,10 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   const [jpHolidays, setJpHolidays] = useState<Holiday[]>([]);
   const [txHolidays, setTxHolidays] = useState<Holiday[]>([]);
 
-  // Otsukaresama Drops State
   const [drops, setDrops] = useState<Drop[]>([]);
   const [showDropMenu, setShowDropMenu] = useState(false);
   const [burstingIds, setBurstingIds] = useState<string[]>([]);
   
-  // Cinematic Finale State
   const [otsukaresamaBurst, setOtsukaresamaBurst] = useState<number | null>(null);
   const wasBurstingRef = useRef(false);
 
@@ -93,15 +90,12 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
     return () => clearInterval(timer);
   }, []);
 
-  // Monitor the burst queue to trigger the final animation
   useEffect(() => {
     if (burstingIds.length > 0) {
       wasBurstingRef.current = true;
     } else if (burstingIds.length === 0 && wasBurstingRef.current) {
       wasBurstingRef.current = false;
-      // All sparkles have finished. Trigger the 3-second finale.
       setOtsukaresamaBurst(Date.now());
-      // Clean up the overlay after it finishes
       setTimeout(() => setOtsukaresamaBurst(null), 4000);
     }
   }, [burstingIds.length]);
@@ -172,7 +166,6 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
     
     setBurstingIds(prev => [...prev, id]);
     
-    // Smooth 1500ms handoff to cut out the awkward pause
     setTimeout(async () => {
       setDrops(prev => prev.filter(d => d.id !== id));
       setBurstingIds(prev => prev.filter(bId => bId !== id));
@@ -202,7 +195,7 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   };
 
   const renderDropMenu = () => (
-    <div className="relative mr-1">
+    <div className="relative mr-1 shrink-0">
       <button 
         onClick={() => setShowDropMenu(!showDropMenu)}
         className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all cursor-pointer ${showDropMenu ? 'bg-amber-900/50 border-amber-700/50 text-amber-500' : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}`}
@@ -211,7 +204,6 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
       </button>
       {showDropMenu && (
         <div className="absolute top-8 right-0 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-xl p-1.5 flex gap-1 shadow-xl z-20 animate-in fade-in zoom-in-95">
-          {/* THE PANCAKES HAVE ARRIVED */}
           {['🍵', '☕', '🥞', '♨️'].map(emoji => (
             <button 
               key={emoji}
@@ -227,11 +219,9 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   );
 
   const renderMyDrop = (drop: Drop) => (
-    // Width collapses gracefully over 700ms to pull the layout together
     <div key={drop.id} className={`relative flex items-center justify-center transition-[width] duration-700 ease-in-out overflow-visible ${burstingIds.includes(drop.id) ? 'w-0 pointer-events-none' : 'w-8 h-8'}`}>
       <button 
         onClick={() => handleConsumeDrop(drop.id)} 
-        // Emoji scales down slowly over 1000ms
         className={`text-xl transition-all cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] ${burstingIds.includes(drop.id) ? 'scale-0 opacity-0 duration-1000' : 'animate-[bounce_2s_infinite] hover:scale-125 duration-300'}`}
       >
         {drop.emoji}
@@ -249,7 +239,6 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
                 key={i}
                 className="absolute w-1.5 h-1.5 bg-amber-300 rounded-full shadow-[0_0_8px_rgba(252,211,77,1)]"
                 style={{
-                  // Sparkles drift smoothly outward over 1.5s
                   animation: `dropBurst 1.5s ease-out forwards`,
                   '--tx': `${x}px`,
                   '--ty': `${y}px`,
@@ -274,7 +263,6 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   const texasFormattedDate = formatInTimeZone(now, 'America/Chicago', formatStr, { locale });
   const japanFormattedDate = formatInTimeZone(now, 'Asia/Tokyo', formatStr, { locale });
 
-  // Holiday Matchers
   const jpDateStr = formatInTimeZone(now, 'Asia/Tokyo', 'yyyy-MM-dd');
   const txDateStr = formatInTimeZone(now, 'America/Chicago', 'yyyy-MM-dd');
   
@@ -284,7 +272,6 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   const displayJpHoliday = todayJpHoliday ? (lang === 'ja' ? todayJpHoliday.localName : todayJpHoliday.name) : null;
   const displayTxHoliday = todayTxHoliday ? (lang === 'ja' && todayTxHoliday.name === "New Year's Day" ? '元日' : todayTxHoliday.name) : null;
 
-  // Retrieve descriptions from dictionary, falling back gracefully if not found
   const jpDesc = todayJpHoliday ? HOLIDAY_INFO[todayJpHoliday.name]?.[lang] : null;
   const txDesc = todayTxHoliday ? HOLIDAY_INFO[todayTxHoliday.name]?.[lang] : null;
 
@@ -311,108 +298,118 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   };
 
   const japanCard = (
-    <div key="jp" className="relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full">
+    <div key="jp" className="relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full overflow-hidden">
       {renderFinalBurstOverlay('Tamae')}
-      <div className="flex items-start gap-3 md:gap-4 relative z-10 pointer-events-none">
-        <div className={`p-3 rounded-xl border shadow-inner mt-1 shrink-0 ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
-          {isJapanDay ? <Sun className="w-5 h-5 md:w-6 md:h-6" /> : <Moon className="w-5 h-5 md:w-6 md:h-6" />}
+      
+      <div className="flex items-start justify-between w-full relative z-10">
+        <div className="flex items-start gap-3 md:gap-4 pointer-events-none">
+          <div className={`p-3 rounded-xl border shadow-inner mt-1 shrink-0 ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+            {isJapanDay ? <Sun className="w-5 h-5 md:w-6 md:h-6" /> : <Moon className="w-5 h-5 md:w-6 md:h-6" />}
+          </div>
+          <div className="flex flex-col">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+              <h4 className="text-[10px] md:text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? '神奈川 (JST)' : 'Kanagawa (JST)'}</h4>
+              <span className="text-[10px] md:text-xs font-mono text-zinc-400 flex items-center gap-1 whitespace-nowrap">
+                <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(jpWeather.tempC)}
+              </span>
+            </div>
+            <p className="text-base md:text-lg font-semibold text-zinc-100 mt-1 font-mono whitespace-nowrap">
+              {formatInTimeZone(now, 'Asia/Tokyo', 'h:mm:ss a')}
+            </p>
+            <div className="mt-0.5">
+              <span className="text-xs md:text-sm text-zinc-300 font-mono block whitespace-nowrap">{japanFormattedDate}</span>
+              {displayJpHoliday && (
+                <div className="mt-2.5 pointer-events-auto">
+                  <span className="w-max px-2 py-0.5 rounded text-[9px] font-mono tracking-widest uppercase bg-amber-950/30 text-amber-500/90 border border-amber-900/30 block">
+                    ★ {displayJpHoliday}
+                  </span>
+                  {jpDesc && (
+                    <span className="block mt-1.5 text-[10px] font-mono text-stone-500 leading-snug pr-4">
+                      {jpDesc}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col min-w-0">
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            <h4 className="text-[10px] md:text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold whitespace-nowrap">{lang === 'ja' ? '神奈川 (JST)' : 'Kanagawa (JST)'}</h4>
-            <span className="text-[10px] md:text-xs font-mono text-zinc-400 flex items-center gap-1 whitespace-nowrap">
-              <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(jpWeather.tempC)}
+        
+        <div className="flex flex-col items-end gap-1.5 shrink-0 ml-4 relative z-10">
+          <div className="flex items-center justify-end gap-2 shrink-0">
+            {currentUser !== 'Tamae' && renderDropMenu()}
+            <span className="text-[10px] md:text-xs font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
+              {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
             </span>
           </div>
-          <p className="text-base md:text-lg font-semibold text-zinc-100 mt-1 font-mono whitespace-nowrap">
-            {formatInTimeZone(now, 'Asia/Tokyo', 'h:mm:ss a')}
-          </p>
-          <div className="mt-0.5">
-            <span className="text-xs md:text-sm text-zinc-300 font-mono block whitespace-nowrap">{japanFormattedDate}</span>
-            {displayJpHoliday && (
-              <div className="mt-2.5 pointer-events-auto">
-                <span className="w-max px-2 py-0.5 rounded text-[9px] font-mono tracking-widest uppercase bg-amber-950/30 text-amber-500/90 border border-amber-900/30">
-                  ★ {displayJpHoliday}
-                </span>
-                {jpDesc && (
-                  <span className="block mt-1.5 text-[10px] font-mono text-stone-500 leading-snug pr-4">
-                    {jpDesc}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col items-end gap-1.5 shrink-0 ml-2 relative z-10">
-        <div className="flex items-center gap-2">
-          {currentUser !== 'Tamae' && renderDropMenu()}
-          <span className="text-[10px] md:text-xs font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
-            {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+          <span className="text-[10px] md:text-xs text-zinc-400 flex items-center gap-1.5 mt-0.5 whitespace-nowrap shrink-0">
+            <jpWeatherDetails.Icon className="w-3.5 h-3.5 shrink-0" /> {jpWeatherDetails.text}
           </span>
         </div>
-        <span className="text-[10px] md:text-xs text-zinc-400 flex items-center gap-1.5 mt-0.5">
-          <jpWeatherDetails.Icon className="w-3.5 h-3.5" /> {jpWeatherDetails.text}
-        </span>
-        {currentUser === 'Tamae' && drops.filter(d => d.target_user === 'Tamae').length > 0 && (
-          <div className="flex flex-wrap justify-end gap-1.5 mt-2 w-full max-w-30">
-            {drops.filter(d => d.target_user === 'Tamae').map(renderMyDrop)}
-          </div>
-        )}
       </div>
+
+      {currentUser === 'Tamae' && drops.filter(d => d.target_user === 'Tamae').length > 0 && (
+        <div className="flex flex-wrap justify-end gap-1.5 mt-4 pt-3 border-t border-zinc-800/40 w-full relative z-10">
+          {drops.filter(d => d.target_user === 'Tamae').map(renderMyDrop)}
+        </div>
+      )}
     </div>
   );
 
   const texasCard = (
-    <div key="tx" className="relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-start justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full">
+    <div key="tx" className="relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full overflow-hidden">
       {renderFinalBurstOverlay('Michael')}
-      <div className="flex items-start gap-3 md:gap-4 relative z-10 pointer-events-none">
-        <div className={`p-3 rounded-xl border shadow-inner mt-1 shrink-0 ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
-          {isTexasDay ? <Sun className="w-5 h-5 md:w-6 md:h-6" /> : <Moon className="w-5 h-5 md:w-6 md:h-6" />}
+      
+      <div className="flex items-start justify-between w-full relative z-10">
+        <div className="flex items-start gap-3 md:gap-4 pointer-events-none">
+          <div className={`p-3 rounded-xl border shadow-inner mt-1 shrink-0 ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+            {isTexasDay ? <Sun className="w-5 h-5 md:w-6 md:h-6" /> : <Moon className="w-5 h-5 md:w-6 md:h-6" />}
+          </div>
+          <div className="flex flex-col">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+              <h4 className="text-[10px] md:text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? 'テキサス (CDT)' : 'Texas (CDT)'}</h4>
+              <span className="text-[10px] md:text-xs font-mono text-zinc-400 flex items-center gap-1 whitespace-nowrap">
+                <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(txWeather.tempC)}
+              </span>
+            </div>
+            <p className="text-base md:text-lg font-semibold text-zinc-100 mt-1 font-mono whitespace-nowrap">
+              {formatInTimeZone(now, 'America/Chicago', 'h:mm:ss a')}
+            </p>
+            <div className="mt-0.5">
+              <span className="text-xs md:text-sm text-zinc-300 font-mono block whitespace-nowrap">{texasFormattedDate}</span>
+              {displayTxHoliday && (
+                <div className="mt-2.5 pointer-events-auto">
+                  <span className="w-max px-2 py-0.5 rounded text-[9px] font-mono tracking-widest uppercase bg-amber-950/30 text-amber-500/90 border border-amber-900/30 block">
+                    ★ {displayTxHoliday}
+                  </span>
+                  {txDesc && (
+                    <span className="block mt-1.5 text-[10px] font-mono text-stone-500 leading-snug pr-4">
+                      {txDesc}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col min-w-0">
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            <h4 className="text-[10px] md:text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold whitespace-nowrap">{lang === 'ja' ? 'テキサス (CDT)' : 'Texas (CDT)'}</h4>
-            <span className="text-[10px] md:text-xs font-mono text-zinc-400 flex items-center gap-1 whitespace-nowrap">
-              <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(txWeather.tempC)}
+        
+        <div className="flex flex-col items-end gap-1.5 shrink-0 ml-4 relative z-10">
+          <div className="flex items-center justify-end gap-2 shrink-0">
+            {currentUser !== 'Michael' && renderDropMenu()}
+            <span className="text-[10px] md:text-xs font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
+              {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
             </span>
           </div>
-          <p className="text-base md:text-lg font-semibold text-zinc-100 mt-1 font-mono whitespace-nowrap">
-            {formatInTimeZone(now, 'America/Chicago', 'h:mm:ss a')}
-          </p>
-          <div className="mt-0.5">
-            <span className="text-xs md:text-sm text-zinc-300 font-mono block whitespace-nowrap">{texasFormattedDate}</span>
-            {displayTxHoliday && (
-              <div className="mt-2.5 pointer-events-auto">
-                <span className="w-max px-2 py-0.5 rounded text-[9px] font-mono tracking-widest uppercase bg-amber-950/30 text-amber-500/90 border border-amber-900/30">
-                  ★ {displayTxHoliday}
-                </span>
-                {txDesc && (
-                  <span className="block mt-1.5 text-[10px] font-mono text-stone-500 leading-snug pr-4">
-                    {txDesc}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col items-end gap-1.5 shrink-0 ml-2 relative z-10">
-        <div className="flex items-center gap-2">
-          {currentUser !== 'Michael' && renderDropMenu()}
-          <span className="text-[10px] md:text-xs font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
-            {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+          <span className="text-[10px] md:text-xs text-zinc-400 flex items-center gap-1.5 mt-0.5 whitespace-nowrap shrink-0">
+            <txWeatherDetails.Icon className="w-3.5 h-3.5 shrink-0" /> {txWeatherDetails.text}
           </span>
         </div>
-        <span className="text-[10px] md:text-xs text-zinc-400 flex items-center gap-1.5 mt-0.5">
-          <txWeatherDetails.Icon className="w-3.5 h-3.5" /> {txWeatherDetails.text}
-        </span>
-        {currentUser === 'Michael' && drops.filter(d => d.target_user === 'Michael').length > 0 && (
-          <div className="flex flex-wrap justify-end gap-1.5 mt-2 w-full max-w-30">
-            {drops.filter(d => d.target_user === 'Michael').map(renderMyDrop)}
-          </div>
-        )}
       </div>
+
+      {currentUser === 'Michael' && drops.filter(d => d.target_user === 'Michael').length > 0 && (
+        <div className="flex flex-wrap justify-end gap-1.5 mt-4 pt-3 border-t border-zinc-800/40 w-full relative z-10">
+          {drops.filter(d => d.target_user === 'Michael').map(renderMyDrop)}
+        </div>
+      )}
     </div>
   );
 
@@ -438,11 +435,9 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
       `}} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Partner-First Rendering */}
         {currentUser === 'Michael' ? [japanCard, texasCard] : [texasCard, japanCard]}
       </div>
       
-      {/* Under the Same Moon Banner */}
       <div className="p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-center gap-2 md:gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all group overflow-hidden">
         <span className="text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] transition-transform group-hover:scale-110 shrink-0">
           {moonPhase.emoji}

@@ -225,6 +225,15 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           
           <CountdownTicker lang={lang} />
 
+          {/* MOVED: Global Bucket List directly below Next Window Target */}
+          <GlobalBucketList 
+            currentUser={currentUser}
+            lang={lang}
+            title={currentLang.bucket}
+            subtitle={currentLang.bucket_sub}
+            icon={<MapIcon className="w-5 h-5" />}
+          />
+
           <MilestoneTracker 
             currentUser={currentUser} 
             lang={lang}
@@ -255,14 +264,6 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             title={currentLang.sync} 
             subtitle={currentLang.sync_sub} 
             icon={<CalendarDays className="w-5 h-5" />} 
-          />
-
-          <GlobalBucketList 
-            currentUser={currentUser}
-            lang={lang}
-            title={currentLang.bucket}
-            subtitle={currentLang.bucket_sub}
-            icon={<MapIcon className="w-5 h-5" />}
           />
 
           <ItineraryTracker 
