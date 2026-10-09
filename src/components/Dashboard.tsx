@@ -221,6 +221,14 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         <div className="w-full max-w-4xl space-y-6 relative z-10">
           <SanctuaryStatus lang={lang} currentUser={currentUser} />
           
+          <MilestoneTracker 
+            currentUser={currentUser} 
+            lang={lang}
+            title={currentLang.milestones} 
+            subtitle={currentLang.milestones_sub} 
+            icon={<Target className="w-5 h-5" />} 
+          />
+
           <WeeklyUnlock lang={lang} currentUser={currentUser} />
           
           <CountdownTicker lang={lang} />
@@ -232,14 +240,6 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             title={currentLang.bucket}
             subtitle={currentLang.bucket_sub}
             icon={<MapIcon className="w-5 h-5" />}
-          />
-
-          <MilestoneTracker 
-            currentUser={currentUser} 
-            lang={lang}
-            title={currentLang.milestones} 
-            subtitle={currentLang.milestones_sub} 
-            icon={<Target className="w-5 h-5" />} 
           />
 
           <MemoryVault 
