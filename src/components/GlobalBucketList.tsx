@@ -60,7 +60,8 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
   const [burstingIds, setBurstingIds] = useState<string[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
-  const [collapsedIdeaIds, setCollapsedIdeaIds] = useState<string[]>([]);
+  // Track which specific ideas have their comment threads expanded (default is collapsed)
+  const [expandedIdeaIds, setExpandedIdeaIds] = useState<string[]>([]);
   const [replyingToIdeaId, setReplyingToIdeaId] = useState<string | null>(null);
   const [ideaReplyContent, setIdeaReplyContent] = useState('');
   const [newIdea, setNewIdea] = useState('');
@@ -214,8 +215,8 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
     setExpandedId(expandedId === item.id ? null : item.id);
   };
 
-  const toggleIdeaCollapse = (ideaId: string) => {
-    setCollapsedIdeaIds(prev => prev.includes(ideaId) ? prev.filter(id => id !== ideaId) : [...prev, ideaId]);
+  const toggleIdeaExpand = (ideaId: string) => {
+    setExpandedIdeaIds(prev => prev.includes(ideaId) ? prev.filter(id => id !== ideaId) : [...prev, ideaId]);
   };
 
   const actionButton = (
@@ -394,7 +395,7 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                           ) : (
                             item.ideas.map(idea => {
                               const hasComments = idea.comments && idea.comments.length > 0;
-                              const isIdeaCollapsed = collapsedIdeaIds.includes(idea.id);
+                              const isIdeaExpanded = expandedIdeaIds.includes(idea.id);
                               
                               const currentHearts = idea.hearted_by || [];
                               const anyoneHeartedIdea = currentHearts.length > 0;
@@ -404,7 +405,7 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                                 <div key={idea.id} className="bg-zinc-900/50 rounded-lg border border-zinc-800/40 overflow-hidden transition-all">
                                   <div 
                                     className="flex items-start gap-2.5 p-3 cursor-pointer hover:bg-zinc-800/30 transition-colors"
-                                    onClick={() => toggleIdeaCollapse(idea.id)}
+                                    onClick={() => toggleIdeaExpand(idea.id)}
                                   >
                                     <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 mt-0.5 border border-stone-500/20">
                                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -438,17 +439,17 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                                             onClick={(e) => {
                                               e.stopPropagation();
                                               setReplyingToIdeaId(replyingToIdeaId === idea.id ? null : idea.id);
-                                              if (isIdeaCollapsed) toggleIdeaCollapse(idea.id);
+                                              if (!isIdeaExpanded) toggleIdeaExpand(idea.id);
                                             }}
-                                            className="flex items-center gap-1 text-stone-500 hover:text-stone-300 transition-colors cursor-pointer"
+                                            className={`flex items-center gap-1 transition-colors cursor-pointer ${hasComments ? 'text-amber-500 hover:text-amber-400' : 'text-stone-500 hover:text-stone-300'}`}
                                           >
                                             <MessageCircle className="w-3.5 h-3.5" />
                                             {hasComments && <span className="text-[9px] font-mono">{idea.comments!.length}</span>}
                                           </button>
                                           
                                           {hasComments && (
-                                            <div className="text-stone-500 ml-1">
-                                              {isIdeaCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                                            <div className={`ml-1 ${hasComments ? 'text-amber-500' : 'text-stone-500'}`}>
+                                              {isIdeaExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                             </div>
                                           )}
                                         </div>
@@ -457,7 +458,7 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                                     </div>
                                   </div>
 
-                                  {(!isIdeaCollapsed && (hasComments || replyingToIdeaId === idea.id)) && (
+                                  {(isIdeaExpanded || replyingToIdeaId === idea.id) && (
                                     <div className="px-3 pb-3 bg-zinc-900/20 cursor-default" onClick={(e) => e.stopPropagation()}>
                                       <div className="ml-7 pl-3 border-l-2 border-zinc-800/50 flex flex-col gap-2.5 pt-2">
                                         {idea.comments?.map(comment => (
