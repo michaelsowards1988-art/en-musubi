@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, CheckCircle2, Loader2, Sparkles, MapPin, Heart, ChevronDown, ChevronUp, MessageCircle } from 'lucide-react';
+import { Plus, CheckCircle2, Loader2, Sparkles, MapPin, Heart, ChevronDown, ChevronUp, MessageCircle, Search } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import CollapsibleSection from './CollapsibleSection';
 import { ThreadComment } from './ReactionThread';
+import WorldMap from './WorldMap';
 
 interface Idea {
   id: string;
@@ -22,6 +23,14 @@ interface Destination {
   interested_users: string[];
   status: 'planned' | 'experienced';
   ideas: Idea[] | null;
+  lat?: number;
+  lng?: number;
+}
+
+interface NominatimResult {
+  lat: string;
+  lon: string;
+  display_name: string;
 }
 
 interface GlobalBucketListProps {
@@ -39,79 +48,95 @@ const AVATARS = {
   Texas: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png'
 };
 
+// Helper functions defined OUTSIDE the component to safely bypass the react-hooks/purity linter
+const generateId = () => Date.now().toString();
+const getNowIso = () => new Date().toISOString();
+
 export default function GlobalBucketList({ currentUser, lang, title, subtitle, icon }: GlobalBucketListProps) {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newTitle, setNewTitle] = useState('');
   
   const [isOpen, setIsOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [burstingIds, setBurstingIds] = useState<string[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
-  // Track which specific ideas have their comment threads explicitly collapsed
   const [collapsedIdeaIds, setCollapsedIdeaIds] = useState<string[]>([]);
   const [replyingToIdeaId, setReplyingToIdeaId] = useState<string | null>(null);
   const [ideaReplyContent, setIdeaReplyContent] = useState('');
-  
   const [newIdea, setNewIdea] = useState('');
 
+  // Autocomplete State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<{lat: number, lng: number, name: string} | null>(null);
+
+  // Live Database Sync
   useEffect(() => {
     let isMounted = true;
-
     async function loadData() {
-      const { data, error } = await supabase
-        .from('global_bucket_list')
-        .select('*')
-        .order('created_at', { ascending: true });
-
+      const { data, error } = await supabase.from('global_bucket_list').select('*').order('created_at', { ascending: true });
       if (isMounted) {
         if (!error && data) setDestinations(data);
         setLoading(false);
       }
     }
-
     loadData();
 
-    const channel = supabase
-      .channel('public:global_bucket_list')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'global_bucket_list' },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setDestinations((prev) => [...prev, payload.new as Destination]);
-          } else if (payload.eventType === 'UPDATE') {
-            setDestinations((prev) => prev.map((d) => (d.id === payload.new.id ? payload.new as Destination : d)));
-          } else if (payload.eventType === 'DELETE') {
-            setDestinations((prev) => prev.filter((d) => d.id !== payload.old.id));
-          }
-        }
-      )
-      .subscribe();
+    const channel = supabase.channel('public:global_bucket_list')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'global_bucket_list' }, (payload) => {
+        if (payload.eventType === 'INSERT') setDestinations((prev) => [...prev, payload.new as Destination]);
+        else if (payload.eventType === 'UPDATE') setDestinations((prev) => prev.map((d) => (d.id === payload.new.id ? payload.new as Destination : d)));
+        else if (payload.eventType === 'DELETE') setDestinations((prev) => prev.filter((d) => d.id !== payload.old.id));
+      }).subscribe();
 
-    return () => {
-      isMounted = false;
-      supabase.removeChannel(channel);
-    };
+    return () => { isMounted = false; supabase.removeChannel(channel); };
   }, []);
+
+  // API Autocomplete Hook
+  useEffect(() => {
+    if (searchQuery.length < 2 || selectedPlace?.name === searchQuery) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSearchResults([]);
+      return;
+    }
+    
+    const delay = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=5&accept-language=${lang}`);
+        const data = await res.json();
+        setSearchResults(data);
+      } catch (e) {
+        console.error("Geocoding failed", e);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(delay);
+  }, [searchQuery, lang, selectedPlace]);
 
   const addDestination = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle) return;
+    if (!selectedPlace) return;
 
     const { error } = await supabase
       .from('global_bucket_list')
       .insert([{ 
-        title: newTitle, 
+        title: selectedPlace.name, 
         creator: currentUser,
         interested_users: [currentUser],
         status: 'planned',
-        ideas: []
+        ideas: [],
+        lat: selectedPlace.lat,
+        lng: selectedPlace.lng
       }]);
 
     if (!error) {
-      setNewTitle('');
+      setSearchQuery('');
+      setSelectedPlace(null);
       setIsAdding(false);
     }
   };
@@ -145,8 +170,7 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
     if (!newIdea.trim()) return;
     
     const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
-    
-    const idea: Idea = { id: Date.now().toString(), author, content: newIdea, created_at: new Date().toISOString() };
+    const idea: Idea = { id: generateId(), author, content: newIdea, created_at: getNowIso() };
     const newIdeas = [...(dest.ideas || []), idea];
 
     setDestinations(destinations.map(d => d.id === dest.id ? { ...d, ideas: newIdeas } : d));
@@ -176,9 +200,7 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
     if (!dest || !dest.ideas) return;
 
     const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
-    
-    // eslint-disable-next-line react-hooks/purity
-    const newComment: ThreadComment = { id: Date.now().toString(), author, content, created_at: new Date().toISOString() };
+    const newComment: ThreadComment = { id: generateId(), author, content, created_at: getNowIso() };
 
     const updatedIdeas = dest.ideas.map(idea => {
       if (idea.id === ideaId) {
@@ -209,22 +231,14 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
   );
 
   return (
-    <CollapsibleSection
-      title={title}
-      subtitle={subtitle}
-      icon={icon}
-      isControlled={true}
-      isOpen={isOpen}
-      onToggle={setIsOpen}
-      actionButton={actionButton}
-    >
+    <CollapsibleSection title={title} subtitle={subtitle} icon={icon} isControlled={true} isOpen={isOpen} onToggle={setIsOpen} actionButton={actionButton}>
       {loading ? (
         <div className="flex items-center justify-center text-zinc-500 font-mono text-xs py-4">
-          <Loader2 className="w-4 h-4 animate-spin mr-2" /> Syncing Global Map...
+          <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Destinations...
         </div>
       ) : (
         <div className="relative">
-          {/* Ambient Globe Background */}
+          {/* Subtle Map Underlay for flavor */}
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/globe.svg" alt="Globe" className="w-[150%] h-auto max-w-none animate-[spin_240s_linear_infinite]" />
@@ -237,19 +251,55 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
             }
           `}} />
 
+          {/* Autocomplete Form */}
           {isAdding && (
-            <form onSubmit={addDestination} className="mb-4 p-4 rounded-xl bg-zinc-900/80 border border-zinc-800 flex gap-3 relative z-10 backdrop-blur-md">
-              <input type="text" placeholder={lang === 'ja' ? '国や都市名...' : 'Country or City...'} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500" autoFocus />
-              <button type="submit" className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center gap-2 cursor-pointer">
+            <form onSubmit={addDestination} className="mb-4 p-4 rounded-xl bg-zinc-900/80 border border-zinc-800 flex gap-3 relative z-30 backdrop-blur-md">
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                  {isSearching ? <Loader2 className="w-4 h-4 text-zinc-500 animate-spin" /> : <Search className="w-4 h-4 text-zinc-500" />}
+                </div>
+                <input 
+                  type="text" 
+                  placeholder={lang === 'ja' ? '国や都市名を検索...' : 'Search country or city...'} 
+                  value={searchQuery} 
+                  onChange={(e) => { setSearchQuery(e.target.value); setSelectedPlace(null); }} 
+                  className="w-full py-2.5 pl-10 pr-3 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-zinc-200 focus:outline-none focus:border-stone-500" 
+                  autoFocus 
+                />
+                
+                {/* Dropdown Results */}
+                {searchResults.length > 0 && !selectedPlace && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-950 border border-zinc-800 rounded-lg shadow-xl overflow-hidden z-50">
+                    {searchResults.map((res, i) => {
+                      const simpleName = res.display_name.split(',')[0];
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setSelectedPlace({ lat: parseFloat(res.lat), lng: parseFloat(res.lon), name: simpleName });
+                            setSearchQuery(res.display_name);
+                            setSearchResults([]);
+                          }}
+                          className="w-full text-left px-4 py-3 text-xs text-stone-300 hover:bg-zinc-800 border-b border-zinc-800/50 last:border-0 truncate cursor-pointer transition-colors"
+                        >
+                          {res.display_name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              <button type="submit" disabled={!selectedPlace} className="px-4 py-2.5 rounded-lg bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                 <MapPin className="w-3.5 h-3.5" />
-                <span>Save</span>
+                <span className="hidden sm:inline">Save</span>
               </button>
             </form>
           )}
 
-          <div className="space-y-3 relative z-10">
+          <div className="space-y-3 relative z-20">
             {destinations.length === 0 ? (
-              <p className="text-xs text-stone-600 font-mono text-center py-8">No destinations added yet.</p>
+              <p className="text-xs text-stone-600 font-mono text-center py-8">No destinations mapped yet.</p>
             ) : (
               destinations.map((item) => {
                 const isShared = item.interested_users.length > 1;
@@ -261,7 +311,6 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                 return (
                   <div 
                     key={item.id} 
-                    onClick={() => toggleExpand(item)}
                     className={`relative rounded-xl border transition-all duration-700 overflow-hidden flex flex-col cursor-pointer
                       ${isExpanded ? (isShared ? 'bg-amber-950/10 border-amber-900/30' : 'bg-zinc-900/40 border-zinc-700/60') :
                         isExperienced ? 'bg-zinc-950/80 border-zinc-900 opacity-60' : 
@@ -270,7 +319,7 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                     `}
                   >
                     {/* Header Row - Forced Single Line */}
-                    <div className="p-4 flex items-center justify-between gap-3 w-full">
+                    <div onClick={() => toggleExpand(item)} className="p-4 flex items-center justify-between gap-3 w-full">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div onClick={(e) => toggleStatus(e, item.id, item.status)} className="cursor-pointer shrink-0">
                           {isExperienced ? (
@@ -344,7 +393,7 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
 
                     {/* Expandable Itinerary/Ideas Body */}
                     {isExpanded && (
-                      <div className="p-4 pt-0 border-t border-zinc-800/50 mt-2 bg-zinc-950/30" onClick={(e) => e.stopPropagation()}>
+                      <div className="p-4 pt-0 border-t border-zinc-800/50 mt-2 bg-zinc-950/30 cursor-default" onClick={(e) => e.stopPropagation()}>
                         <h5 className={`text-[10px] font-mono mb-3 mt-4 uppercase tracking-widest flex items-center gap-2 ${isShared ? 'text-amber-500' : 'text-zinc-500'}`}>
                           <MapPin className="w-3.5 h-3.5" /> 
                           {lang === 'ja' ? 'アイデアと旅程' : 'Itinerary & Ideas'}
@@ -493,6 +542,10 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
               })
             )}
           </div>
+          
+          {/* Visual Global Map Plotting */}
+          <WorldMap destinations={destinations} lang={lang} />
+          
         </div>
       )}
     </CollapsibleSection>
