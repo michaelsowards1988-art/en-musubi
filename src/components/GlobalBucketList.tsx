@@ -359,19 +359,21 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                               const isIdeaCollapsed = collapsedIdeaIds.includes(idea.id);
                               
                               const currentHearts = idea.hearted_by || [];
-                              const isHearted = currentHearts.includes(currentUser);
+                              const anyoneHeartedIdea = currentHearts.length > 0;
                               const bothHeartedIdea = currentHearts.length >= 2;
 
                               return (
-                                <div key={idea.id} className="bg-zinc-900/50 rounded-lg border border-zinc-800/40 p-3">
-                                  <div className="flex items-start gap-2.5">
+                                <div key={idea.id} className="bg-zinc-900/50 rounded-lg border border-zinc-800/40 overflow-hidden transition-all">
+                                  {/* Whole header row is clickable to expand/collapse */}
+                                  <div 
+                                    className="flex items-start gap-2.5 p-3 cursor-pointer hover:bg-zinc-800/30 transition-colors"
+                                    onClick={() => toggleIdeaCollapse(idea.id)}
+                                  >
                                     <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 mt-0.5 border border-stone-500/20">
                                       {/* eslint-disable-next-line @next/next/no-img-element */}
                                       <img src={AVATARS[idea.author as keyof typeof AVATARS]} alt={idea.author} className="w-full h-full object-cover" />
                                     </div>
-                                    
                                     <div className="flex-1 min-w-0">
-                                      {/* Header Row for Idea */}
                                       <div className="flex justify-between items-start mb-1">
                                         <div className="flex items-center gap-2 mt-0.5">
                                           <span className="text-[9px] font-mono text-stone-500 uppercase">{idea.author === 'Kanagawa' ? 'Tamae' : 'Michael'}</span>
@@ -380,13 +382,16 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                                         
                                         {/* Action Bar integrated into Header */}
                                         <div className="flex items-center gap-3 shrink-0">
-                                          <button onClick={() => toggleIdeaHeart(item.id, idea.id)} className="transition-all hover:scale-110 cursor-pointer">
+                                          <button 
+                                            onClick={(e) => { e.stopPropagation(); toggleIdeaHeart(item.id, idea.id); }} 
+                                            className="transition-all hover:scale-110 cursor-pointer"
+                                          >
                                             {bothHeartedIdea ? (
                                               <div className="relative">
                                                 <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse" />
                                                 <Sparkles className="w-2 h-2 text-amber-400 absolute -top-1 -right-1" />
                                               </div>
-                                            ) : isHearted ? (
+                                            ) : anyoneHeartedIdea ? (
                                               <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
                                             ) : (
                                               <Heart className="w-3.5 h-3.5 text-stone-500 hover:text-stone-300" />
@@ -394,9 +399,9 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                                           </button>
                                           
                                           <button 
-                                            onClick={() => {
+                                            onClick={(e) => {
+                                              e.stopPropagation();
                                               setReplyingToIdeaId(replyingToIdeaId === idea.id ? null : idea.id);
-                                              // Auto-expand if collapsed so user can see the input box
                                               if (isIdeaCollapsed) toggleIdeaCollapse(idea.id);
                                             }}
                                             className="flex items-center gap-1 text-stone-500 hover:text-stone-300 transition-colors cursor-pointer"
@@ -406,65 +411,63 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
                                           </button>
                                           
                                           {hasComments && (
-                                            <button 
-                                              onClick={() => toggleIdeaCollapse(idea.id)} 
-                                              className="text-stone-500 hover:text-stone-300 transition-colors cursor-pointer ml-1"
-                                            >
+                                            <div className="text-stone-500 ml-1">
                                               {isIdeaCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-                                            </button>
+                                            </div>
                                           )}
                                         </div>
                                       </div>
-                                      
                                       <p className="text-xs text-stone-300 mb-1">{idea.content}</p>
-
-                                      {/* Comments Thread */}
-                                      {(!isIdeaCollapsed && (hasComments || replyingToIdeaId === idea.id)) && (
-                                        <div className="ml-1 pl-3 border-l-2 border-zinc-800/50 flex flex-col gap-2.5 mt-3 pt-1">
-                                          {idea.comments?.map(comment => (
-                                            <div key={comment.id} className="flex items-start gap-2">
-                                              <div className="w-5 h-5 rounded-full overflow-hidden border border-stone-500/20 bg-zinc-950 shrink-0 mt-0.5">
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img src={AVATARS[comment.author as keyof typeof AVATARS]} alt={comment.author} className="w-full h-full object-cover" />
-                                              </div>
-                                              <div className="flex-1 min-w-0 bg-zinc-950/50 p-2 rounded-lg border border-zinc-800/40">
-                                                <div className="flex justify-between items-center mb-0.5">
-                                                  <span className="text-[9px] font-mono text-stone-500 uppercase">{comment.author === 'Kanagawa' ? 'Tamae' : 'Michael'}</span>
-                                                </div>
-                                                <p className="text-xs text-stone-300 whitespace-pre-wrap">{comment.content}</p>
-                                              </div>
-                                            </div>
-                                          ))}
-
-                                          {replyingToIdeaId === idea.id && (
-                                            <form 
-                                              onSubmit={(e) => { 
-                                                e.preventDefault(); 
-                                                if (ideaReplyContent.trim()) {
-                                                  postIdeaReply(ideaReplyContent, item.id, idea.id); 
-                                                  setIdeaReplyContent(''); 
-                                                  setReplyingToIdeaId(null);
-                                                }
-                                              }} 
-                                              className="flex items-center gap-2 mt-1 animate-in fade-in"
-                                            >
-                                              <input
-                                                type="text"
-                                                autoFocus
-                                                placeholder="Add a reply..."
-                                                value={ideaReplyContent}
-                                                onChange={(e) => setIdeaReplyContent(e.target.value)}
-                                                className="flex-1 p-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-stone-200 focus:outline-none focus:border-amber-700/50"
-                                              />
-                                              <button type="submit" disabled={!ideaReplyContent.trim()} className="p-2 rounded-lg bg-amber-600/80 text-white hover:bg-amber-500 transition-all disabled:opacity-50 cursor-pointer">
-                                                <Plus className="w-3.5 h-3.5" />
-                                              </button>
-                                            </form>
-                                          )}
-                                        </div>
-                                      )}
                                     </div>
                                   </div>
+
+                                  {/* Comments Thread (Expanded by default) */}
+                                  {(!isIdeaCollapsed && (hasComments || replyingToIdeaId === idea.id)) && (
+                                    <div className="px-3 pb-3 bg-zinc-900/20 cursor-default" onClick={(e) => e.stopPropagation()}>
+                                      <div className="ml-7 pl-3 border-l-2 border-zinc-800/50 flex flex-col gap-2.5 pt-2">
+                                        {idea.comments?.map(comment => (
+                                          <div key={comment.id} className="flex items-start gap-2">
+                                            <div className="w-5 h-5 rounded-full overflow-hidden border border-stone-500/20 bg-zinc-950 shrink-0 mt-0.5">
+                                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                                              <img src={AVATARS[comment.author as keyof typeof AVATARS]} alt={comment.author} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className="flex-1 min-w-0 bg-zinc-950/50 p-2 rounded-lg border border-zinc-800/40">
+                                              <div className="flex justify-between items-center mb-0.5">
+                                                <span className="text-[9px] font-mono text-stone-500 uppercase">{comment.author === 'Kanagawa' ? 'Tamae' : 'Michael'}</span>
+                                              </div>
+                                              <p className="text-xs text-stone-300 whitespace-pre-wrap">{comment.content}</p>
+                                            </div>
+                                          </div>
+                                        ))}
+
+                                        {replyingToIdeaId === idea.id && (
+                                          <form 
+                                            onSubmit={(e) => { 
+                                              e.preventDefault(); 
+                                              if (ideaReplyContent.trim()) {
+                                                postIdeaReply(ideaReplyContent, item.id, idea.id); 
+                                                setIdeaReplyContent(''); 
+                                                setReplyingToIdeaId(null);
+                                              }
+                                            }} 
+                                            className="flex items-center gap-2 mt-1 animate-in fade-in"
+                                          >
+                                            <input
+                                              type="text"
+                                              autoFocus
+                                              placeholder="Add a reply..."
+                                              value={ideaReplyContent}
+                                              onChange={(e) => setIdeaReplyContent(e.target.value)}
+                                              className="flex-1 p-2 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-stone-200 focus:outline-none focus:border-amber-700/50"
+                                            />
+                                            <button type="submit" disabled={!ideaReplyContent.trim()} className="p-2 rounded-lg bg-amber-600/80 text-white hover:bg-amber-500 transition-all disabled:opacity-50 cursor-pointer">
+                                              <Plus className="w-3.5 h-3.5" />
+                                            </button>
+                                          </form>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })
