@@ -211,7 +211,8 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
       </button>
       {showDropMenu && (
         <div className="absolute top-8 right-0 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-xl p-1.5 flex gap-1 shadow-xl z-20 animate-in fade-in zoom-in-95">
-          {['🍵', '☕', '♨️'].map(emoji => (
+          {/* THE PANCAKES HAVE ARRIVED */}
+          {['🍵', '☕', '🥞', '♨️'].map(emoji => (
             <button 
               key={emoji}
               onClick={() => handleSendDrop(emoji)}
