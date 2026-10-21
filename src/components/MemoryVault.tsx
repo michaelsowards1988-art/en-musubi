@@ -5,6 +5,7 @@ import { Image as ImageIcon, Music, Plus, Loader2, Sparkles, ExternalLink } from
 import { supabase } from '@/lib/supabase';
 import { fetchAppleMusicArt } from '@/lib/musicScraper';
 import CollapsibleSection from './CollapsibleSection';
+import ReactionThread, { ThreadComment } from './ReactionThread';
 
 interface SharedRecord {
   id: string;
@@ -14,6 +15,8 @@ interface SharedRecord {
   media_type: 'image' | 'music';
   external_link: string | null;
   created_at: string;
+  hearted_by: string[] | null;
+  comments: ThreadComment[] | null;
 }
 
 interface MemoryVaultProps {
@@ -23,6 +26,10 @@ interface MemoryVaultProps {
   subtitle: string;
   icon: React.ReactNode;
 }
+
+const generateId = () => Date.now().toString();
+const getNowIso = () => new Date().toISOString();
+const generateFilePrefix = () => `${Date.now()}-${Math.random().toString(36).substring(2)}`;
 
 export default function MemoryVault({ currentUser, lang, title, subtitle, icon }: MemoryVaultProps) {
   const [records, setRecords] = useState<SharedRecord[]>([]);
@@ -60,10 +67,18 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
       .channel('public:memories')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'memories' },
+        { event: '*', schema: 'public', table: 'memories' },
         (payload) => {
-          const newRecord = payload.new as SharedRecord;
-          setRecords((prev) => [newRecord, ...prev]);
+          if (payload.eventType === 'INSERT') {
+            const newRecord = payload.new as SharedRecord;
+            setRecords((prev) => [newRecord, ...prev.filter((r) => r.id !== newRecord.id)]);
+          } else if (payload.eventType === 'UPDATE') {
+            setRecords((prev) =>
+              prev.map((r) => (r.id === payload.new.id ? (payload.new as SharedRecord) : r))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setRecords((prev) => prev.filter((r) => r.id !== payload.old.id));
+          }
         }
       )
       .subscribe();
@@ -86,7 +101,7 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
     try {
       if (mediaType === 'image' && imageFile) {
         const fileExt = imageFile.name.split('.').pop();
-        const fileName = `vault/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const fileName = `vault/${generateFilePrefix()}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('photos')
@@ -125,6 +140,30 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const toggleHeart = async (record: SharedRecord) => {
+    const currentHearts = record.hearted_by || [];
+    const newHearts = currentHearts.includes(currentUser)
+      ? currentHearts.filter((u) => u !== currentUser)
+      : [...currentHearts, currentUser];
+
+    setRecords(records.map((r) => (r.id === record.id ? { ...r, hearted_by: newHearts } : r)));
+    await supabase.from('memories').update({ hearted_by: newHearts }).eq('id', record.id);
+  };
+
+  const postReply = async (content: string, record: SharedRecord) => {
+    const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+    const newComment: ThreadComment = {
+      id: generateId(),
+      author,
+      content,
+      created_at: getNowIso(),
+    };
+    const newComments = [...(record.comments || []), newComment];
+
+    setRecords(records.map((r) => (r.id === record.id ? { ...r, comments: newComments } : r)));
+    await supabase.from('memories').update({ comments: newComments }).eq('id', record.id);
   };
 
   const handleAddClick = () => {
@@ -226,7 +265,7 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
             </form>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             {records.length === 0 ? (
               <p className="text-xs text-stone-600 font-mono text-center py-8 col-span-2">No records logged yet.</p>
             ) : (
@@ -257,31 +296,41 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
                       
                       <div className="absolute top-3 left-3 flex gap-2 pointer-events-none">
                         <span className="px-2 py-1 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-stone-300 border border-zinc-800 flex items-center gap-1.5 shadow-sm">
-                          {isMusic ? <Music className="w-3 h-3 text-amber-500" /> : <ImageIcon className="w-3 h-3 text-stone-400" />}
+                          {isMusic ? <Music className="w-3 h-3 text-amber-500" /> : <ImageIcon className="w-3.5 h-3.5 text-stone-400" />}
                           {displayLocation}
                         </span>
                       </div>
                     </div>
                     
                     <div className="p-4 flex-1 flex flex-col justify-between bg-zinc-900/40">
-                      <div>
+                      <div className="flex items-start justify-between gap-2">
                         <p className="text-sm font-medium text-stone-200">{record.caption}</p>
-                      </div>
-                      
-                      <div className="flex items-center justify-between mt-3">
-                        <span className="text-[10px] font-mono text-stone-500">
+                        <span className="text-[10px] font-mono text-stone-500 shrink-0 mt-0.5">
                           {new Date(record.created_at).toLocaleDateString()}
                         </span>
-                        {isMusic && record.external_link && (
+                      </div>
+                      
+                      {isMusic && record.external_link && (
+                        <div className="mt-2">
                           <a 
                             href={record.external_link} 
                             target="_blank" 
                             rel="noreferrer"
-                            className="flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10 cursor-pointer"
+                            className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10 cursor-pointer"
                           >
                             Listen <ExternalLink className="w-3 h-3" />
                           </a>
-                        )}
+                        </div>
+                      )}
+
+                      <div className="mt-2 pt-2 border-t border-zinc-800/40">
+                        <ReactionThread
+                          currentUser={currentUser}
+                          heartedBy={record.hearted_by || []}
+                          comments={record.comments || []}
+                          onToggleHeart={() => toggleHeart(record)}
+                          onAddComment={(content) => postReply(content, record)}
+                        />
                       </div>
                     </div>
                   </div>
