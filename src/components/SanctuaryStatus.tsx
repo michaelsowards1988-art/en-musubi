@@ -203,7 +203,7 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
         <Plus className={`w-3.5 h-3.5 transition-transform ${showDropMenu ? 'rotate-45' : ''}`} />
       </button>
       {showDropMenu && (
-        <div className="absolute top-8 right-0 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-xl p-1.5 flex gap-1 shadow-xl z-20 animate-in fade-in zoom-in-95">
+        <div className="absolute top-8 right-0 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-xl p-1.5 grid grid-cols-4 sm:flex gap-1 w-max shadow-xl z-20 animate-in fade-in zoom-in-95">
           {['🥙', '🪷', '💄', '🍫', '🍵', '☕', '🥞', '♨️'].map(emoji => (
             <button 
               key={emoji}
