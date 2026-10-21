@@ -23,6 +23,8 @@ interface Drop {
   emoji: string;
 }
 
+const BASE_EMOJIS = ['💋', '🥙', '🪷', '💄', '🍫', '🍵', '☕', '🥞', '♨️'];
+
 // Cultural Dictionary for Context
 const HOLIDAY_INFO: Record<string, { en: string, ja: string }> = {
   "New Year's Day": { en: "Celebrating the start of the new year.", ja: "年の初めを祝う日。" },
@@ -82,6 +84,10 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   const [showDropMenu, setShowDropMenu] = useState(false);
   const [burstingIds, setBurstingIds] = useState<string[]>([]);
   
+  // Prank state: tracks which emoji slots Tamae has tapped so they permanently turn into 💋
+  const [kissedIndices, setKissedIndices] = useState<number[]>([]);
+  const [justMorphedIdx, setJustMorphedIdx] = useState<number | null>(null);
+
   const [otsukaresamaBurst, setOtsukaresamaBurst] = useState<number | null>(null);
   const wasBurstingRef = useRef(false);
 
@@ -89,6 +95,21 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Load Tamae's permanently morphed kiss slots from localStorage
+  useEffect(() => {
+    if (currentUser === 'Tamae') {
+      try {
+        const saved = localStorage.getItem('tamae_kiss_prank_indices');
+        if (saved) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setKissedIndices(JSON.parse(saved));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     if (burstingIds.length > 0) {
@@ -154,9 +175,32 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
     };
   }, []);
 
-  const handleSendDrop = async (emoji: string) => {
+  const handleSendDrop = async (displayedEmoji: string, index: number) => {
     const targetUser = currentUser === 'Michael' ? 'Tamae' : 'Michael';
-    await supabase.from('drops').insert([{ target_user: targetUser, emoji }]);
+
+    // Prank logic for Tamae: send whatever is currently displayed on the button,
+    // then permanently transform that button into 💋 on her screen!
+    if (currentUser === 'Tamae') {
+      if (!kissedIndices.includes(index)) {
+        const updated = [...kissedIndices, index];
+        setKissedIndices(updated);
+        localStorage.setItem('tamae_kiss_prank_indices', JSON.stringify(updated));
+        setJustMorphedIdx(index);
+        setTimeout(() => setJustMorphedIdx(null), 600);
+      }
+
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+      await supabase.from('drops').insert([{ target_user: targetUser, emoji: displayedEmoji }]);
+
+      // If she actually tapped a 💋, close the menu after a brief moment;
+      // if she tapped a non-kiss emoji, keep the menu open so she sees it morph into 💋!
+      if (displayedEmoji === '💋') {
+        setTimeout(() => setShowDropMenu(false), 350);
+      }
+      return;
+    }
+
+    await supabase.from('drops').insert([{ target_user: targetUser, emoji: displayedEmoji }]);
     setShowDropMenu(false);
   };
 
@@ -204,15 +248,21 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
       </button>
       {showDropMenu && (
         <div className="absolute top-8 right-0 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-xl p-1.5 grid grid-cols-4 sm:flex gap-1 w-max shadow-xl z-20 animate-in fade-in zoom-in-95">
-          {['💋', '🥙', '🪷', '💄', '🍫', '🍵', '☕', '🥞', '♨️'].map(emoji => (
-            <button 
-              key={emoji}
-              onClick={() => handleSendDrop(emoji)}
-              className="w-8 h-8 flex items-center justify-center text-xl hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
-            >
-              {emoji}
-            </button>
-          ))}
+          {BASE_EMOJIS.map((baseEmoji, idx) => {
+            const isMorphedToKiss = currentUser === 'Tamae' && kissedIndices.includes(idx);
+            const displayedEmoji = isMorphedToKiss ? '💋' : baseEmoji;
+            const isPopping = justMorphedIdx === idx;
+
+            return (
+              <button 
+                key={idx}
+                onClick={() => handleSendDrop(displayedEmoji, idx)}
+                className={`w-8 h-8 flex items-center justify-center text-xl hover:bg-zinc-800 rounded-lg transition-all duration-300 cursor-pointer ${isPopping ? 'scale-125 bg-rose-950/60 ring-1 ring-rose-500/50' : ''}`}
+              >
+                {displayedEmoji}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
