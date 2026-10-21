@@ -298,7 +298,7 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   };
 
   const japanCard = (
-    <div key="jp" className="relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full overflow-hidden">
+    <div key="jp" className={`relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full ${showDropMenu && currentUser !== 'Tamae' ? 'z-30' : 'z-10'}`}>
       {renderFinalBurstOverlay('Tamae')}
       
       <div className="flex items-start justify-between w-full relative z-10">
@@ -356,7 +356,7 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   );
 
   const texasCard = (
-    <div key="tx" className="relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full overflow-hidden">
+    <div key="tx" className={`relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full ${showDropMenu && currentUser !== 'Michael' ? 'z-30' : 'z-10'}`}>
       {renderFinalBurstOverlay('Michael')}
       
       <div className="flex items-start justify-between w-full relative z-10">
