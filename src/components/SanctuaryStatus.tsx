@@ -10,11 +10,11 @@ import {
   CloudLightning,
   CloudSnow,
   CloudFog,
-  Plus,
 } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { enUS, ja } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
+import { SanctuaryDropMenu } from './SanctuaryDropMenu';
 
 interface SanctuaryStatusProps {
   lang: 'en' | 'ja';
@@ -32,8 +32,6 @@ interface Drop {
   target_user: string;
   emoji: string;
 }
-
-const BASE_EMOJIS = ['💋', '🥙', '🪷', '💄', '🍫', '🍵', '☕', '🥞', '♨️'];
 
 const getBurstTimestamp = () => Date.now();
 
@@ -115,44 +113,34 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   const [txHolidays, setTxHolidays] = useState<Holiday[]>([]);
 
   const [drops, setDrops] = useState<Drop[]>([]);
-  const [showDropMenu, setShowDropMenu] = useState(false);
   const [burstingIds, setBurstingIds] = useState<string[]>([]);
 
-  // Prank state: tracks which emoji slots Tamae has tapped so they permanently turn into 💋
-  const [kissedIndices, setKissedIndices] = useState<number[]>([]);
-  const [justMorphedIdx, setJustMorphedIdx] = useState<number | null>(null);
-  const [kissCelebrationBurst, setKissCelebrationBurst] = useState<number | null>(null);
+  // Track which card ('Michael' | 'Tamae') is currently displaying the Kiss Explosion
+  const [kissCelebration, setKissCelebration] = useState<{
+    key: number;
+    cardOwner: 'Michael' | 'Tamae';
+  } | null>(null);
 
   const [otsukaresamaBurst, setOtsukaresamaBurst] = useState<number | null>(null);
   const wasBurstingRef = useRef(false);
+  const lastConsumedWasKissRef = useRef(false);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Load Tamae's permanently morphed kiss slots from localStorage
-  useEffect(() => {
-    if (currentUser === 'Tamae') {
-      try {
-        const saved = localStorage.getItem('tamae_kiss_prank_indices');
-        if (saved) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setKissedIndices(JSON.parse(saved));
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }, [currentUser]);
-
   useEffect(() => {
     if (burstingIds.length > 0) {
       wasBurstingRef.current = true;
     } else if (burstingIds.length === 0 && wasBurstingRef.current) {
       wasBurstingRef.current = false;
-      setOtsukaresamaBurst(getBurstTimestamp());
-      setTimeout(() => setOtsukaresamaBurst(null), 4000);
+      // Only show Otsukaresama if we aren't already playing the Kiss Explosion
+      if (!lastConsumedWasKissRef.current) {
+        setOtsukaresamaBurst(getBurstTimestamp());
+        setTimeout(() => setOtsukaresamaBurst(null), 4000);
+      }
+      lastConsumedWasKissRef.current = false;
     }
   }, [burstingIds.length]);
 
@@ -224,50 +212,42 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
     };
   }, []);
 
-  const handleSendDrop = async (displayedEmoji: string, index: number) => {
-    const targetUser = currentUser === 'Michael' ? 'Tamae' : 'Michael';
+  const targetPartner = currentUser === 'Michael' ? 'Tamae' : 'Michael';
+  const partnerActiveDrops = drops
+    .filter((d) => d.target_user === targetPartner)
+    .map((d) => d.emoji);
 
-    // Prank logic for Tamae: send whatever is currently displayed on the button,
-    // then permanently transform that button into 💋 on her screen!
-    if (currentUser === 'Tamae') {
-      if (!kissedIndices.includes(index)) {
-        const updated = [...kissedIndices, index];
-        setKissedIndices(updated);
-        localStorage.setItem('tamae_kiss_prank_indices', JSON.stringify(updated));
-        setJustMorphedIdx(index);
-        setTimeout(() => setJustMorphedIdx(null), 600);
-      }
-
-      await supabase.from('drops').insert([{ target_user: targetUser, emoji: displayedEmoji }]);
-
-      // If she tapped a 💋, trigger the 5.5-second Slow-Mo Kiss Confetti & Glow celebration!
-      if (displayedEmoji === '💋') {
-        if (typeof navigator !== 'undefined' && navigator.vibrate) {
-          navigator.vibrate([40, 80, 40, 80, 120]);
-        }
-        setShowDropMenu(false);
-        setKissCelebrationBurst(getBurstTimestamp());
-        setTimeout(() => setKissCelebrationBurst(null), 5800);
-      } else {
-        if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
-      }
-      return;
+  const triggerKissExplosionOnCard = (cardOwner: 'Michael' | 'Tamae') => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([40, 80, 40, 80, 120]);
     }
-
-    await supabase.from('drops').insert([{ target_user: targetUser, emoji: displayedEmoji }]);
-    setShowDropMenu(false);
+    setKissCelebration({ key: getBurstTimestamp(), cardOwner });
+    setTimeout(() => setKissCelebration(null), 5000);
   };
 
-  const handleConsumeDrop = async (id: string) => {
-    if (burstingIds.includes(id)) return;
+  const handleToggleDropFromPack = async (emoji: string) => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(15);
+    }
+    await supabase.from('drops').insert([{ target_user: targetPartner, emoji }]);
+  };
+
+  const handleConsumeDrop = async (drop: Drop) => {
+    if (burstingIds.includes(drop.id)) return;
     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([20, 30, 20]);
 
-    setBurstingIds((prev) => [...prev, id]);
+    // If the drop being tapped/consumed is 💋, set off the Kiss Explosion on your own card too!
+    if (drop.emoji === '💋') {
+      lastConsumedWasKissRef.current = true;
+      triggerKissExplosionOnCard(currentUser);
+    }
+
+    setBurstingIds((prev) => [...prev, drop.id]);
 
     setTimeout(async () => {
-      setDrops((prev) => prev.filter((d) => d.id !== id));
-      setBurstingIds((prev) => prev.filter((bId) => bId !== id));
-      await supabase.from('drops').delete().eq('id', id);
+      setDrops((prev) => prev.filter((d) => d.id !== drop.id));
+      setBurstingIds((prev) => prev.filter((bId) => bId !== drop.id));
+      await supabase.from('drops').delete().eq('id', drop.id);
     }, 1500);
   };
 
@@ -292,85 +272,49 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
     );
   };
 
-  // Slow-Mo Kiss Confetti & Glow overlay when Tamae taps a 💋 (5.5s total duration)
-  const renderKissCelebrationElements = (burstKey: number) => (
-    <div
-      key={burstKey}
-      className="absolute inset-0 z-40 rounded-2xl flex flex-col items-center justify-center pointer-events-none overflow-hidden"
-      style={{ animation: 'kissCardDim 5.5s ease-in-out forwards' }}
-    >
-      <div className="absolute inset-0 flex items-center justify-center">
-        {KISS_CONFETTI.map((p, idx) => (
-          <span
-            key={idx}
-            className="absolute text-xl select-none"
-            style={
-              {
-                animation: `kissConfettiFly 4.8s cubic-bezier(0.12, 0.8, 0.25, 1) ${p.delay}s forwards`,
-                '--tx': `${p.tx}px`,
-                '--ty': `${p.ty}px`,
-                '--rot': `${p.rot}deg`,
-                '--sc': p.scale,
-              } as React.CSSProperties
-            }
-          >
-            {p.char}
-          </span>
-        ))}
-      </div>
-
+  // Permanent Kiss Confetti & Glow overlay ("ちゅっ！💋" in Japanese, "Muah! 💋" in English)
+  const renderKissCelebrationElements = (cardOwner: 'Michael' | 'Tamae') => {
+    if (!kissCelebration || kissCelebration.cardOwner !== cardOwner) return null;
+    return (
       <div
-        className="relative z-10 flex flex-col items-center"
-        style={{
-          animation: 'kissTextGlow 5.5s ease-in-out forwards',
-          fontFamily: '"Shippori Mincho", "Noto Serif JP", serif',
-        }}
+        key={kissCelebration.key}
+        className="absolute inset-0 z-40 rounded-2xl flex flex-col items-center justify-center pointer-events-none overflow-hidden"
+        style={{ animation: 'kissCardDim 4.8s ease-in-out forwards' }}
       >
-        <span className="text-2xl md:text-3xl text-rose-400 tracking-[0.25em] ml-2">
-          ちゅっ！💋
-        </span>
-        <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-rose-300/90 mt-1.5">
-          {lang === 'ja' ? 'やっときた！ (Finally!)' : 'Finally!'}
-        </span>
-      </div>
-    </div>
-  );
-
-  const renderDropMenu = () => (
-    <div className="relative mr-1 shrink-0">
-      <button
-        onClick={() => setShowDropMenu(!showDropMenu)}
-        className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
-          showDropMenu
-            ? 'bg-amber-900/50 border-amber-700/50 text-amber-500'
-            : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'
-        }`}
-      >
-        <Plus className={`w-3.5 h-3.5 transition-transform ${showDropMenu ? 'rotate-45' : ''}`} />
-      </button>
-      {showDropMenu && (
-        <div className="absolute top-8 right-0 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700 rounded-xl p-1.5 grid grid-cols-4 sm:flex gap-1 w-max shadow-xl z-20 animate-in fade-in zoom-in-95">
-          {BASE_EMOJIS.map((baseEmoji, idx) => {
-            const isMorphedToKiss = currentUser === 'Tamae' && kissedIndices.includes(idx);
-            const displayedEmoji = isMorphedToKiss ? '💋' : baseEmoji;
-            const isPopping = justMorphedIdx === idx;
-
-            return (
-              <button
-                key={idx}
-                onClick={() => handleSendDrop(displayedEmoji, idx)}
-                className={`w-8 h-8 flex items-center justify-center text-xl hover:bg-zinc-800 rounded-lg transition-all duration-300 cursor-pointer ${
-                  isPopping ? 'scale-125 bg-rose-950/60 ring-1 ring-rose-500/50' : ''
-                }`}
-              >
-                {displayedEmoji}
-              </button>
-            );
-          })}
+        <div className="absolute inset-0 flex items-center justify-center">
+          {KISS_CONFETTI.map((p, idx) => (
+            <span
+              key={idx}
+              className="absolute text-xl select-none"
+              style={
+                {
+                  animation: `kissConfettiFly 4.4s cubic-bezier(0.12, 0.8, 0.25, 1) ${p.delay}s forwards`,
+                  '--tx': `${p.tx}px`,
+                  '--ty': `${p.ty}px`,
+                  '--rot': `${p.rot}deg`,
+                  '--sc': p.scale,
+                } as React.CSSProperties
+              }
+            >
+              {p.char}
+            </span>
+          ))}
         </div>
-      )}
-    </div>
-  );
+
+        <div
+          className="relative z-10 flex flex-col items-center"
+          style={{
+            animation: 'kissTextGlow 4.8s ease-in-out forwards',
+            fontFamily: '"Shippori Mincho", "Noto Serif JP", serif',
+          }}
+        >
+          <span className="text-2xl md:text-3xl text-rose-400 tracking-[0.2em] ml-2 font-semibold">
+            {lang === 'ja' ? 'ちゅっ！💋' : 'Muah! 💋'}
+          </span>
+        </div>
+      </div>
+    );
+  };
 
   const renderMyDrop = (drop: Drop) => (
     <div
@@ -380,7 +324,7 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
       }`}
     >
       <button
-        onClick={() => handleConsumeDrop(drop.id)}
+        onClick={() => handleConsumeDrop(drop)}
         className={`text-xl transition-all cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] ${
           burstingIds.includes(drop.id)
             ? 'scale-0 opacity-0 duration-1000'
@@ -470,10 +414,11 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
     <div
       key="jp"
       className={`relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full ${
-        showDropMenu && currentUser !== 'Tamae' ? 'z-30' : 'z-10'
+        currentUser !== 'Tamae' ? 'z-30' : 'z-10'
       }`}
     >
       {renderFinalBurstOverlay('Tamae')}
+      {renderKissCelebrationElements('Tamae')}
 
       <div className="flex items-start justify-between w-full relative z-10">
         <div className="flex items-start gap-3 md:gap-4 pointer-events-none">
@@ -518,9 +463,16 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-1.5 shrink-0 ml-4 relative z-10">
+        <div className="flex flex-col items-end gap-1.5 shrink-0 ml-4 relative z-20">
           <div className="flex items-center justify-end gap-2 shrink-0">
-            {currentUser !== 'Tamae' && renderDropMenu()}
+            {currentUser !== 'Tamae' && (
+              <SanctuaryDropMenu
+                lang={lang}
+                activeDrops={partnerActiveDrops}
+                onToggleDrop={handleToggleDropFromPack}
+                onTriggerKissBurst={() => triggerKissExplosionOnCard('Tamae')}
+              />
+            )}
             <span className="text-[10px] md:text-xs font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
               {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : lang === 'ja' ? '夜' : 'Night'}
             </span>
@@ -543,11 +495,11 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
     <div
       key="tx"
       className={`relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full ${
-        showDropMenu && currentUser !== 'Michael' ? 'z-30' : 'z-10'
+        currentUser !== 'Michael' ? 'z-30' : 'z-10'
       }`}
     >
       {renderFinalBurstOverlay('Michael')}
-      {kissCelebrationBurst && currentUser === 'Tamae' && renderKissCelebrationElements(kissCelebrationBurst)}
+      {renderKissCelebrationElements('Michael')}
 
       <div className="flex items-start justify-between w-full relative z-10">
         <div className="flex items-start gap-3 md:gap-4 pointer-events-none">
@@ -592,9 +544,16 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-1.5 shrink-0 ml-4 relative z-10">
+        <div className="flex flex-col items-end gap-1.5 shrink-0 ml-4 relative z-20">
           <div className="flex items-center justify-end gap-2 shrink-0">
-            {currentUser !== 'Michael' && renderDropMenu()}
+            {currentUser !== 'Michael' && (
+              <SanctuaryDropMenu
+                lang={lang}
+                activeDrops={partnerActiveDrops}
+                onToggleDrop={handleToggleDropFromPack}
+                onTriggerKissBurst={() => triggerKissExplosionOnCard('Michael')}
+              />
+            )}
             <span className="text-[10px] md:text-xs font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
               {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : lang === 'ja' ? '夜' : 'Night'}
             </span>
