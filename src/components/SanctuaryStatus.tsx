@@ -316,49 +316,71 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
     );
   };
 
-  const renderMyDrop = (drop: Drop) => (
-    <div
-      key={drop.id}
-      className={`relative flex items-center justify-center transition-[width] duration-700 ease-in-out overflow-visible ${
-        burstingIds.includes(drop.id) ? 'w-0 pointer-events-none' : 'w-8 h-8'
-      }`}
-    >
-      <button
-        onClick={() => handleConsumeDrop(drop)}
-        className={`text-xl transition-all cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] ${
-          burstingIds.includes(drop.id)
-            ? 'scale-0 opacity-0 duration-1000'
-            : 'animate-[bounce_2s_infinite] hover:scale-125 duration-300'
+  const renderMyDrop = (drop: Drop, index: number) => {
+    // Deterministic hash from drop.id + index so every emoji gets a unique rhythm
+    // even after a full page refresh (and satisfies React 19 strict purity rules!)
+    let hash = (index + 1) * 137;
+    for (let i = 0; i < drop.id.length; i++) {
+      hash = (hash * 31 + drop.id.charCodeAt(i)) % 10000;
+    }
+
+    // Negative delay (-0.00s to -2.00s) starts each emoji at a different point in its bounce immediately
+    const delaySecs = -((hash % 200) / 100);
+    // Slightly varied duration (1.75s to 2.45s) so they never sync up
+    const durationSecs = 1.75 + ((hash % 70) / 100);
+
+    return (
+      <div
+        key={drop.id}
+        className={`relative flex items-center justify-center transition-[width] duration-700 ease-in-out overflow-visible ${
+          burstingIds.includes(drop.id) ? 'w-0 pointer-events-none' : 'w-8 h-8'
         }`}
       >
-        {drop.emoji}
-      </button>
-
-      {burstingIds.includes(drop.id) && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
-          {[...Array(12)].map((_, i) => {
-            const angle = i * 30 * (Math.PI / 180);
-            const distance = 40 + ((i * 7) % 20);
-            const x = Math.cos(angle) * distance;
-            const y = Math.sin(angle) * distance;
-            return (
-              <div
-                key={i}
-                className="absolute w-1.5 h-1.5 bg-amber-300 rounded-full shadow-[0_0_8px_rgba(252,211,77,1)]"
-                style={
-                  {
-                    animation: `dropBurst 1.5s ease-out forwards`,
-                    '--tx': `${x}px`,
-                    '--ty': `${y}px`,
-                  } as React.CSSProperties
+        <button
+          onClick={() => handleConsumeDrop(drop)}
+          style={
+            burstingIds.includes(drop.id)
+              ? undefined
+              : {
+                  animationDelay: `${delaySecs}s`,
+                  animationDuration: `${durationSecs}s`,
                 }
-              />
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+          }
+          className={`text-xl transition-all cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] ${
+            burstingIds.includes(drop.id)
+              ? 'scale-0 opacity-0 duration-1000'
+              : 'animate-[bounce_2s_infinite] hover:scale-125 duration-300'
+          }`}
+        >
+          {drop.emoji}
+        </button>
+
+        {burstingIds.includes(drop.id) && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+            {[...Array(12)].map((_, i) => {
+              const angle = i * 30 * (Math.PI / 180);
+              const distance = 40 + ((i * 7) % 20);
+              const x = Math.cos(angle) * distance;
+              const y = Math.sin(angle) * distance;
+              return (
+                <div
+                  key={i}
+                  className="absolute w-1.5 h-1.5 bg-amber-300 rounded-full shadow-[0_0_8px_rgba(252,211,77,1)]"
+                  style={
+                    {
+                      animation: `dropBurst 1.5s ease-out forwards`,
+                      '--tx': `${x}px`,
+                      '--ty': `${y}px`,
+                    } as React.CSSProperties
+                  }
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const texasHour = parseInt(formatInTimeZone(now, 'America/Chicago', 'H'), 10);
   const japanHour = parseInt(formatInTimeZone(now, 'Asia/Tokyo', 'H'), 10);
