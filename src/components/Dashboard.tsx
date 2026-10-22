@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import SanctuaryStatus from '@/components/SanctuaryStatus';
+import DailyReflection from '@/components/DailyReflection';
 import WeeklyUnlock from '@/components/WeeklyUnlock';
 import CountdownTicker from '@/components/CountdownTicker';
 import AvailabilityCalendar from '@/components/AvailabilityCalendar';
@@ -372,6 +373,9 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           <SanctuaryStatus lang={lang} currentUser={currentUser} />
 
           <CountdownTicker lang={lang} />
+
+          {/* NEW: Daily Stoic / Romantic Reflection right above Weekly Unlock */}
+          <DailyReflection lang={lang} currentUser={currentUser} />
 
           <WeeklyUnlock lang={lang} currentUser={currentUser} />
 
