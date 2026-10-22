@@ -1662,305 +1662,6 @@ export default function KeySuccessFactors({ currentUser, lang, title, subtitle, 
 }
 </file>
 
-<file path="src/components/MemoryVault.tsx">
-'use client';
-
-import { useState, useEffect } from 'react';
-import { Image as ImageIcon, Music, Plus, Loader2, Sparkles, ExternalLink } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { fetchAppleMusicArt } from '@/lib/musicScraper';
-import CollapsibleSection from './CollapsibleSection';
-
-interface SharedRecord {
-  id: string;
-  image_url: string;
-  caption: string;
-  location: string;
-  media_type: 'image' | 'music';
-  external_link: string | null;
-  created_at: string;
-}
-
-interface MemoryVaultProps {
-  currentUser: 'Michael' | 'Tamae';
-  lang: 'en' | 'ja';
-  title: string;
-  subtitle: string;
-  icon: React.ReactNode;
-}
-
-export default function MemoryVault({ currentUser, lang, title, subtitle, icon }: MemoryVaultProps) {
-  const [records, setRecords] = useState<SharedRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  const [mediaType, setMediaType] = useState<'image' | 'music'>('image');
-  const [caption, setCaption] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [externalLink, setExternalLink] = useState('');
-  
-  const [isOpen, setIsOpen] = useState(false);
-  const [isAdding, setIsAdding] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function fetchRecords() {
-      const { data, error } = await supabase
-        .from('memories')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (isMounted) {
-        if (!error && data) {
-          setRecords(data);
-        }
-        setLoading(false);
-      }
-    }
-
-    fetchRecords();
-
-    const channel = supabase
-      .channel('public:memories')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'memories' },
-        (payload) => {
-          const newRecord = payload.new as SharedRecord;
-          setRecords((prev) => [newRecord, ...prev]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      isMounted = false;
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const addRecord = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!caption) return;
-    if (mediaType === 'image' && !imageFile) return;
-    if (mediaType === 'music' && !externalLink) return;
-
-    setIsSaving(true);
-    let finalImageUrl = '';
-
-    try {
-      if (mediaType === 'image' && imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `vault/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('photos')
-          .upload(fileName, imageFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('photos')
-          .getPublicUrl(fileName);
-
-        finalImageUrl = publicUrl;
-      } else if (mediaType === 'music') {
-        const scrapedArt = await fetchAppleMusicArt(externalLink);
-        finalImageUrl = scrapedArt || 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=500&auto=format&fit=crop';
-      }
-
-      const location = currentUser === 'Michael' ? 'Michael' : 'Tamae';
-
-      await supabase
-        .from('memories')
-        .insert([{ 
-          image_url: finalImageUrl, 
-          caption, 
-          location,
-          media_type: mediaType,
-          external_link: externalLink || null
-        }]);
-
-      setImageFile(null);
-      setCaption('');
-      setExternalLink('');
-      setIsAdding(false);
-    } catch (error) {
-      console.error('Error saving record:', error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleAddClick = () => {
-    if (!isOpen) {
-      setIsOpen(true);
-      setIsAdding(true);
-    } else {
-      setIsAdding(!isAdding);
-    }
-  };
-
-  const actionButton = (
-    <button 
-      onClick={handleAddClick}
-      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all cursor-pointer"
-    >
-      <Plus className="w-3.5 h-3.5" />
-      <span className="hidden md:inline">{lang === 'ja' ? '記録追加' : 'Add Record'}</span>
-      <span className="md:hidden">{lang === 'ja' ? '追加' : 'Add'}</span>
-    </button>
-  );
-
-  return (
-    <CollapsibleSection
-      title={title}
-      subtitle={subtitle}
-      icon={icon}
-      isControlled={true}
-      isOpen={isOpen}
-      onToggle={setIsOpen}
-      actionButton={actionButton}
-    >
-      {loading ? (
-        <div className="flex items-center justify-center text-stone-500 font-mono text-xs py-4">
-          <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Records...
-        </div>
-      ) : (
-        <>
-          {isAdding && (
-            <form onSubmit={addRecord} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col gap-3">
-              <div className="flex gap-3 mb-1">
-                <button
-                  type="button"
-                  onClick={() => { setMediaType('image'); setExternalLink(''); }}
-                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer ${mediaType === 'image' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
-                >
-                  <ImageIcon className="w-3.5 h-3.5" /> Photo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setMediaType('music'); setImageFile(null); }}
-                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer ${mediaType === 'music' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
-                >
-                  <Music className="w-3.5 h-3.5" /> Music
-                </button>
-              </div>
-
-              <div className="flex gap-3">
-                {mediaType === 'image' ? (
-                  <input
-                    key="image-upload-input"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                    className="flex-1 block w-full text-sm text-stone-400 file:mr-3 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-mono file:bg-stone-800 file:text-stone-300 hover:file:bg-stone-700 transition-all bg-zinc-950 border border-zinc-800 rounded-lg cursor-pointer focus:outline-none focus:border-stone-500"
-                  />
-                ) : (
-                  <input
-                    key="music-link-input"
-                    type="text"
-                    placeholder="Paste Apple Music Link..."
-                    value={externalLink}
-                    onChange={(e) => setExternalLink(e.target.value)}
-                    className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500 font-mono"
-                  />
-                )}
-              </div>
-              
-              <input
-                type="text"
-                placeholder={mediaType === 'music' ? 'Caption (e.g., Gesaffelstein - Pursuit)' : 'Caption (e.g., Sunset by the lake)'}
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500"
-              />
-
-              <button 
-                type="submit" 
-                disabled={isSaving}
-                className="py-2.5 mt-1 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-              >
-                {isSaving ? (
-                  <Loader2 className="w-4 h-4 text-zinc-950 animate-spin" />
-                ) : (
-                  <Sparkles className="w-4 h-4 text-amber-700" />
-                )}
-                <span>{isSaving ? 'Fetching & Saving...' : 'Save to Records'}</span>
-              </button>
-            </form>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {records.length === 0 ? (
-              <p className="text-xs text-stone-600 font-mono text-center py-8 col-span-2">No records logged yet.</p>
-            ) : (
-              records.map((record) => {
-                const isMusic = record.media_type === 'music';
-                const displayLocation = record.location === 'Texas' ? 'Michael' : record.location === 'Kanagawa' ? 'Tamae' : record.location;
-                
-                return (
-                  <div key={record.id} className="rounded-xl overflow-hidden bg-zinc-900/40 border border-zinc-800/60 group relative flex flex-col">
-                    <div className={`${isMusic ? 'h-56 sm:h-64' : 'h-48 md:h-56'} overflow-hidden relative bg-zinc-950`}>
-                      {isMusic && record.external_link ? (
-                        <a href={record.external_link} target="_blank" rel="noreferrer" className="block w-full h-full cursor-pointer">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img 
-                            src={record.image_url} 
-                            alt={record.caption} 
-                            className={`w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 ${isMusic ? 'blur-[2px] scale-105 group-hover:blur-none' : ''}`} 
-                          />
-                        </a>
-                      ) : (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img 
-                          src={record.image_url} 
-                          alt={record.caption} 
-                          className={`w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 ${isMusic ? 'blur-[2px] scale-105 group-hover:blur-none' : ''}`} 
-                        />
-                      )}
-                      
-                      <div className="absolute top-3 left-3 flex gap-2 pointer-events-none">
-                        <span className="px-2 py-1 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-stone-300 border border-zinc-800 flex items-center gap-1.5 shadow-sm">
-                          {isMusic ? <Music className="w-3 h-3 text-amber-500" /> : <ImageIcon className="w-3 h-3 text-stone-400" />}
-                          {displayLocation}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="p-4 flex-1 flex flex-col justify-between bg-zinc-900/40">
-                      <div>
-                        <p className="text-sm font-medium text-stone-200">{record.caption}</p>
-                      </div>
-                      
-                      <div className="flex items-center justify-between mt-3">
-                        <span className="text-[10px] font-mono text-stone-500">
-                          {new Date(record.created_at).toLocaleDateString()}
-                        </span>
-                        {isMusic && record.external_link && (
-                          <a 
-                            href={record.external_link} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10 cursor-pointer"
-                          >
-                            Listen <ExternalLink className="w-3 h-3" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </>
-      )}
-    </CollapsibleSection>
-  );
-}
-</file>
-
 <file path="src/components/MilestoneTracker.tsx">
 'use client';
 
@@ -2675,6 +2376,382 @@ export default function GlobalBucketList({ currentUser, lang, title, subtitle, i
           <WorldMap destinations={destinations} lang={lang} />
           
         </div>
+      )}
+    </CollapsibleSection>
+  );
+}
+</file>
+
+<file path="src/components/MemoryVault.tsx">
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Image as ImageIcon, Music, Plus, Loader2, Sparkles, ExternalLink, X } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { fetchAppleMusicArt } from '@/lib/musicScraper';
+import CollapsibleSection from './CollapsibleSection';
+import ReactionThread, { ThreadComment } from './ReactionThread';
+
+interface SharedRecord {
+  id: string;
+  image_url: string;
+  caption: string;
+  location: string;
+  media_type: 'image' | 'music';
+  external_link: string | null;
+  created_at: string;
+  hearted_by: string[] | null;
+  comments: ThreadComment[] | null;
+}
+
+interface MemoryVaultProps {
+  currentUser: 'Michael' | 'Tamae';
+  lang: 'en' | 'ja';
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+}
+
+const generateId = () => Date.now().toString();
+const getNowIso = () => new Date().toISOString();
+const generateFilePrefix = () => `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+
+export default function MemoryVault({ currentUser, lang, title, subtitle, icon }: MemoryVaultProps) {
+  const [records, setRecords] = useState<SharedRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const [mediaType, setMediaType] = useState<'image' | 'music'>('image');
+  const [caption, setCaption] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [externalLink, setExternalLink] = useState('');
+  
+  const [isOpen, setIsOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lightboxRecord, setLightboxRecord] = useState<SharedRecord | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchRecords() {
+      const { data, error } = await supabase
+        .from('memories')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (isMounted) {
+        if (!error && data) {
+          setRecords(data);
+        }
+        setLoading(false);
+      }
+    }
+
+    fetchRecords();
+
+    const channel = supabase
+      .channel('public:memories')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'memories' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newRecord = payload.new as SharedRecord;
+            setRecords((prev) => [newRecord, ...prev.filter((r) => r.id !== newRecord.id)]);
+          } else if (payload.eventType === 'UPDATE') {
+            setRecords((prev) =>
+              prev.map((r) => (r.id === payload.new.id ? (payload.new as SharedRecord) : r))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setRecords((prev) => prev.filter((r) => r.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const addRecord = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!caption) return;
+    if (mediaType === 'image' && !imageFile) return;
+    if (mediaType === 'music' && !externalLink) return;
+
+    setIsSaving(true);
+    let finalImageUrl = '';
+
+    try {
+      if (mediaType === 'image' && imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `vault/${generateFilePrefix()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('photos')
+          .upload(fileName, imageFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('photos')
+          .getPublicUrl(fileName);
+
+        finalImageUrl = publicUrl;
+      } else if (mediaType === 'music') {
+        const scrapedArt = await fetchAppleMusicArt(externalLink);
+        finalImageUrl = scrapedArt || 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=500&auto=format&fit=crop';
+      }
+
+      const location = currentUser === 'Michael' ? 'Michael' : 'Tamae';
+
+      await supabase
+        .from('memories')
+        .insert([{ 
+          image_url: finalImageUrl, 
+          caption, 
+          location,
+          media_type: mediaType,
+          external_link: externalLink || null
+        }]);
+
+      setImageFile(null);
+      setCaption('');
+      setExternalLink('');
+      setIsAdding(false);
+    } catch (error) {
+      console.error('Error saving record:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const toggleHeart = async (record: SharedRecord) => {
+    const currentHearts = record.hearted_by || [];
+    const newHearts = currentHearts.includes(currentUser)
+      ? currentHearts.filter((u) => u !== currentUser)
+      : [...currentHearts, currentUser];
+
+    setRecords(records.map((r) => (r.id === record.id ? { ...r, hearted_by: newHearts } : r)));
+    await supabase.from('memories').update({ hearted_by: newHearts }).eq('id', record.id);
+  };
+
+  const postReply = async (content: string, record: SharedRecord) => {
+    const author = currentUser === 'Michael' ? 'Texas' : 'Kanagawa';
+    const newComment: ThreadComment = {
+      id: generateId(),
+      author,
+      content,
+      created_at: getNowIso(),
+    };
+    const newComments = [...(record.comments || []), newComment];
+
+    setRecords(records.map((r) => (r.id === record.id ? { ...r, comments: newComments } : r)));
+    await supabase.from('memories').update({ comments: newComments }).eq('id', record.id);
+  };
+
+  const handleAddClick = () => {
+    if (!isOpen) {
+      setIsOpen(true);
+      setIsAdding(true);
+    } else {
+      setIsAdding(!isAdding);
+    }
+  };
+
+  const actionButton = (
+    <button 
+      onClick={handleAddClick}
+      className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all cursor-pointer"
+    >
+      <Plus className="w-3.5 h-3.5" />
+      <span className="hidden md:inline">{lang === 'ja' ? '記録追加' : 'Add Record'}</span>
+      <span className="md:hidden">{lang === 'ja' ? '追加' : 'Add'}</span>
+    </button>
+  );
+
+  return (
+    <CollapsibleSection
+      title={title}
+      subtitle={subtitle}
+      icon={icon}
+      isControlled={true}
+      isOpen={isOpen}
+      onToggle={setIsOpen}
+      actionButton={actionButton}
+    >
+      {loading ? (
+        <div className="flex items-center justify-center text-stone-500 font-mono text-xs py-4">
+          <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading Records...
+        </div>
+      ) : (
+        <>
+          {isAdding && (
+            <form onSubmit={addRecord} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col gap-3">
+              <div className="flex gap-3 mb-1">
+                <button
+                  type="button"
+                  onClick={() => { setMediaType('image'); setExternalLink(''); }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer ${mediaType === 'image' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+                >
+                  <ImageIcon className="w-3.5 h-3.5" /> Photo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setMediaType('music'); setImageFile(null); }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer ${mediaType === 'music' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+                >
+                  <Music className="w-3.5 h-3.5" /> Music
+                </button>
+              </div>
+
+              <div className="flex gap-3">
+                {mediaType === 'image' ? (
+                  <input
+                    key="image-upload-input"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    className="flex-1 block w-full text-sm text-stone-400 file:mr-3 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-mono file:bg-stone-800 file:text-stone-300 hover:file:bg-stone-700 transition-all bg-zinc-950 border border-zinc-800 rounded-lg cursor-pointer focus:outline-none focus:border-stone-500"
+                  />
+                ) : (
+                  <input
+                    key="music-link-input"
+                    type="text"
+                    placeholder="Paste Apple Music Link..."
+                    value={externalLink}
+                    onChange={(e) => setExternalLink(e.target.value)}
+                    className="flex-1 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500 font-mono"
+                  />
+                )}
+              </div>
+              
+              <input
+                type="text"
+                placeholder={mediaType === 'music' ? 'Caption (e.g., Gesaffelstein - Pursuit)' : 'Caption (e.g., Sunset by the lake)'}
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500"
+              />
+
+              <button 
+                type="submit" 
+                disabled={isSaving}
+                className="py-2.5 mt-1 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 text-zinc-950 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 text-amber-700" />
+                )}
+                <span>{isSaving ? 'Fetching & Saving...' : 'Save to Records'}</span>
+              </button>
+            </form>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            {records.length === 0 ? (
+              <p className="text-xs text-stone-600 font-mono text-center py-8 col-span-2">No records logged yet.</p>
+            ) : (
+              records.map((record) => {
+                const isMusic = record.media_type === 'music';
+                const displayLocation = record.location === 'Texas' ? 'Michael' : record.location === 'Kanagawa' ? 'Tamae' : record.location;
+                
+                return (
+                  <div key={record.id} className="rounded-xl overflow-hidden bg-zinc-900/40 border border-zinc-800/60 group relative flex flex-col">
+                    <div className={`${isMusic ? 'h-56 sm:h-64' : 'max-h-112 flex items-center justify-center'} overflow-hidden relative bg-zinc-950`}>
+                      {isMusic && record.external_link ? (
+                        <a href={record.external_link} target="_blank" rel="noreferrer" className="block w-full h-full cursor-pointer">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img 
+                            src={record.image_url} 
+                            alt={record.caption} 
+                            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 blur-[2px] scale-105 group-hover:blur-none" 
+                          />
+                        </a>
+                      ) : (
+                        <div
+                          onClick={() => setLightboxRecord(record)}
+                          className="w-full flex items-center justify-center cursor-zoom-in"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img 
+                            src={record.image_url} 
+                            alt={record.caption} 
+                            className="w-full h-auto max-h-112 object-contain group-hover:scale-[1.02] transition-transform duration-500 opacity-95" 
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="absolute top-3 left-3 flex gap-2 pointer-events-none">
+                        <span className="px-2 py-1 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-stone-300 border border-zinc-800 flex items-center gap-1.5 shadow-sm">
+                          {isMusic ? <Music className="w-3 h-3 text-amber-500" /> : <ImageIcon className="w-3 h-3 text-stone-400" />}
+                          {displayLocation}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 flex-1 flex flex-col justify-between bg-zinc-900/40">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-medium text-stone-200">{record.caption}</p>
+                        <span className="text-[10px] font-mono text-stone-500 shrink-0 mt-0.5">
+                          {new Date(record.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      
+                      {isMusic && record.external_link && (
+                        <div className="mt-2">
+                          <a 
+                            href={record.external_link} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10 cursor-pointer"
+                          >
+                            Listen <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
+
+                      <div className="mt-2 pt-2 border-t border-zinc-800/40">
+                        <ReactionThread
+                          currentUser={currentUser}
+                          heartedBy={record.hearted_by || []}
+                          comments={record.comments || []}
+                          onToggleHeart={() => toggleHeart(record)}
+                          onAddComment={(content) => postReply(content, record)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Full-Screen Photo Lightbox */}
+          {lightboxRecord && (
+            <div
+              onClick={() => setLightboxRecord(null)}
+              className="fixed inset-0 z-50 bg-zinc-950/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 md:p-8 cursor-zoom-out animate-in fade-in duration-200"
+            >
+              <button
+                onClick={() => setLightboxRecord(null)}
+                className="absolute top-6 right-6 p-2.5 rounded-full bg-zinc-900 border border-zinc-700 text-stone-300 hover:text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={lightboxRecord.image_url}
+                alt={lightboxRecord.caption}
+                className="max-w-full max-h-[82vh] object-contain rounded-xl border border-zinc-800 shadow-2xl"
+              />
+              <p className="mt-4 text-sm font-medium text-stone-200">{lightboxRecord.caption}</p>
+            </div>
+          )}
+        </>
       )}
     </CollapsibleSection>
   );

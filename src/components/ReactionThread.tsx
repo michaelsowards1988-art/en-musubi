@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Heart, MessageCircle, Send, Sparkles, X } from 'lucide-react';
 
 export interface ThreadComment {
@@ -20,13 +20,26 @@ interface ReactionThreadProps {
 
 const AVATARS = {
   Kanagawa: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Tamae.png',
-  Texas: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png'
+  Texas: 'https://sizdewlxjcfdekzzdofw.supabase.co/storage/v1/object/public/photos/Michael.png',
 };
 
-export default function ReactionThread({ heartedBy, comments, onToggleHeart, onAddComment }: ReactionThreadProps) {
+export default function ReactionThread({
+  heartedBy,
+  comments,
+  onToggleHeart,
+  onAddComment,
+}: ReactionThreadProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [replyContent, setReplyContent] = useState('');
+  const [avatarBust, setAvatarBust] = useState('1');
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const syncBust = () => setAvatarBust(localStorage.getItem('avatar_bust') || '1');
+    syncBust();
+    window.addEventListener('avatar-bust-changed', syncBust);
+    return () => window.removeEventListener('avatar-bust-changed', syncBust);
+  }, []);
 
   const bothHearted = heartedBy.length >= 2;
   const anyoneHearted = heartedBy.length > 0;
@@ -46,9 +59,8 @@ export default function ReactionThread({ heartedBy, comments, onToggleHeart, onA
 
   return (
     <div className="w-full">
-      {/* Action Bar */}
       <div className="flex items-center gap-4 mt-3">
-        <button 
+        <button
           onClick={onToggleHeart}
           className="flex items-center justify-center transition-all cursor-pointer relative"
         >
@@ -63,12 +75,12 @@ export default function ReactionThread({ heartedBy, comments, onToggleHeart, onA
             <Heart className="w-3.5 h-3.5 text-stone-500 hover:text-stone-300" />
           )}
         </button>
-        
-        <button 
+
+        <button
           onClick={() => setIsExpanded(!isExpanded)}
           className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer ${
-            hasComments && !isExpanded 
-              ? 'text-amber-500 hover:text-amber-400' 
+            hasComments && !isExpanded
+              ? 'text-amber-500 hover:text-amber-400'
               : 'text-stone-500 hover:text-stone-300'
           }`}
         >
@@ -77,42 +89,45 @@ export default function ReactionThread({ heartedBy, comments, onToggleHeart, onA
         </button>
       </div>
 
-      {/* Comments Thread (Hidden by default, expands on click) */}
       {isExpanded && (
         <div className="ml-1 pl-4 border-l-2 border-zinc-800/50 flex flex-col gap-3 mt-4 animate-in fade-in duration-300">
-          {comments.map((comment) => (
-            <div key={comment.id} className="flex items-start gap-2.5">
-              <div className="w-5 h-5 rounded-full overflow-hidden border border-stone-500/20 bg-zinc-950 shrink-0 mt-0.5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={AVATARS[comment.author as keyof typeof AVATARS] || AVATARS.Texas} 
-                  alt={comment.author} 
-                  className="w-full h-full object-cover" 
-                />
-              </div>
-              <div className="flex-1 min-w-0 bg-zinc-950/50 p-2.5 rounded-lg border border-zinc-800/40">
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-[9px] font-mono text-stone-500 uppercase">
-                    {comment.author === 'Kanagawa' ? 'Tamae' : 'Michael'}
-                  </span>
+          {comments.map((comment) => {
+            const baseAvatar =
+              AVATARS[comment.author as keyof typeof AVATARS] || AVATARS.Texas;
+            return (
+              <div key={comment.id} className="flex items-start gap-2.5">
+                <div className="w-5 h-5 rounded-full overflow-hidden border border-stone-500/20 bg-zinc-950 shrink-0 mt-0.5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`${baseAvatar}?v=${avatarBust}`}
+                    alt={comment.author}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <p className="text-xs text-stone-300 whitespace-pre-wrap">{comment.content}</p>
+                <div className="flex-1 min-w-0 bg-zinc-950/50 p-2.5 rounded-lg border border-zinc-800/40">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[9px] font-mono text-stone-500 uppercase">
+                      {comment.author === 'Kanagawa' ? 'Tamae' : 'Michael'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-300 whitespace-pre-wrap">{comment.content}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           <form ref={formRef} onSubmit={handleSubmit} className="flex items-center gap-2 mt-1">
             <div className="relative flex-1">
               <input
                 type="text"
                 autoFocus
-                placeholder={hasComments ? "Add a reply..." : "Add a thought..."}
+                placeholder={hasComments ? 'Add a reply...' : 'Add a thought...'}
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 className="w-full p-2 pr-8 rounded-lg bg-zinc-950 border border-zinc-800 text-xs text-stone-200 focus:outline-none focus:border-amber-700/50"
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={handleClose}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-500 hover:text-red-500 transition-colors cursor-pointer"
                 aria-label="Close thread"
@@ -120,7 +135,11 @@ export default function ReactionThread({ heartedBy, comments, onToggleHeart, onA
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
-            <button type="submit" disabled={!replyContent.trim()} className="p-2 rounded-lg bg-stone-200 text-zinc-950 hover:bg-white transition-all disabled:opacity-50 disabled:hover:bg-stone-200 cursor-pointer">
+            <button
+              type="submit"
+              disabled={!replyContent.trim()}
+              className="p-2 rounded-lg bg-stone-200 text-zinc-950 hover:bg-white transition-all disabled:opacity-50 disabled:hover:bg-stone-200 cursor-pointer"
+            >
               <Send className="w-3.5 h-3.5" />
             </button>
           </form>

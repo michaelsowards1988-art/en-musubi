@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Image as ImageIcon, Music, Plus, Loader2, Sparkles, ExternalLink, X } from 'lucide-react';
+import { Image as ImageIcon, Music, Plus, Loader2, Sparkles, ExternalLink, X, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { fetchAppleMusicArt } from '@/lib/musicScraper';
 import CollapsibleSection from './CollapsibleSection';
@@ -34,12 +34,12 @@ const generateFilePrefix = () => `${Date.now()}-${Math.random().toString(36).sub
 export default function MemoryVault({ currentUser, lang, title, subtitle, icon }: MemoryVaultProps) {
   const [records, setRecords] = useState<SharedRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [mediaType, setMediaType] = useState<'image' | 'music'>('image');
   const [caption, setCaption] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [externalLink, setExternalLink] = useState('');
-  
+
   const [isOpen, setIsOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -66,22 +66,18 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
 
     const channel = supabase
       .channel('public:memories')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'memories' },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            const newRecord = payload.new as SharedRecord;
-            setRecords((prev) => [newRecord, ...prev.filter((r) => r.id !== newRecord.id)]);
-          } else if (payload.eventType === 'UPDATE') {
-            setRecords((prev) =>
-              prev.map((r) => (r.id === payload.new.id ? (payload.new as SharedRecord) : r))
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setRecords((prev) => prev.filter((r) => r.id !== payload.old.id));
-          }
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'memories' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const newRecord = payload.new as SharedRecord;
+          setRecords((prev) => [newRecord, ...prev.filter((r) => r.id !== newRecord.id)]);
+        } else if (payload.eventType === 'UPDATE') {
+          setRecords((prev) =>
+            prev.map((r) => (r.id === payload.new.id ? (payload.new as SharedRecord) : r))
+          );
+        } else if (payload.eventType === 'DELETE') {
+          setRecords((prev) => prev.filter((r) => r.id !== payload.old.id));
         }
-      )
+      })
       .subscribe();
 
     return () => {
@@ -110,27 +106,29 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('photos')
-          .getPublicUrl(fileName);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('photos').getPublicUrl(fileName);
 
         finalImageUrl = publicUrl;
       } else if (mediaType === 'music') {
         const scrapedArt = await fetchAppleMusicArt(externalLink);
-        finalImageUrl = scrapedArt || 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=500&auto=format&fit=crop';
+        finalImageUrl =
+          scrapedArt ||
+          'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?q=80&w=500&auto=format&fit=crop';
       }
 
       const location = currentUser === 'Michael' ? 'Michael' : 'Tamae';
 
-      await supabase
-        .from('memories')
-        .insert([{ 
-          image_url: finalImageUrl, 
-          caption, 
+      await supabase.from('memories').insert([
+        {
+          image_url: finalImageUrl,
+          caption,
           location,
           media_type: mediaType,
-          external_link: externalLink || null
-        }]);
+          external_link: externalLink || null,
+        },
+      ]);
 
       setImageFile(null);
       setCaption('');
@@ -141,6 +139,11 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const deleteRecord = async (id: string) => {
+    setRecords((prev) => prev.filter((r) => r.id !== id));
+    await supabase.from('memories').delete().eq('id', id);
   };
 
   const toggleHeart = async (record: SharedRecord) => {
@@ -177,7 +180,7 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
   };
 
   const actionButton = (
-    <button 
+    <button
       onClick={handleAddClick}
       className="flex items-center gap-1.5 text-xs font-mono bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg text-stone-300 hover:bg-zinc-800 transition-all cursor-pointer"
     >
@@ -204,19 +207,36 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
       ) : (
         <>
           {isAdding && (
-            <form onSubmit={addRecord} className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col gap-3">
+            <form
+              onSubmit={addRecord}
+              className="mb-6 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col gap-3"
+            >
               <div className="flex gap-3 mb-1">
                 <button
                   type="button"
-                  onClick={() => { setMediaType('image'); setExternalLink(''); }}
-                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer ${mediaType === 'image' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+                  onClick={() => {
+                    setMediaType('image');
+                    setExternalLink('');
+                  }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    mediaType === 'image'
+                      ? 'bg-stone-800 text-stone-200 border border-stone-700'
+                      : 'bg-zinc-950 text-stone-500 border border-zinc-800'
+                  }`}
                 >
                   <ImageIcon className="w-3.5 h-3.5" /> Photo
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setMediaType('music'); setImageFile(null); }}
-                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer ${mediaType === 'music' ? 'bg-stone-800 text-stone-200 border border-stone-700' : 'bg-zinc-950 text-stone-500 border border-zinc-800'}`}
+                  onClick={() => {
+                    setMediaType('music');
+                    setImageFile(null);
+                  }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-mono flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    mediaType === 'music'
+                      ? 'bg-stone-800 text-stone-200 border border-stone-700'
+                      : 'bg-zinc-950 text-stone-500 border border-zinc-800'
+                  }`}
                 >
                   <Music className="w-3.5 h-3.5" /> Music
                 </button>
@@ -242,17 +262,21 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
                   />
                 )}
               </div>
-              
+
               <input
                 type="text"
-                placeholder={mediaType === 'music' ? 'Caption (e.g., Gesaffelstein - Pursuit)' : 'Caption (e.g., Sunset by the lake)'}
+                placeholder={
+                  mediaType === 'music'
+                    ? 'Caption (e.g., Gesaffelstein - Pursuit)'
+                    : 'Caption (e.g., Sunset by the lake)'
+                }
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 className="p-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-sm text-stone-200 focus:outline-none focus:border-stone-500"
               />
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={isSaving}
                 className="py-2.5 mt-1 rounded-lg bg-stone-200 text-zinc-950 text-sm font-medium hover:bg-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
@@ -268,22 +292,41 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             {records.length === 0 ? (
-              <p className="text-xs text-stone-600 font-mono text-center py-8 col-span-2">No records logged yet.</p>
+              <p className="text-xs text-stone-600 font-mono text-center py-8 col-span-2">
+                No records logged yet.
+              </p>
             ) : (
               records.map((record) => {
                 const isMusic = record.media_type === 'music';
-                const displayLocation = record.location === 'Texas' ? 'Michael' : record.location === 'Kanagawa' ? 'Tamae' : record.location;
-                
+                const displayLocation =
+                  record.location === 'Texas'
+                    ? 'Michael'
+                    : record.location === 'Kanagawa'
+                      ? 'Tamae'
+                      : record.location;
+
                 return (
-                  <div key={record.id} className="rounded-xl overflow-hidden bg-zinc-900/40 border border-zinc-800/60 group relative flex flex-col">
-                    <div className={`${isMusic ? 'h-56 sm:h-64' : 'max-h-112 flex items-center justify-center'} overflow-hidden relative bg-zinc-950`}>
+                  <div
+                    key={record.id}
+                    className="rounded-xl overflow-hidden bg-zinc-900/40 border border-zinc-800/60 group relative flex flex-col"
+                  >
+                    <div
+                      className={`${
+                        isMusic ? 'h-56 sm:h-64' : 'max-h-112 flex items-center justify-center'
+                      } overflow-hidden relative bg-zinc-950`}
+                    >
                       {isMusic && record.external_link ? (
-                        <a href={record.external_link} target="_blank" rel="noreferrer" className="block w-full h-full cursor-pointer">
+                        <a
+                          href={record.external_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block w-full h-full cursor-pointer"
+                        >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img 
-                            src={record.image_url} 
-                            alt={record.caption} 
-                            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 blur-[2px] scale-105 group-hover:blur-none" 
+                          <img
+                            src={record.image_url}
+                            alt={record.caption}
+                            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 blur-[2px] scale-105 group-hover:blur-none"
                           />
                         </a>
                       ) : (
@@ -292,22 +335,35 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
                           className="w-full flex items-center justify-center cursor-zoom-in"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img 
-                            src={record.image_url} 
-                            alt={record.caption} 
-                            className="w-full h-auto max-h-112 object-contain group-hover:scale-[1.02] transition-transform duration-500 opacity-95" 
+                          <img
+                            src={record.image_url}
+                            alt={record.caption}
+                            className="w-full h-auto max-h-112 object-contain group-hover:scale-[1.02] transition-transform duration-500 opacity-95"
                           />
                         </div>
                       )}
-                      
+
                       <div className="absolute top-3 left-3 flex gap-2 pointer-events-none">
                         <span className="px-2 py-1 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-stone-300 border border-zinc-800 flex items-center gap-1.5 shadow-sm">
-                          {isMusic ? <Music className="w-3 h-3 text-amber-500" /> : <ImageIcon className="w-3 h-3 text-stone-400" />}
+                          {isMusic ? (
+                            <Music className="w-3 h-3 text-amber-500" />
+                          ) : (
+                            <ImageIcon className="w-3.5 h-3.5 text-stone-400" />
+                          )}
                           {displayLocation}
                         </span>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => deleteRecord(record.id)}
+                        title={lang === 'ja' ? '削除' : 'Delete'}
+                        className="absolute top-3 right-3 p-1.5 rounded-lg bg-zinc-950/80 border border-zinc-800 text-stone-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                    
+
                     <div className="p-4 flex-1 flex flex-col justify-between bg-zinc-900/40">
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm font-medium text-stone-200">{record.caption}</p>
@@ -315,12 +371,12 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
                           {new Date(record.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                      
+
                       {isMusic && record.external_link && (
                         <div className="mt-2">
-                          <a 
-                            href={record.external_link} 
-                            target="_blank" 
+                          <a
+                            href={record.external_link}
+                            target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10 cursor-pointer"
                           >
@@ -345,7 +401,6 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
             )}
           </div>
 
-          {/* Full-Screen Photo Lightbox */}
           {lightboxRecord && (
             <div
               onClick={() => setLightboxRecord(null)}
