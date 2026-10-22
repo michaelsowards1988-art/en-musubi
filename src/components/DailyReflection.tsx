@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BookOpen, ChevronLeft, ChevronRight, Loader2, Quote } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, Loader2, Quote, RotateCcw } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { supabase } from '@/lib/supabase';
 import ReactionThread, { ThreadComment } from './ReactionThread';
@@ -37,11 +37,12 @@ const MONTH_NAMES_EN = [
 export default function DailyReflection({ lang, currentUser }: DailyReflectionProps) {
   const [reflections, setReflections] = useState<ReflectionRecord[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [todayIndex, setTodayIndex] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    // Anchor today's MM-DD to Asia/Tokyo so both Kanagawa & Texas share the exact same daily rollover
+    // Anchor today's MM-DD to Asia/Tokyo so both Kanagawa & Texas unlock the new reflection together
     const todayJstMmDd = formatInTimeZone(new Date(), 'Asia/Tokyo', 'MM-dd');
 
     async function fetchReflections() {
@@ -52,17 +53,16 @@ export default function DailyReflection({ lang, currentUser }: DailyReflectionPr
 
       if (isMounted) {
         if (!error && data && data.length > 0) {
-          const typedData = data as ReflectionRecord[];
-          setReflections(typedData);
+          const allData = data as ReflectionRecord[];
+          // Lock future dates: only allow viewing reflections up to today's JST date
+          const unlocked = allData.filter((r) => r.month_day <= todayJstMmDd);
+          const visibleList = unlocked.length > 0 ? unlocked : [allData[0]];
 
-          // Find exact match for today's MM-DD, or closest prior day
-          const exactIdx = typedData.findIndex((r) => r.month_day === todayJstMmDd);
-          if (exactIdx !== -1) {
-            setCurrentIndex(exactIdx);
-          } else {
-            const priorIdx = typedData.findLastIndex((r) => r.month_day <= todayJstMmDd);
-            setCurrentIndex(priorIdx !== -1 ? priorIdx : typedData.length - 1);
-          }
+          setReflections(visibleList);
+
+          const latestIdx = visibleList.length - 1;
+          setTodayIndex(latestIdx);
+          setCurrentIndex(latestIdx);
         }
         setLoading(false);
       }
@@ -81,11 +81,14 @@ export default function DailyReflection({ lang, currentUser }: DailyReflectionPr
               prev.map((r) => (r.id === payload.new.id ? (payload.new as ReflectionRecord) : r))
             );
           } else if (payload.eventType === 'INSERT') {
-            setReflections((prev) =>
-              [...prev.filter((r) => r.id !== payload.new.id), payload.new as ReflectionRecord].sort(
-                (a, b) => a.month_day.localeCompare(b.month_day)
-              )
-            );
+            const newRec = payload.new as ReflectionRecord;
+            if (newRec.month_day <= todayJstMmDd) {
+              setReflections((prev) =>
+                [...prev.filter((r) => r.id !== newRec.id), newRec].sort((a, b) =>
+                  a.month_day.localeCompare(b.month_day)
+                )
+              );
+            }
           }
         }
       )
@@ -107,7 +110,10 @@ export default function DailyReflection({ lang, currentUser }: DailyReflectionPr
 
   if (reflections.length === 0) return null;
 
-  const current = reflections[currentIndex] || reflections[0];
+  const current = reflections[currentIndex] || reflections[todayIndex] || reflections[0];
+  const isViewingToday = currentIndex === todayIndex;
+  const canGoBack = currentIndex > 0;
+  const canGoForward = currentIndex < todayIndex;
 
   const formatMmDdLabel = (mmDd: string) => {
     const [mStr, dStr] = mmDd.split('-');
@@ -148,7 +154,7 @@ export default function DailyReflection({ lang, currentUser }: DailyReflectionPr
   return (
     <div className="w-full max-w-4xl rounded-2xl bg-zinc-950/80 backdrop-blur-xl border border-stone-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.5)] overflow-hidden relative transition-all">
       <div className="p-6 md:p-8">
-        {/* Top Bar: Label & Day Navigation */}
+        {/* Top Bar: Label & Past-Only Day Navigation */}
         <div className="flex items-center justify-between gap-4 mb-5">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-stone-900/60 border border-stone-800/60 text-amber-500/90 shadow-inner">
@@ -158,36 +164,59 @@ export default function DailyReflection({ lang, currentUser }: DailyReflectionPr
               <h3 className="text-xs font-mono uppercase tracking-widest text-amber-500/90 font-semibold">
                 {lang === 'ja' ? '日々の思索' : 'Daily Reflection'}
               </h3>
-              <p className="text-[11px] font-mono text-stone-400 mt-0.5">
-                {formatMmDdLabel(current.month_day)}
-              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-[11px] font-mono text-stone-400">
+                  {formatMmDdLabel(current.month_day)}
+                </p>
+                {isViewingToday && (
+                  <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-950/40 text-amber-400 border border-amber-900/40">
+                    {lang === 'ja' ? '今日' : 'Today'}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
-          {reflections.length > 1 && (
-            <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5">
+            {!isViewingToday && (
               <button
                 type="button"
-                onClick={() =>
-                  setCurrentIndex((prev) => (prev > 0 ? prev - 1 : reflections.length - 1))
-                }
-                title={lang === 'ja' ? '前の日' : 'Previous Day'}
-                className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-stone-400 hover:text-stone-200 transition-colors cursor-pointer"
+                onClick={() => setCurrentIndex(todayIndex)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-950/40 border border-amber-800/50 text-[10px] font-mono uppercase tracking-wider text-amber-400 hover:bg-amber-900/50 transition-all cursor-pointer mr-1"
               >
-                <ChevronLeft className="w-3.5 h-3.5" />
+                <RotateCcw className="w-3 h-3" />
+                <span>{lang === 'ja' ? '今日に戻る' : 'Today'}</span>
               </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setCurrentIndex((prev) => (prev < reflections.length - 1 ? prev + 1 : 0))
-                }
-                title={lang === 'ja' ? '次の日' : 'Next Day'}
-                className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-stone-400 hover:text-stone-200 transition-colors cursor-pointer"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
+            )}
+
+            <button
+              type="button"
+              disabled={!canGoBack}
+              onClick={() => canGoBack && setCurrentIndex((prev) => prev - 1)}
+              title={lang === 'ja' ? '前の日' : 'Previous Day'}
+              className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-stone-400 hover:text-stone-200 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              disabled={!canGoForward}
+              onClick={() => canGoForward && setCurrentIndex((prev) => prev + 1)}
+              title={
+                canGoForward
+                  ? lang === 'ja'
+                    ? '次の日'
+                    : 'Next Day'
+                  : lang === 'ja'
+                    ? '明日の思索はJST午前0時に解放されます'
+                    : 'Tomorrow unlocks at midnight JST'
+              }
+              className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-stone-400 hover:text-stone-200 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Title */}
