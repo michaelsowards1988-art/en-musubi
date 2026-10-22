@@ -1,7 +1,17 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Sun, Moon, Cloud, Thermometer, CloudRain, CloudLightning, CloudSnow, CloudFog, Plus } from 'lucide-react';
+import {
+  Sun,
+  Moon,
+  Cloud,
+  Thermometer,
+  CloudRain,
+  CloudLightning,
+  CloudSnow,
+  CloudFog,
+  Plus,
+} from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { enUS, ja } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
@@ -25,8 +35,24 @@ interface Drop {
 
 const BASE_EMOJIS = ['💋', '🥙', '🪷', '💄', '🍫', '🍵', '☕', '🥞', '♨️'];
 
+const getBurstTimestamp = () => Date.now();
+
+// Deterministic pseudo-random offsets for the 24 slow-mo kiss confetti particles
+const KISS_CONFETTI = Array.from({ length: 24 }).map((_, i) => {
+  const angle = i * 15 * (Math.PI / 180);
+  const distance = 65 + ((i * 29) % 95);
+  return {
+    tx: Math.round(Math.cos(angle) * distance),
+    ty: Math.round(Math.sin(angle) * distance - 20),
+    rot: ((i * 47) % 90) - 45,
+    delay: (i % 8) * 0.09,
+    scale: 0.75 + (i % 4) * 0.25,
+    char: i % 4 === 0 ? '✨' : '💋',
+  };
+});
+
 // Cultural Dictionary for Context
-const HOLIDAY_INFO: Record<string, { en: string, ja: string }> = {
+const HOLIDAY_INFO: Record<string, { en: string; ja: string }> = {
   "New Year's Day": { en: "Celebrating the start of the new year.", ja: "年の初めを祝う日。" },
   "Coming of Age Day": { en: "Celebrating youth who have reached adulthood.", ja: "新成人を祝い励ます日。" },
   "National Foundation Day": { en: "Reflecting on the nation's founding.", ja: "建国をしのび、国を愛する心を養う日。" },
@@ -52,7 +78,7 @@ const HOLIDAY_INFO: Record<string, { en: string, ja: string }> = {
   "Washington's Birthday": { en: "Honoring the first US President.", ja: "初代大統領ワシントンをたたえる日（大統領の日）。" },
   "Juneteenth": { en: "Commemorates the emancipation of enslaved African Americans.", ja: "アフリカ系アメリカ人の奴隷解放を記念する日。" },
   "Columbus Day": { en: "Commemorates the landing of Christopher Columbus in 1492.", ja: "1492年のコロンブスのアメリカ大陸到達を記念する日。" },
-  "Christmas Day": { en: "Celebrating the birth of Jesus Christ.", ja: "イエス・キリストの降誕を祝う日。" }
+  "Christmas Day": { en: "Celebrating the birth of Jesus Christ.", ja: "イエス・キリストの降誕を祝う日。" },
 };
 
 const getMoonPhase = (date: Date) => {
@@ -74,19 +100,28 @@ const getMoonPhase = (date: Date) => {
 
 export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusProps) {
   const [now, setNow] = useState(new Date());
-  const [jpWeather, setJpWeather] = useState<{ tempC: number | null, code: number | null, isDay: boolean | null }>({ tempC: null, code: null, isDay: null });
-  const [txWeather, setTxWeather] = useState<{ tempC: number | null, code: number | null, isDay: boolean | null }>({ tempC: null, code: null, isDay: null });
-  
+  const [jpWeather, setJpWeather] = useState<{ tempC: number | null; code: number | null; isDay: boolean | null }>({
+    tempC: null,
+    code: null,
+    isDay: null,
+  });
+  const [txWeather, setTxWeather] = useState<{ tempC: number | null; code: number | null; isDay: boolean | null }>({
+    tempC: null,
+    code: null,
+    isDay: null,
+  });
+
   const [jpHolidays, setJpHolidays] = useState<Holiday[]>([]);
   const [txHolidays, setTxHolidays] = useState<Holiday[]>([]);
 
   const [drops, setDrops] = useState<Drop[]>([]);
   const [showDropMenu, setShowDropMenu] = useState(false);
   const [burstingIds, setBurstingIds] = useState<string[]>([]);
-  
+
   // Prank state: tracks which emoji slots Tamae has tapped so they permanently turn into 💋
   const [kissedIndices, setKissedIndices] = useState<number[]>([]);
   const [justMorphedIdx, setJustMorphedIdx] = useState<number | null>(null);
+  const [kissCelebrationBurst, setKissCelebrationBurst] = useState<number | null>(null);
 
   const [otsukaresamaBurst, setOtsukaresamaBurst] = useState<number | null>(null);
   const wasBurstingRef = useRef(false);
@@ -116,7 +151,7 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
       wasBurstingRef.current = true;
     } else if (burstingIds.length === 0 && wasBurstingRef.current) {
       wasBurstingRef.current = false;
-      setOtsukaresamaBurst(Date.now());
+      setOtsukaresamaBurst(getBurstTimestamp());
       setTimeout(() => setOtsukaresamaBurst(null), 4000);
     }
   }, [burstingIds.length]);
@@ -140,38 +175,52 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
     };
 
     Promise.all([
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=35.4478&longitude=139.6425&current=temperature_2m,weather_code,is_day').then(r => r.json()),
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=32.5896&longitude=-95.1972&current=temperature_2m,weather_code,is_day').then(r => r.json()),
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=35.4478&longitude=139.6425&current=temperature_2m,weather_code,is_day').then(
+        (r) => r.json()
+      ),
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=32.5896&longitude=-95.1972&current=temperature_2m,weather_code,is_day').then(
+        (r) => r.json()
+      ),
       fetchHolidays('JP'),
       fetchHolidays('US'),
-      fetchDrops()
+      fetchDrops(),
     ])
-    .then(([jpData, txData, jpD, txD]) => {
-      if (jpData?.current && isMounted) {
-        setJpWeather({ tempC: jpData.current.temperature_2m, code: jpData.current.weather_code, isDay: jpData.current.is_day === 1 });
-      }
-      if (txData?.current && isMounted) {
-        setTxWeather({ tempC: txData.current.temperature_2m, code: txData.current.weather_code, isDay: txData.current.is_day === 1 });
-      }
-      if (isMounted) {
-        setJpHolidays(jpD);
-        setTxHolidays(txD);
-      }
-    })
-    .catch(console.error);
+      .then(([jpData, txData, jpD, txD]) => {
+        if (jpData?.current && isMounted) {
+          setJpWeather({
+            tempC: jpData.current.temperature_2m,
+            code: jpData.current.weather_code,
+            isDay: jpData.current.is_day === 1,
+          });
+        }
+        if (txData?.current && isMounted) {
+          setTxWeather({
+            tempC: txData.current.temperature_2m,
+            code: txData.current.weather_code,
+            isDay: txData.current.is_day === 1,
+          });
+        }
+        if (isMounted) {
+          setJpHolidays(jpD);
+          setTxHolidays(txD);
+        }
+      })
+      .catch(console.error);
 
-    const channel = supabase.channel('public:drops')
+    const channel = supabase
+      .channel('public:drops')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'drops' }, (payload) => {
         if (payload.eventType === 'INSERT') {
-          setDrops(prev => [...prev, payload.new as Drop]);
+          setDrops((prev) => [...prev, payload.new as Drop]);
         } else if (payload.eventType === 'DELETE') {
-          setDrops(prev => prev.filter(d => d.id !== payload.old.id));
+          setDrops((prev) => prev.filter((d) => d.id !== payload.old.id));
         }
-      }).subscribe();
+      })
+      .subscribe();
 
-    return () => { 
-      isMounted = false; 
-      supabase.removeChannel(channel); 
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -189,13 +238,18 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
         setTimeout(() => setJustMorphedIdx(null), 600);
       }
 
-      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
       await supabase.from('drops').insert([{ target_user: targetUser, emoji: displayedEmoji }]);
 
-      // If she actually tapped a 💋, close the menu after a brief moment;
-      // if she tapped a non-kiss emoji, keep the menu open so she sees it morph into 💋!
+      // If she tapped a 💋, trigger the 5.5-second Slow-Mo Kiss Confetti & Glow celebration!
       if (displayedEmoji === '💋') {
-        setTimeout(() => setShowDropMenu(false), 350);
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate([40, 80, 40, 80, 120]);
+        }
+        setShowDropMenu(false);
+        setKissCelebrationBurst(getBurstTimestamp());
+        setTimeout(() => setKissCelebrationBurst(null), 5800);
+      } else {
+        if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
       }
       return;
     }
@@ -207,12 +261,12 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   const handleConsumeDrop = async (id: string) => {
     if (burstingIds.includes(id)) return;
     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([20, 30, 20]);
-    
-    setBurstingIds(prev => [...prev, id]);
-    
+
+    setBurstingIds((prev) => [...prev, id]);
+
     setTimeout(async () => {
-      setDrops(prev => prev.filter(d => d.id !== id));
-      setBurstingIds(prev => prev.filter(bId => bId !== id));
+      setDrops((prev) => prev.filter((d) => d.id !== id));
+      setBurstingIds((prev) => prev.filter((bId) => bId !== id));
       await supabase.from('drops').delete().eq('id', id);
     }, 1500);
   };
@@ -220,16 +274,16 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   const renderFinalBurstOverlay = (targetUser: 'Michael' | 'Tamae') => {
     if (!otsukaresamaBurst || currentUser !== targetUser) return null;
     return (
-      <div 
+      <div
         key={otsukaresamaBurst}
         className="absolute inset-0 z-40 rounded-2xl flex items-center justify-center pointer-events-none"
         style={{ animation: 'otsukaresamaCardDim 3.5s ease-in-out forwards' }}
       >
-        <span 
+        <span
           className="text-2xl md:text-3xl text-amber-400 tracking-[0.3em] ml-3"
-          style={{ 
+          style={{
             animation: 'otsukaresamaTextGlow 3.5s ease-in-out forwards',
-            fontFamily: '"Shippori Mincho", "Noto Serif JP", serif'
+            fontFamily: '"Shippori Mincho", "Noto Serif JP", serif',
           }}
         >
           お疲れ様
@@ -238,11 +292,59 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
     );
   };
 
+  // Slow-Mo Kiss Confetti & Glow overlay when Tamae taps a 💋 (5.5s total duration)
+  const renderKissCelebrationElements = (burstKey: number) => (
+    <div
+      key={burstKey}
+      className="absolute inset-0 z-40 rounded-2xl flex flex-col items-center justify-center pointer-events-none overflow-hidden"
+      style={{ animation: 'kissCardDim 5.5s ease-in-out forwards' }}
+    >
+      <div className="absolute inset-0 flex items-center justify-center">
+        {KISS_CONFETTI.map((p, idx) => (
+          <span
+            key={idx}
+            className="absolute text-xl select-none"
+            style={
+              {
+                animation: `kissConfettiFly 4.8s cubic-bezier(0.12, 0.8, 0.25, 1) ${p.delay}s forwards`,
+                '--tx': `${p.tx}px`,
+                '--ty': `${p.ty}px`,
+                '--rot': `${p.rot}deg`,
+                '--sc': p.scale,
+              } as React.CSSProperties
+            }
+          >
+            {p.char}
+          </span>
+        ))}
+      </div>
+
+      <div
+        className="relative z-10 flex flex-col items-center"
+        style={{
+          animation: 'kissTextGlow 5.5s ease-in-out forwards',
+          fontFamily: '"Shippori Mincho", "Noto Serif JP", serif',
+        }}
+      >
+        <span className="text-2xl md:text-3xl text-rose-400 tracking-[0.25em] ml-2">
+          ちゅっ！💋
+        </span>
+        <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-rose-300/90 mt-1.5">
+          {lang === 'ja' ? 'やっときた！ (Finally!)' : 'Finally!'}
+        </span>
+      </div>
+    </div>
+  );
+
   const renderDropMenu = () => (
     <div className="relative mr-1 shrink-0">
-      <button 
+      <button
         onClick={() => setShowDropMenu(!showDropMenu)}
-        className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all cursor-pointer ${showDropMenu ? 'bg-amber-900/50 border-amber-700/50 text-amber-500' : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'}`}
+        className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
+          showDropMenu
+            ? 'bg-amber-900/50 border-amber-700/50 text-amber-500'
+            : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500'
+        }`}
       >
         <Plus className={`w-3.5 h-3.5 transition-transform ${showDropMenu ? 'rotate-45' : ''}`} />
       </button>
@@ -254,10 +356,12 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
             const isPopping = justMorphedIdx === idx;
 
             return (
-              <button 
+              <button
                 key={idx}
                 onClick={() => handleSendDrop(displayedEmoji, idx)}
-                className={`w-8 h-8 flex items-center justify-center text-xl hover:bg-zinc-800 rounded-lg transition-all duration-300 cursor-pointer ${isPopping ? 'scale-125 bg-rose-950/60 ring-1 ring-rose-500/50' : ''}`}
+                className={`w-8 h-8 flex items-center justify-center text-xl hover:bg-zinc-800 rounded-lg transition-all duration-300 cursor-pointer ${
+                  isPopping ? 'scale-125 bg-rose-950/60 ring-1 ring-rose-500/50' : ''
+                }`}
               >
                 {displayedEmoji}
               </button>
@@ -269,30 +373,41 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   );
 
   const renderMyDrop = (drop: Drop) => (
-    <div key={drop.id} className={`relative flex items-center justify-center transition-[width] duration-700 ease-in-out overflow-visible ${burstingIds.includes(drop.id) ? 'w-0 pointer-events-none' : 'w-8 h-8'}`}>
-      <button 
-        onClick={() => handleConsumeDrop(drop.id)} 
-        className={`text-xl transition-all cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] ${burstingIds.includes(drop.id) ? 'scale-0 opacity-0 duration-1000' : 'animate-[bounce_2s_infinite] hover:scale-125 duration-300'}`}
+    <div
+      key={drop.id}
+      className={`relative flex items-center justify-center transition-[width] duration-700 ease-in-out overflow-visible ${
+        burstingIds.includes(drop.id) ? 'w-0 pointer-events-none' : 'w-8 h-8'
+      }`}
+    >
+      <button
+        onClick={() => handleConsumeDrop(drop.id)}
+        className={`text-xl transition-all cursor-pointer drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] ${
+          burstingIds.includes(drop.id)
+            ? 'scale-0 opacity-0 duration-1000'
+            : 'animate-[bounce_2s_infinite] hover:scale-125 duration-300'
+        }`}
       >
         {drop.emoji}
       </button>
-      
+
       {burstingIds.includes(drop.id) && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
           {[...Array(12)].map((_, i) => {
-            const angle = (i * 30) * (Math.PI / 180);
-            const distance = 40 + Math.random() * 20;
+            const angle = i * 30 * (Math.PI / 180);
+            const distance = 40 + ((i * 7) % 20);
             const x = Math.cos(angle) * distance;
             const y = Math.sin(angle) * distance;
             return (
               <div
                 key={i}
                 className="absolute w-1.5 h-1.5 bg-amber-300 rounded-full shadow-[0_0_8px_rgba(252,211,77,1)]"
-                style={{
-                  animation: `dropBurst 1.5s ease-out forwards`,
-                  '--tx': `${x}px`,
-                  '--ty': `${y}px`,
-                } as React.CSSProperties}
+                style={
+                  {
+                    animation: `dropBurst 1.5s ease-out forwards`,
+                    '--tx': `${x}px`,
+                    '--ty': `${y}px`,
+                  } as React.CSSProperties
+                }
               />
             );
           })}
@@ -304,23 +419,27 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
   const texasHour = parseInt(formatInTimeZone(now, 'America/Chicago', 'H'), 10);
   const japanHour = parseInt(formatInTimeZone(now, 'Asia/Tokyo', 'H'), 10);
 
-  const isTexasDay = txWeather.isDay !== null ? txWeather.isDay : (texasHour >= 6 && texasHour < 19);
-  const isJapanDay = jpWeather.isDay !== null ? jpWeather.isDay : (japanHour >= 6 && japanHour < 19);
+  const isTexasDay = txWeather.isDay !== null ? txWeather.isDay : texasHour >= 6 && texasHour < 19;
+  const isJapanDay = jpWeather.isDay !== null ? jpWeather.isDay : japanHour >= 6 && japanHour < 19;
 
   const locale = lang === 'ja' ? ja : enUS;
   const formatStr = lang === 'ja' ? 'M月d日 (EEEE)' : 'EEEE, MMM d';
-  
+
   const texasFormattedDate = formatInTimeZone(now, 'America/Chicago', formatStr, { locale });
   const japanFormattedDate = formatInTimeZone(now, 'Asia/Tokyo', formatStr, { locale });
 
   const jpDateStr = formatInTimeZone(now, 'Asia/Tokyo', 'yyyy-MM-dd');
   const txDateStr = formatInTimeZone(now, 'America/Chicago', 'yyyy-MM-dd');
-  
-  const todayJpHoliday = jpHolidays.find(h => h.date === jpDateStr);
-  const todayTxHoliday = txHolidays.find(h => h.date === txDateStr);
+
+  const todayJpHoliday = jpHolidays.find((h) => h.date === jpDateStr);
+  const todayTxHoliday = txHolidays.find((h) => h.date === txDateStr);
 
   const displayJpHoliday = todayJpHoliday ? (lang === 'ja' ? todayJpHoliday.localName : todayJpHoliday.name) : null;
-  const displayTxHoliday = todayTxHoliday ? (lang === 'ja' && todayTxHoliday.name === "New Year's Day" ? '元日' : todayTxHoliday.name) : null;
+  const displayTxHoliday = todayTxHoliday
+    ? lang === 'ja' && todayTxHoliday.name === "New Year's Day"
+      ? '元日'
+      : todayTxHoliday.name
+    : null;
 
   const jpDesc = todayJpHoliday ? HOLIDAY_INFO[todayJpHoliday.name]?.[lang] : null;
   const txDesc = todayTxHoliday ? HOLIDAY_INFO[todayTxHoliday.name]?.[lang] : null;
@@ -343,22 +462,35 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
 
   const formatTemp = (tempC: number | null) => {
     if (tempC === null) return '--';
-    const tempF = (tempC * 9/5) + 32;
+    const tempF = (tempC * 9) / 5 + 32;
     return `${Math.round(tempC)}°C / ${Math.round(tempF)}°F`;
   };
 
   const japanCard = (
-    <div key="jp" className={`relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full ${showDropMenu && currentUser !== 'Tamae' ? 'z-30' : 'z-10'}`}>
+    <div
+      key="jp"
+      className={`relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full ${
+        showDropMenu && currentUser !== 'Tamae' ? 'z-30' : 'z-10'
+      }`}
+    >
       {renderFinalBurstOverlay('Tamae')}
-      
+
       <div className="flex items-start justify-between w-full relative z-10">
         <div className="flex items-start gap-3 md:gap-4 pointer-events-none">
-          <div className={`p-3 rounded-xl border shadow-inner mt-1 shrink-0 ${isJapanDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+          <div
+            className={`p-3 rounded-xl border shadow-inner mt-1 shrink-0 ${
+              isJapanDay
+                ? 'bg-amber-950/30 border-amber-800/50 text-amber-400'
+                : 'bg-blue-950/30 border-blue-800/50 text-blue-400'
+            }`}
+          >
             {isJapanDay ? <Sun className="w-5 h-5 md:w-6 md:h-6" /> : <Moon className="w-5 h-5 md:w-6 md:h-6" />}
           </div>
           <div className="flex flex-col">
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-              <h4 className="text-[10px] md:text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? '神奈川 (JST)' : 'Kanagawa (JST)'}</h4>
+              <h4 className="text-[10px] md:text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">
+                {lang === 'ja' ? '神奈川 (JST)' : 'Kanagawa (JST)'}
+              </h4>
               <span className="text-[10px] md:text-xs font-mono text-zinc-400 flex items-center gap-1 whitespace-nowrap">
                 <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(jpWeather.tempC)}
               </span>
@@ -367,7 +499,9 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
               {formatInTimeZone(now, 'Asia/Tokyo', 'h:mm:ss a')}
             </p>
             <div className="mt-0.5">
-              <span className="text-xs md:text-sm text-zinc-300 font-mono block whitespace-nowrap">{japanFormattedDate}</span>
+              <span className="text-xs md:text-sm text-zinc-300 font-mono block whitespace-nowrap">
+                {japanFormattedDate}
+              </span>
               {displayJpHoliday && (
                 <div className="mt-2.5 pointer-events-auto">
                   <span className="w-max px-2 py-0.5 rounded text-[9px] font-mono tracking-widest uppercase bg-amber-950/30 text-amber-500/90 border border-amber-900/30 block">
@@ -383,12 +517,12 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
             </div>
           </div>
         </div>
-        
+
         <div className="flex flex-col items-end gap-1.5 shrink-0 ml-4 relative z-10">
           <div className="flex items-center justify-end gap-2 shrink-0">
             {currentUser !== 'Tamae' && renderDropMenu()}
             <span className="text-[10px] md:text-xs font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
-              {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+              {isJapanDay ? (lang === 'ja' ? '昼' : 'Daytime') : lang === 'ja' ? '夜' : 'Night'}
             </span>
           </div>
           <span className="text-[10px] md:text-xs text-zinc-400 flex items-center gap-1.5 mt-0.5 whitespace-nowrap shrink-0">
@@ -397,26 +531,40 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
         </div>
       </div>
 
-      {currentUser === 'Tamae' && drops.filter(d => d.target_user === 'Tamae').length > 0 && (
+      {currentUser === 'Tamae' && drops.filter((d) => d.target_user === 'Tamae').length > 0 && (
         <div className="flex flex-wrap justify-end gap-1.5 mt-4 pt-3 border-t border-zinc-800/40 w-full relative z-10">
-          {drops.filter(d => d.target_user === 'Tamae').map(renderMyDrop)}
+          {drops.filter((d) => d.target_user === 'Tamae').map(renderMyDrop)}
         </div>
       )}
     </div>
   );
 
   const texasCard = (
-    <div key="tx" className={`relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full ${showDropMenu && currentUser !== 'Michael' ? 'z-30' : 'z-10'}`}>
+    <div
+      key="tx"
+      className={`relative p-5 md:p-6 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.5)] h-full ${
+        showDropMenu && currentUser !== 'Michael' ? 'z-30' : 'z-10'
+      }`}
+    >
       {renderFinalBurstOverlay('Michael')}
-      
+      {kissCelebrationBurst && currentUser === 'Tamae' && renderKissCelebrationElements(kissCelebrationBurst)}
+
       <div className="flex items-start justify-between w-full relative z-10">
         <div className="flex items-start gap-3 md:gap-4 pointer-events-none">
-          <div className={`p-3 rounded-xl border shadow-inner mt-1 shrink-0 ${isTexasDay ? 'bg-amber-950/30 border-amber-800/50 text-amber-400' : 'bg-blue-950/30 border-blue-800/50 text-blue-400'}`}>
+          <div
+            className={`p-3 rounded-xl border shadow-inner mt-1 shrink-0 ${
+              isTexasDay
+                ? 'bg-amber-950/30 border-amber-800/50 text-amber-400'
+                : 'bg-blue-950/30 border-blue-800/50 text-blue-400'
+            }`}
+          >
             {isTexasDay ? <Sun className="w-5 h-5 md:w-6 md:h-6" /> : <Moon className="w-5 h-5 md:w-6 md:h-6" />}
           </div>
           <div className="flex flex-col">
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-              <h4 className="text-[10px] md:text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">{lang === 'ja' ? 'テキサス (CDT)' : 'Texas (CDT)'}</h4>
+              <h4 className="text-[10px] md:text-xs font-mono uppercase tracking-widest text-zinc-300 font-semibold">
+                {lang === 'ja' ? 'テキサス (CDT)' : 'Texas (CDT)'}
+              </h4>
               <span className="text-[10px] md:text-xs font-mono text-zinc-400 flex items-center gap-1 whitespace-nowrap">
                 <Thermometer className="w-3.5 h-3.5 text-amber-400" /> {formatTemp(txWeather.tempC)}
               </span>
@@ -425,7 +573,9 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
               {formatInTimeZone(now, 'America/Chicago', 'h:mm:ss a')}
             </p>
             <div className="mt-0.5">
-              <span className="text-xs md:text-sm text-zinc-300 font-mono block whitespace-nowrap">{texasFormattedDate}</span>
+              <span className="text-xs md:text-sm text-zinc-300 font-mono block whitespace-nowrap">
+                {texasFormattedDate}
+              </span>
               {displayTxHoliday && (
                 <div className="mt-2.5 pointer-events-auto">
                   <span className="w-max px-2 py-0.5 rounded text-[9px] font-mono tracking-widest uppercase bg-amber-950/30 text-amber-500/90 border border-amber-900/30 block">
@@ -441,12 +591,12 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
             </div>
           </div>
         </div>
-        
+
         <div className="flex flex-col items-end gap-1.5 shrink-0 ml-4 relative z-10">
           <div className="flex items-center justify-end gap-2 shrink-0">
             {currentUser !== 'Michael' && renderDropMenu()}
             <span className="text-[10px] md:text-xs font-mono px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 shrink-0">
-              {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : (lang === 'ja' ? '夜' : 'Night')}
+              {isTexasDay ? (lang === 'ja' ? '昼' : 'Daytime') : lang === 'ja' ? '夜' : 'Night'}
             </span>
           </div>
           <span className="text-[10px] md:text-xs text-zinc-400 flex items-center gap-1.5 mt-0.5 whitespace-nowrap shrink-0">
@@ -455,9 +605,9 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
         </div>
       </div>
 
-      {currentUser === 'Michael' && drops.filter(d => d.target_user === 'Michael').length > 0 && (
+      {currentUser === 'Michael' && drops.filter((d) => d.target_user === 'Michael').length > 0 && (
         <div className="flex flex-wrap justify-end gap-1.5 mt-4 pt-3 border-t border-zinc-800/40 w-full relative z-10">
-          {drops.filter(d => d.target_user === 'Michael').map(renderMyDrop)}
+          {drops.filter((d) => d.target_user === 'Michael').map(renderMyDrop)}
         </div>
       )}
     </div>
@@ -465,7 +615,9 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
 
   return (
     <div className="w-full max-w-4xl flex flex-col gap-4 mb-6 relative">
-      <style dangerouslySetInnerHTML={{__html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @keyframes dropBurst {
           0% { transform: translate(0, 0) scale(1.2); opacity: 1; }
           100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
@@ -482,12 +634,32 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
           85% { opacity: 1; transform: scale(1.05) translateY(-5px); text-shadow: 0 0 20px rgba(245,158,11,0.6); }
           100% { opacity: 0; transform: scale(1.1) translateY(-15px); text-shadow: 0 0 0 rgba(245,158,11,0); }
         }
-      `}} />
+        @keyframes kissCardDim {
+          0% { background-color: rgba(24, 9, 14, 0); backdrop-filter: blur(0px); opacity: 0; }
+          12% { background-color: rgba(24, 9, 14, 0.9); backdrop-filter: blur(4px); opacity: 1; }
+          86% { background-color: rgba(24, 9, 14, 0.9); backdrop-filter: blur(4px); opacity: 1; }
+          100% { background-color: rgba(24, 9, 14, 0); backdrop-filter: blur(0px); opacity: 0; }
+        }
+        @keyframes kissTextGlow {
+          0% { opacity: 0; transform: scale(0.85) translateY(12px); text-shadow: 0 0 0 rgba(244,63,94,0); }
+          15% { opacity: 1; transform: scale(1.03) translateY(0); text-shadow: 0 0 24px rgba(244,63,94,0.85); }
+          85% { opacity: 1; transform: scale(1.08) translateY(-4px); text-shadow: 0 0 28px rgba(244,63,94,0.9); }
+          100% { opacity: 0; transform: scale(1.14) translateY(-12px); text-shadow: 0 0 0 rgba(244,63,94,0); }
+        }
+        @keyframes kissConfettiFly {
+          0% { transform: translate(0, 0) scale(0.3) rotate(0deg); opacity: 0; }
+          12% { opacity: 1; }
+          70% { opacity: 1; }
+          100% { transform: translate(var(--tx), var(--ty)) scale(var(--sc)) rotate(var(--rot)); opacity: 0; }
+        }
+      `,
+        }}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {currentUser === 'Michael' ? [japanCard, texasCard] : [texasCard, japanCard]}
       </div>
-      
+
       <div className="p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-xl flex items-center justify-center gap-2 md:gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.5)] transition-all group overflow-hidden">
         <span className="text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] transition-transform group-hover:scale-110 shrink-0">
           {moonPhase.emoji}
@@ -495,7 +667,9 @@ export default function SanctuaryStatus({ lang, currentUser }: SanctuaryStatusPr
         <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs font-mono tracking-widest uppercase text-stone-400 min-w-0">
           <span className="truncate">{lang === 'ja' ? '同じ月を見上げて' : 'Under the Same Moon'}</span>
           <span className="opacity-30 shrink-0">|</span>
-          <span className="text-amber-500/80 whitespace-nowrap shrink-0">{lang === 'ja' ? moonPhase.ja : moonPhase.en}</span>
+          <span className="text-amber-500/80 whitespace-nowrap shrink-0">
+            {lang === 'ja' ? moonPhase.ja : moonPhase.en}
+          </span>
         </div>
       </div>
     </div>
