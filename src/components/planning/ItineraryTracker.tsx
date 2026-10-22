@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Plus, Loader2, Pencil, Trash2, Check, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import CollapsibleSection from './CollapsibleSection';
-import ReactionThread, { ThreadComment } from './ReactionThread';
+import CollapsibleSection from '@/components/shared/CollapsibleSection';
+import ReactionThread, { ThreadComment } from '@/components/shared/ReactionThread';
 
 interface Itinerary {
   id: string;

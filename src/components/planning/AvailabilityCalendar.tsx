@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Loader2, Info, Plus } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday } from 'date-fns';
 import { supabase } from '@/lib/supabase';
-import CollapsibleSection from './CollapsibleSection';
+import CollapsibleSection from '@/components/shared/CollapsibleSection';
 
 interface Availability {
   id: string;

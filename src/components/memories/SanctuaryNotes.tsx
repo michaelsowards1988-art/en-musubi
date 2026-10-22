@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Send, Loader2, Plus, Pencil, Trash2, Check, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import ReactionThread, { ThreadComment } from './ReactionThread';
-import CollapsibleSection from './CollapsibleSection';
+import CollapsibleSection from '@/components/shared/CollapsibleSection';
+import ReactionThread, { ThreadComment } from '@/components/shared/ReactionThread';
 
 interface Note {
   id: string;

@@ -1,23 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Image as ImageIcon, Music, Plus, Loader2, Sparkles, ExternalLink, X, Trash2 } from 'lucide-react';
+import { Image as ImageIcon, Music, Plus, Loader2, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { generateId, getNowIso, generateFilePrefix } from '@/lib/utils';
 import { fetchAppleMusicArt } from '@/lib/musicScraper';
-import CollapsibleSection from './CollapsibleSection';
-import ReactionThread, { ThreadComment } from './ReactionThread';
-
-interface SharedRecord {
-  id: string;
-  image_url: string;
-  caption: string;
-  location: string;
-  media_type: 'image' | 'music';
-  external_link: string | null;
-  created_at: string;
-  hearted_by: string[] | null;
-  comments: ThreadComment[] | null;
-}
+import CollapsibleSection from '@/components/shared/CollapsibleSection';
+import { ThreadComment } from '@/components/shared/ReactionThread';
+import MemoryLightbox, { SharedRecord } from '@/components/memories/MemoryLightbox';
+import MemoryRecordCard from '@/components/memories/MemoryRecordCard';
 
 interface MemoryVaultProps {
   currentUser: 'Michael' | 'Tamae';
@@ -26,10 +17,6 @@ interface MemoryVaultProps {
   subtitle: string;
   icon: React.ReactNode;
 }
-
-const generateId = () => Date.now().toString();
-const getNowIso = () => new Date().toISOString();
-const generateFilePrefix = () => `${Date.now()}-${Math.random().toString(36).substring(2)}`;
 
 export default function MemoryVault({ currentUser, lang, title, subtitle, icon }: MemoryVaultProps) {
   const [records, setRecords] = useState<SharedRecord[]>([]);
@@ -296,131 +283,22 @@ export default function MemoryVault({ currentUser, lang, title, subtitle, icon }
                 No records logged yet.
               </p>
             ) : (
-              records.map((record) => {
-                const isMusic = record.media_type === 'music';
-                const displayLocation =
-                  record.location === 'Texas'
-                    ? 'Michael'
-                    : record.location === 'Kanagawa'
-                      ? 'Tamae'
-                      : record.location;
-
-                return (
-                  <div
-                    key={record.id}
-                    className="rounded-xl overflow-hidden bg-zinc-900/40 border border-zinc-800/60 group relative flex flex-col"
-                  >
-                    <div
-                      className={`${
-                        isMusic ? 'h-56 sm:h-64' : 'max-h-112 flex items-center justify-center'
-                      } overflow-hidden relative bg-zinc-950`}
-                    >
-                      {isMusic && record.external_link ? (
-                        <a
-                          href={record.external_link}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block w-full h-full cursor-pointer"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={record.image_url}
-                            alt={record.caption}
-                            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-80 blur-[2px] scale-105 group-hover:blur-none"
-                          />
-                        </a>
-                      ) : (
-                        <div
-                          onClick={() => setLightboxRecord(record)}
-                          className="w-full flex items-center justify-center cursor-zoom-in"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={record.image_url}
-                            alt={record.caption}
-                            className="w-full h-auto max-h-112 object-contain group-hover:scale-[1.02] transition-transform duration-500 opacity-95"
-                          />
-                        </div>
-                      )}
-
-                      <div className="absolute top-3 left-3 flex gap-2 pointer-events-none">
-                        <span className="px-2 py-1 rounded text-[10px] font-mono bg-zinc-950/80 backdrop-blur-md text-stone-300 border border-zinc-800 flex items-center gap-1.5 shadow-sm">
-                          {isMusic ? (
-                            <Music className="w-3 h-3 text-amber-500" />
-                          ) : (
-                            <ImageIcon className="w-3.5 h-3.5 text-stone-400" />
-                          )}
-                          {displayLocation}
-                        </span>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => deleteRecord(record.id)}
-                        title={lang === 'ja' ? '削除' : 'Delete'}
-                        className="absolute top-3 right-3 p-1.5 rounded-lg bg-zinc-950/80 border border-zinc-800 text-stone-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    <div className="p-4 flex-1 flex flex-col justify-between bg-zinc-900/40">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-medium text-stone-200">{record.caption}</p>
-                        <span className="text-[10px] font-mono text-stone-500 shrink-0 mt-0.5">
-                          {new Date(record.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-
-                      {isMusic && record.external_link && (
-                        <div className="mt-2">
-                          <a
-                            href={record.external_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-500 hover:text-amber-400 transition-colors relative z-10 cursor-pointer"
-                          >
-                            Listen <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </div>
-                      )}
-
-                      <div className="mt-2 pt-2 border-t border-zinc-800/40">
-                        <ReactionThread
-                          currentUser={currentUser}
-                          heartedBy={record.hearted_by || []}
-                          comments={record.comments || []}
-                          onToggleHeart={() => toggleHeart(record)}
-                          onAddComment={(content) => postReply(content, record)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
+              records.map((record) => (
+                <MemoryRecordCard
+                  key={record.id}
+                  record={record}
+                  currentUser={currentUser}
+                  lang={lang}
+                  onOpenLightbox={setLightboxRecord}
+                  onDelete={deleteRecord}
+                  onToggleHeart={toggleHeart}
+                  onPostReply={postReply}
+                />
+              ))
             )}
           </div>
 
-          {lightboxRecord && (
-            <div
-              onClick={() => setLightboxRecord(null)}
-              className="fixed inset-0 z-50 bg-zinc-950/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 md:p-8 cursor-zoom-out animate-in fade-in duration-200"
-            >
-              <button
-                onClick={() => setLightboxRecord(null)}
-                className="absolute top-6 right-6 p-2.5 rounded-full bg-zinc-900 border border-zinc-700 text-stone-300 hover:text-white cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={lightboxRecord.image_url}
-                alt={lightboxRecord.caption}
-                className="max-w-full max-h-[82vh] object-contain rounded-xl border border-zinc-800 shadow-2xl"
-              />
-              <p className="mt-4 text-sm font-medium text-stone-200">{lightboxRecord.caption}</p>
-            </div>
-          )}
+          <MemoryLightbox record={lightboxRecord} onClose={() => setLightboxRecord(null)} />
         </>
       )}
     </CollapsibleSection>

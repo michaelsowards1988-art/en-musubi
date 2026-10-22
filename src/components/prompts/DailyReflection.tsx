@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { BookOpen, ChevronLeft, ChevronRight, Loader2, Quote, RotateCcw } from 'lucide-react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { supabase } from '@/lib/supabase';
-import ReactionThread, { ThreadComment } from './ReactionThread';
+import ReactionThread, { ThreadComment } from '@/components/shared/ReactionThread';
 
 interface ReflectionRecord {
   id: string;

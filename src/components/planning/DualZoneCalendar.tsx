@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { MapPin, Loader2 } from 'lucide-react';
-import CollapsibleSection from './CollapsibleSection';
+import CollapsibleSection from '@/components/shared/CollapsibleSection';
 
 interface DualZoneCalendarProps {
   currentUser: 'Michael' | 'Tamae'; // Kept in interface to satisfy parent types
