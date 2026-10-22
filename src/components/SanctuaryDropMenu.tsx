@@ -139,7 +139,6 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
     let isMounted = true;
 
     async function syncCustomEmojis() {
-      // 1. Always read current local items first
       let localItems: DropItem[] = [];
       try {
         const saved = localStorage.getItem(CUSTOM_DROPS_STORAGE_KEY);
@@ -148,19 +147,12 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
         // ignore
       }
 
-      // 2. Fetch remote items from Supabase
       const { data, error } = await supabase
         .from('custom_emojis')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!isMounted) return;
-
-      // If table doesn't exist yet or query errored, DO NOT touch localStorage!
-      if (error || !data) {
-        console.warn('custom_emojis sync skipped:', error?.message);
-        return;
-      }
+      if (!isMounted || error || !data) return;
 
       const remoteItems: DropItem[] = (data as CustomEmojiRow[]).map((row) => ({
         emoji: row.emoji,
@@ -169,7 +161,7 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
         isCustom: true,
       }));
 
-      // 3. Find any local emojis missing from Supabase and push them up
+      // Find any local emojis missing from Supabase and upload them with DO NOTHING on conflict
       const missingFromRemote = localItems.filter(
         (loc) => loc.emoji && !remoteItems.some((rem) => rem.emoji === loc.emoji)
       );
@@ -181,17 +173,25 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
             label_en: item.labelEn || 'Custom',
             label_ja: item.labelJa || 'カスタム',
           })),
-          { onConflict: 'emoji' }
+          { onConflict: 'emoji', ignoreDuplicates: true }
         );
       }
 
-      // 4. Union merge (deduplicated by emoji) so nothing is ever lost
+      // Deduplicated union merge (preferring non-default labels if one partner named it!)
       const mergedMap = new Map<string, DropItem>();
       for (const item of [...remoteItems, ...localItems]) {
-        if (item?.emoji && !mergedMap.has(item.emoji)) {
+        if (!item?.emoji) continue;
+        const existing = mergedMap.get(item.emoji);
+        if (!existing) {
+          mergedMap.set(item.emoji, { ...item, isCustom: true });
+        } else if (
+          (existing.labelEn === 'Custom' || existing.labelJa === 'カスタム') &&
+          item.labelEn !== 'Custom'
+        ) {
           mergedMap.set(item.emoji, { ...item, isCustom: true });
         }
       }
+
       const merged = Array.from(mergedMap.values());
 
       if (isMounted && merged.length > 0) {
@@ -230,7 +230,12 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
       if (segments[0]?.segment) finalEmoji = segments[0].segment;
     }
 
-    const label = newLabelInput.trim() || (lang === 'ja' ? 'カスタム' : 'Custom');
+    const existingItem = customItems.find((i) => i.emoji === finalEmoji);
+    const label =
+      newLabelInput.trim() ||
+      existingItem?.labelEn ||
+      (lang === 'ja' ? 'カスタム' : 'Custom');
+
     const newItem: DropItem = {
       emoji: finalEmoji,
       labelEn: label,
@@ -238,6 +243,7 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
       isCustom: true,
     };
 
+    // Deduplicate by emoji
     const updated = [newItem, ...customItems.filter((i) => i.emoji !== finalEmoji)];
     setCustomItems(updated);
     setNewEmojiInput('');
