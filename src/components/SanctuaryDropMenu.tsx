@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Sparkles } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export interface DropItem {
   emoji: string;
@@ -96,6 +97,13 @@ export const SANCTUARY_DROP_PACKS: DropPack[] = [
 
 const CUSTOM_DROPS_STORAGE_KEY = 'en_musubi_custom_drops_v1';
 
+interface CustomEmojiRow {
+  emoji: string;
+  label_en: string;
+  label_ja: string;
+  created_at?: string;
+}
+
 interface SanctuaryDropMenuProps {
   lang: 'en' | 'ja';
   activeDrops: string[];
@@ -113,14 +121,12 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
   const [selectedPackId, setSelectedPackId] = useState<string>('classics');
   const [justSentEmoji, setJustSentEmoji] = useState<string | null>(null);
 
-  // Lazy-initialized state for React 19 ESLint compliance
   const [customItems, setCustomItems] = useState<DropItem[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
       const saved = localStorage.getItem(CUSTOM_DROPS_STORAGE_KEY);
       return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      console.error('Failed to load custom drops:', e);
+    } catch {
       return [];
     }
   });
@@ -128,38 +134,129 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
   const [newEmojiInput, setNewEmojiInput] = useState('');
   const [newLabelInput, setNewLabelInput] = useState('');
 
-  const saveCustomItems = (items: DropItem[]) => {
-    setCustomItems(items);
-    try {
-      localStorage.setItem(CUSTOM_DROPS_STORAGE_KEY, JSON.stringify(items));
-    } catch (e) {
-      console.error('Failed to save custom drops:', e);
-    }
-  };
+  // Sync custom emojis with Supabase + auto-migrate any localStorage emojis Tamae or Michael already added!
+  useEffect(() => {
+    let isMounted = true;
 
-  const handleAddCustomEmoji = (e: React.FormEvent) => {
+    async function syncCustomEmojis() {
+      const { data, error } = await supabase
+        .from('custom_emojis')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!isMounted || error) return;
+
+      const remoteItems: DropItem[] = (data as CustomEmojiRow[]).map((row) => ({
+        emoji: row.emoji,
+        labelEn: row.label_en,
+        labelJa: row.label_ja,
+        isCustom: true,
+      }));
+
+      let localItems: DropItem[] = [];
+      try {
+        const saved = localStorage.getItem(CUSTOM_DROPS_STORAGE_KEY);
+        if (saved) localItems = JSON.parse(saved);
+      } catch {
+        // ignore
+      }
+
+      // Find any local emojis that aren't in Supabase yet and upload them automatically!
+      const missingFromRemote = localItems.filter(
+        (loc) => loc.emoji && !remoteItems.some((rem) => rem.emoji === loc.emoji)
+      );
+
+      if (missingFromRemote.length > 0) {
+        await supabase.from('custom_emojis').upsert(
+          missingFromRemote.map((item) => ({
+            emoji: item.emoji,
+            label_en: item.labelEn || 'Custom',
+            label_ja: item.labelJa || 'カスタム',
+          })),
+          { onConflict: 'emoji' }
+        );
+      }
+
+      const merged = [
+        ...missingFromRemote.map((i) => ({ ...i, isCustom: true })),
+        ...remoteItems,
+      ];
+
+      if (isMounted) {
+        setCustomItems(merged);
+        try {
+          localStorage.setItem(CUSTOM_DROPS_STORAGE_KEY, JSON.stringify(merged));
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    syncCustomEmojis();
+
+    const channel = supabase
+      .channel('public:custom_emojis')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'custom_emojis' }, () => {
+        syncCustomEmojis();
+      })
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleAddCustomEmoji = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmedEmoji = newEmojiInput.trim();
-    if (!trimmedEmoji) return;
+    const trimmed = newEmojiInput.trim();
+    if (!trimmed) return;
+
+    let finalEmoji = trimmed;
+    if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
+      const segments = Array.from(new Intl.Segmenter().segment(trimmed));
+      if (segments[0]?.segment) finalEmoji = segments[0].segment;
+    }
 
     const label = newLabelInput.trim() || (lang === 'ja' ? 'カスタム' : 'Custom');
     const newItem: DropItem = {
-      emoji: trimmedEmoji,
+      emoji: finalEmoji,
       labelEn: label,
       labelJa: label,
       isCustom: true,
     };
 
-    const updated = [newItem, ...customItems.filter((i) => i.emoji !== trimmedEmoji)];
-    saveCustomItems(updated);
+    const updated = [newItem, ...customItems.filter((i) => i.emoji !== finalEmoji)];
+    setCustomItems(updated);
     setNewEmojiInput('');
     setNewLabelInput('');
+
+    try {
+      localStorage.setItem(CUSTOM_DROPS_STORAGE_KEY, JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+
+    await supabase.from('custom_emojis').upsert(
+      {
+        emoji: finalEmoji,
+        label_en: label,
+        label_ja: label,
+      },
+      { onConflict: 'emoji' }
+    );
   };
 
-  const handleDeleteCustomEmoji = (e: React.MouseEvent, emojiToRemove: string) => {
+  const handleDeleteCustomEmoji = async (e: React.MouseEvent, emojiToRemove: string) => {
     e.stopPropagation();
     const updated = customItems.filter((i) => i.emoji !== emojiToRemove);
-    saveCustomItems(updated);
+    setCustomItems(updated);
+    try {
+      localStorage.setItem(CUSTOM_DROPS_STORAGE_KEY, JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+    await supabase.from('custom_emojis').delete().eq('emoji', emojiToRemove);
   };
 
   const allPacks: DropPack[] = [
@@ -168,8 +265,8 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
       id: 'custom',
       nameEn: '+ Custom',
       nameJa: '+ 追加',
-      badgeEn: 'Custom',
-      badgeJa: '自由追加',
+      badgeEn: 'Shared',
+      badgeJa: 'ふたりの絵文字',
       items: customItems,
     },
   ];
@@ -190,7 +287,6 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
 
   return (
     <div className="relative inline-block">
-      {/* The + Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
@@ -206,11 +302,9 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
 
       {isOpen && (
         <>
-          {/* Invisible backdrop to close when tapping outside */}
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
           <div className="absolute right-0 mt-2.5 w-76 sm:w-84 rounded-2xl bg-zinc-950/95 backdrop-blur-xl border border-zinc-800/90 shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-3.5 z-50 animate-in fade-in zoom-in-95 duration-200">
-            {/* Minimalist Header */}
             <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-zinc-800/80">
               <h4 className="text-xs font-mono font-semibold tracking-widest uppercase text-stone-200">
                 {lang === 'en' ? 'Otsukaresama Drops' : 'お疲れ様ドロップ'}
@@ -220,7 +314,6 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
               </span>
             </div>
 
-            {/* Wrapped Pack Selector Pills — Zero Scrollbars! */}
             <div className="flex flex-wrap items-center gap-1.5 mb-3">
               {allPacks.map((pack) => {
                 const isSelected = pack.id === selectedPackId;
@@ -241,7 +334,6 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
               })}
             </div>
 
-            {/* Custom Emoji Creator Bar */}
             {selectedPackId === 'custom' && (
               <form
                 onSubmit={handleAddCustomEmoji}
@@ -274,7 +366,6 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
               </form>
             )}
 
-            {/* 3x3 Curated Emoji Grid */}
             {currentPack.items.length === 0 ? (
               <div className="py-6 text-center text-xs text-zinc-500 font-mono">
                 {lang === 'ja'
@@ -282,7 +373,7 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
                   : 'Add any emoji above ✨'}
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-0.5">
                 {currentPack.items.map((item, idx) => {
                   const isUnpoppedOnCard = activeDrops.includes(item.emoji);
                   const isJustSent = justSentEmoji === item.emoji;
@@ -303,7 +394,6 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
                         {lang === 'en' ? item.labelEn : item.labelJa}
                       </span>
 
-                      {/* Subtle tiny dot showing it's currently waiting on the card */}
                       {isUnpoppedOnCard && (
                         <span
                           title={lang === 'ja' ? '送信済み' : 'Sent on card'}
@@ -311,7 +401,6 @@ export const SanctuaryDropMenu: React.FC<SanctuaryDropMenuProps> = ({
                         />
                       )}
 
-                      {/* Delete button for custom emojis */}
                       {item.isCustom && (
                         <span
                           onClick={(e) => handleDeleteCustomEmoji(e, item.emoji)}
